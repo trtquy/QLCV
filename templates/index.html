@@ -306,8 +306,8 @@
 <script src="{{ url_for('static', filename='js/kanban.js') }}"></script>
 <script>
 // Global tasks data for JavaScript
-window.tasksData = {{ (todo_tasks + in_progress_tasks + completed_tasks) | tojson }};
-window.usersData = {{ users | tojson }};
+window.tasksData = {{ tasks_dict | tojson }};
+window.usersData = {{ users_dict | tojson }};
 
 // Initialize kanban functionality
 document.addEventListener('DOMContentLoaded', function() {

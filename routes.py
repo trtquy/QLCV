@@ -19,12 +19,18 @@ def index():
     in_progress_tasks = [t for t in tasks if t.status == 'in_progress']
     completed_tasks = [t for t in tasks if t.status == 'completed']
     
+    # Convert to dictionaries for JSON serialization
+    tasks_dict = [t.to_dict() for t in tasks]
+    users_dict = [u.to_dict() for u in users]
+    
     return render_template('index.html', 
                          todo_tasks=todo_tasks,
                          in_progress_tasks=in_progress_tasks,
                          completed_tasks=completed_tasks,
                          users=users,
-                         current_user=current_user)
+                         current_user=current_user,
+                         tasks_dict=tasks_dict,
+                         users_dict=users_dict)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
