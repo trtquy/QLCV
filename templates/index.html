@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Kanban Board - TaskFlow{% endblock %}
+{% block title %}Banking Task Board - TaskFlow{% endblock %}
 
 {% block extra_head %}
 <style>
     .kanban-column {
         min-height: 600px;
-        background-color: var(--bs-gray-100);
+        background-color: #f8f9fa;
         border-radius: 8px;
         padding: 1rem;
     }
@@ -14,7 +14,7 @@
     .task-card {
         cursor: pointer;
         transition: all 0.2s ease;
-        border-left: 4px solid transparent;
+        border-left: 4px solid #0052CC;
     }
     
     .task-card:hover {
@@ -22,34 +22,10 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
-    .task-card.priority-urgent {
-        border-left-color: #FF5630;
-    }
-    
-    .task-card.priority-high {
-        border-left-color: #FF8B00;
-    }
-    
-    .task-card.priority-medium {
-        border-left-color: #36B37E;
-    }
-    
-    .task-card.priority-low {
-        border-left-color: #0065FF;
-    }
-    
-    .avatar {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: linear-gradient(45deg, #0052CC, #36B37E);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 600;
-    }
+    .priority-urgent { border-left-color: #FF5630; }
+    .priority-high { border-left-color: #FF8B00; }
+    .priority-medium { border-left-color: #36B37E; }
+    .priority-low { border-left-color: #0065FF; }
 </style>
 {% endblock %}
 
@@ -60,12 +36,12 @@
         <div class="col">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h1 class="h3 mb-1">Project Board</h1>
-                    <p class="text-muted mb-0">Manage your banking team tasks efficiently</p>
+                    <h1 class="h3 mb-1">Banking Task Board</h1>
+                    <p class="text-muted mb-0">Manage your banking operations efficiently</p>
                 </div>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
                     <i data-feather="plus" class="me-2"></i>
-                    Create Task
+                    Create New Task
                 </button>
             </div>
             
@@ -75,7 +51,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i data-feather="filter"></i></span>
                         <select class="form-select" id="teamFilter" onchange="filterByTeam()">
-                            <option value="">All Teams</option>
+                            <option value="">All Banking Teams</option>
                             {% for team in teams %}
                                 <option value="{{ team.id }}" {% if selected_team == team.id|string %}selected{% endif %}>
                                     {{ team.name }}
@@ -109,7 +85,7 @@
     <div class="row g-4">
         <!-- Todo Column -->
         <div class="col-lg-4">
-            <div class="kanban-column" data-status="todo">
+            <div class="kanban-column">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-secondary">
                         <i data-feather="circle" class="me-2"></i>
@@ -120,24 +96,20 @@
                 
                 <div class="task-container">
                     {% for task in todo_tasks %}
-                        <div class="card task-card mb-3 priority-{{ task.priority }}" 
-                             draggable="true" 
-                             data-task-id="{{ task.id }}">
+                        <div class="card task-card mb-3 priority-{{ task.priority }}" data-task-id="{{ task.id }}">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
-                                    <span class="badge bg-{{ 'danger' if task.priority == 'urgent' else 'warning' if task.priority == 'high' else 'success' if task.priority == 'medium' else 'primary' }} ms-2">
-                                        {{ task.priority.title() }}
-                                    </span>
+                                    <span class="badge bg-primary ms-2">{{ task.priority|upper }}</span>
                                 </div>
                                 
-                                {% if task.description %}
-                                <p class="card-text text-muted small mb-2">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
-                                {% endif %}
+                                <p class="card-text text-muted small mb-2">
+                                    {{ task.description|truncate(80) if task.description else "No description" }}
+                                </p>
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">Task #{{ task.id }}</small>
-                                    <small class="text-muted">{{ task.priority.title() }} Priority</small>
+                                    <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
                             </div>
                         </div>
@@ -148,7 +120,7 @@
 
         <!-- In Progress Column -->
         <div class="col-lg-4">
-            <div class="kanban-column" data-status="in_progress">
+            <div class="kanban-column">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-warning">
                         <i data-feather="clock" class="me-2"></i>
@@ -159,24 +131,20 @@
                 
                 <div class="task-container">
                     {% for task in in_progress_tasks %}
-                        <div class="card task-card mb-3 priority-{{ task.priority }}" 
-                             draggable="true" 
-                             data-task-id="{{ task.id }}">
+                        <div class="card task-card mb-3 priority-{{ task.priority }}" data-task-id="{{ task.id }}">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
-                                    <span class="badge bg-{{ 'danger' if task.priority == 'urgent' else 'warning' if task.priority == 'high' else 'success' if task.priority == 'medium' else 'primary' }} ms-2">
-                                        {{ task.priority.title() }}
-                                    </span>
+                                    <span class="badge bg-warning ms-2">{{ task.priority|upper }}</span>
                                 </div>
                                 
-                                {% if task.description %}
-                                <p class="card-text text-muted small mb-2">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
-                                {% endif %}
+                                <p class="card-text text-muted small mb-2">
+                                    {{ task.description|truncate(80) if task.description else "No description" }}
+                                </p>
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">Task #{{ task.id }}</small>
-                                    <small class="text-muted">{{ task.priority.title() }} Priority</small>
+                                    <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
                             </div>
                         </div>
@@ -187,7 +155,7 @@
 
         <!-- Completed Column -->
         <div class="col-lg-4">
-            <div class="kanban-column" data-status="completed">
+            <div class="kanban-column">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-success">
                         <i data-feather="check-circle" class="me-2"></i>
@@ -198,24 +166,20 @@
                 
                 <div class="task-container">
                     {% for task in completed_tasks %}
-                        <div class="card task-card mb-3 priority-{{ task.priority }}" 
-                             draggable="true" 
-                             data-task-id="{{ task.id }}">
+                        <div class="card task-card mb-3 priority-{{ task.priority }}" data-task-id="{{ task.id }}">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
-                                    <span class="badge bg-{{ 'danger' if task.priority == 'urgent' else 'warning' if task.priority == 'high' else 'success' if task.priority == 'medium' else 'primary' }} ms-2">
-                                        {{ task.priority.title() }}
-                                    </span>
+                                    <span class="badge bg-success ms-2">{{ task.priority|upper }}</span>
                                 </div>
                                 
-                                {% if task.description %}
-                                <p class="card-text text-muted small mb-2">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
-                                {% endif %}
+                                <p class="card-text text-muted small mb-2">
+                                    {{ task.description|truncate(80) if task.description else "No description" }}
+                                </p>
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">Task #{{ task.id }}</small>
-                                    <small class="text-muted">{{ task.priority.title() }} Priority</small>
+                                    <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
                             </div>
                         </div>
@@ -226,39 +190,232 @@
     </div>
 </div>
 
-<!-- Create Task Modal -->
-<div class="modal fade" id="createTaskModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create New Task</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" action="{{ url_for('create_task') }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Task Title *</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+<!-- Sleek Animated Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content animated-modal">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="modal-icon me-3">
+                        <i data-feather="plus-circle" class="text-primary"></i>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="priority" class="form-label">Priority</label>
-                        <select class="form-select" id="priority" name="priority">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
-                        </select>
+                    <div>
+                        <h4 class="modal-title mb-1">Create New Banking Task</h4>
+                        <p class="text-muted small mb-0">Add a new task to your banking workflow</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Task</button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form method="POST" action="{{ url_for('create_task') }}" id="createTaskForm">
+                <div class="modal-body px-4">
+                    <!-- Progress Indicator -->
+                    <div class="progress-indicator mb-4">
+                        <div class="step active" data-step="1">
+                            <div class="step-circle">1</div>
+                            <span>Basic Info</span>
+                        </div>
+                        <div class="step" data-step="2">
+                            <div class="step-circle">2</div>
+                            <span>Details</span>
+                        </div>
+                        <div class="step" data-step="3">
+                            <div class="step-circle">3</div>
+                            <span>Assignment</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Basic Information -->
+                    <div class="form-step active" data-step="1">
+                        <div class="step-header mb-4">
+                            <h5 class="step-title">Task Information</h5>
+                            <p class="step-subtitle text-muted">Define the core details of your banking task</p>
+                        </div>
+                        
+                        <div class="floating-label mb-4">
+                            <input type="text" class="form-control form-control-lg" id="title" name="title" required 
+                                   placeholder=" ">
+                            <label for="title">Task Title *</label>
+                            <div class="label-helper">
+                                <i data-feather="edit-3" class="me-1"></i>
+                                e.g., Credit Risk Assessment - Q4 Portfolio Review
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="priority-selector mb-4">
+                                    <label class="form-label mb-3">Priority Level</label>
+                                    <div class="priority-options">
+                                        <input type="radio" id="priority-low" name="priority" value="low" class="priority-radio">
+                                        <label for="priority-low" class="priority-card low">
+                                            <div class="priority-icon">🟢</div>
+                                            <span>Low</span>
+                                        </label>
+                                        
+                                        <input type="radio" id="priority-medium" name="priority" value="medium" class="priority-radio" checked>
+                                        <label for="priority-medium" class="priority-card medium">
+                                            <div class="priority-icon">🟡</div>
+                                            <span>Medium</span>
+                                        </label>
+                                        
+                                        <input type="radio" id="priority-high" name="priority" value="high" class="priority-radio">
+                                        <label for="priority-high" class="priority-card high">
+                                            <div class="priority-icon">🟠</div>
+                                            <span>High</span>
+                                        </label>
+                                        
+                                        <input type="radio" id="priority-urgent" name="priority" value="urgent" class="priority-radio">
+                                        <label for="priority-urgent" class="priority-card urgent">
+                                            <div class="priority-icon">🔴</div>
+                                            <span>Urgent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="task-preview">
+                                    <h6 class="text-muted mb-2">Task Preview</h6>
+                                    <div class="preview-card">
+                                        <div class="preview-title" id="previewTitle">Enter task title...</div>
+                                        <div class="preview-priority" id="previewPriority">
+                                            <span class="badge bg-success">Medium Priority</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Task Details -->
+                    <div class="form-step" data-step="2">
+                        <div class="step-header mb-4">
+                            <h5 class="step-title">Task Details</h5>
+                            <p class="step-subtitle text-muted">Provide comprehensive information about the task</p>
+                        </div>
+                        
+                        <div class="floating-label mb-4">
+                            <textarea class="form-control" id="description" name="description" rows="5" 
+                                      placeholder=" "></textarea>
+                            <label for="description">Task Description</label>
+                            <div class="label-helper">
+                                <i data-feather="file-text" class="me-1"></i>
+                                Describe requirements, objectives, and expected outcomes
+                            </div>
+                        </div>
+                        
+                        <div class="task-templates mb-4">
+                            <label class="form-label mb-3">Quick Templates</label>
+                            <div class="template-options">
+                                <button type="button" class="template-btn" data-template="risk">
+                                    <i data-feather="shield" class="me-2"></i>
+                                    Risk Assessment
+                                </button>
+                                <button type="button" class="template-btn" data-template="compliance">
+                                    <i data-feather="check-circle" class="me-2"></i>
+                                    Compliance Review
+                                </button>
+                                <button type="button" class="template-btn" data-template="analysis">
+                                    <i data-feather="trending-up" class="me-2"></i>
+                                    Market Analysis
+                                </button>
+                                <button type="button" class="template-btn" data-template="audit">
+                                    <i data-feather="search" class="me-2"></i>
+                                    Audit Task
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Assignment -->
+                    <div class="form-step" data-step="3">
+                        <div class="step-header mb-4">
+                            <h5 class="step-title">Task Assignment</h5>
+                            <p class="step-subtitle text-muted">Assign the task to team members and departments</p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="team-selector mb-4">
+                                    <label class="form-label mb-3">Banking Team</label>
+                                    <div class="team-options">
+                                        <input type="radio" id="team-none" name="team_id" value="" class="team-radio" checked>
+                                        <label for="team-none" class="team-card">
+                                            <div class="team-icon">👥</div>
+                                            <span>No Team</span>
+                                        </label>
+                                        
+                                        {% for team in teams %}
+                                        <input type="radio" id="team-{{ team.id }}" name="team_id" value="{{ team.id }}" class="team-radio">
+                                        <label for="team-{{ team.id }}" class="team-card">
+                                            <div class="team-icon">
+                                                {% if 'Credit' in team.name %}💳
+                                                {% elif 'Market' in team.name %}📈
+                                                {% elif 'Operational' in team.name %}⚙️
+                                                {% elif 'Compliance' in team.name %}✅
+                                                {% elif 'Quantitative' in team.name %}📊
+                                                {% else %}🏦{% endif %}
+                                            </div>
+                                            <span>{{ team.name }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="floating-label mb-4">
+                                    <select class="form-select" id="assignee_id" name="assignee_id">
+                                        <option value="">Unassigned</option>
+                                        {% for user in users %}
+                                            <option value="{{ user.id }}">{{ user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="assignee_id">Assign To</label>
+                                    <div class="label-helper">
+                                        <i data-feather="user" class="me-1"></i>
+                                        Select a team member to assign this task
+                                    </div>
+                                </div>
+                                
+                                <div class="task-summary">
+                                    <h6 class="text-muted mb-2">Task Summary</h6>
+                                    <div class="summary-card">
+                                        <div class="summary-item">
+                                            <strong>Title:</strong> <span id="summaryTitle">Not set</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <strong>Priority:</strong> <span id="summaryPriority">Medium</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <strong>Team:</strong> <span id="summaryTeam">No Team</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <strong>Assignee:</strong> <span id="summaryAssignee">Unassigned</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 pt-0">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <button type="button" class="btn btn-outline-secondary" id="prevStep" style="display: none;">
+                            <i data-feather="arrow-left" class="me-2"></i>
+                            Previous
+                        </button>
+                        <div class="flex-grow-1"></div>
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="nextStep">
+                            Next
+                            <i data-feather="arrow-right" class="ms-2"></i>
+                        </button>
+                        <button type="submit" class="btn btn-success" id="submitTask" style="display: none;">
+                            <i data-feather="check" class="me-2"></i>
+                            Create Task
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -267,8 +424,279 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+/* Sleek Modal Animations */
+.animated-modal {
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal.show .animated-modal {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal-icon i {
+    width: 32px;
+    height: 32px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Progress Indicator */
+.progress-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    opacity: 0.5;
+}
+
+.step.active {
+    opacity: 1;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-circle {
+    background: linear-gradient(45deg, #0052CC, #36B37E);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 82, 204, 0.3);
+}
+
+.step span {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.step.active span {
+    color: #0052CC;
+}
+
+/* Form Steps */
+.form-step {
+    display: none;
+    animation: slideIn 0.5s ease-out;
+}
+
+.form-step.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Floating Labels */
+.floating-label {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.floating-label input,
+.floating-label select,
+.floating-label textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.floating-label input:focus,
+.floating-label select:focus,
+.floating-label textarea:focus {
+    outline: none;
+    border-color: #0052CC;
+    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+    transform: translateY(-2px);
+}
+
+.floating-label label {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    color: #6c757d;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    background: white;
+    padding: 0 0.5rem;
+}
+
+.floating-label input:focus + label,
+.floating-label input:not(:placeholder-shown) + label,
+.floating-label select:focus + label,
+.floating-label textarea:focus + label,
+.floating-label textarea:not(:placeholder-shown) + label {
+    top: -0.5rem;
+    left: 0.75rem;
+    font-size: 0.875rem;
+    color: #0052CC;
+    transform: scale(0.9);
+}
+
+.label-helper {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Priority and Team Selectors */
+.priority-options,
+.team-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.priority-radio,
+.team-radio {
+    display: none;
+}
+
+.priority-card,
+.team-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    text-align: center;
+}
+
+.priority-card:hover,
+.team-card:hover {
+    border-color: #0052CC;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.priority-radio:checked + .priority-card,
+.team-radio:checked + .team-card {
+    border-color: #0052CC;
+    background: linear-gradient(145deg, #f8f9ff, #ffffff);
+    box-shadow: 0 4px 15px rgba(0, 82, 204, 0.2);
+}
+
+.priority-icon,
+.team-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Template Buttons */
+.template-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.template-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    color: #495057;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.template-btn:hover {
+    border-color: #FF8B00;
+    color: #FF8B00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 139, 0, 0.2);
+}
+
+/* Preview and Summary Cards */
+.preview-card,
+.summary-card {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.preview-title {
+    font-weight: 600;
+    color: #172B4D;
+    margin-bottom: 0.5rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.summary-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Button Animations */
+.btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+</style>
+
 <script>
-// Team filtering function
+// Team filtering
 function filterByTeam() {
     const teamSelect = document.getElementById('teamFilter');
     const selectedTeam = teamSelect.value;
@@ -280,11 +708,185 @@ function filterByTeam() {
     }
 }
 
-// Initialize Feather icons
+// Sleek Modal Functionality
+let currentStep = 1;
+const totalSteps = 3;
+
+// Task creation templates
+const templates = {
+    risk: {
+        title: "Risk Assessment - ",
+        description: "Conduct comprehensive risk analysis including:\n• Risk identification and classification\n• Impact assessment and probability analysis\n• Risk mitigation strategies\n• Compliance verification\n• Reporting and documentation"
+    },
+    compliance: {
+        title: "Compliance Review - ",
+        description: "Perform regulatory compliance review including:\n• Regulatory requirement analysis\n• Policy and procedure validation\n• Control effectiveness testing\n• Gap analysis and remediation\n• Compliance reporting"
+    },
+    analysis: {
+        title: "Market Analysis - ",
+        description: "Execute market risk analysis including:\n• Market data collection and validation\n• VaR calculations and stress testing\n• Portfolio performance analysis\n• Risk exposure measurement\n• Strategic recommendations"
+    },
+    audit: {
+        title: "Audit Task - ",
+        description: "Complete audit procedures including:\n• Documentation review and testing\n• Control evaluation and assessment\n• Sample testing and validation\n• Finding documentation\n• Recommendation development"
+    }
+};
+
+function initializeModal() {
+    const modal = document.getElementById('createTaskModal');
+    const titleInput = document.getElementById('title');
+    const descriptionInput = document.getElementById('description');
+    const nextBtn = document.getElementById('nextStep');
+    const prevBtn = document.getElementById('prevStep');
+    const submitBtn = document.getElementById('submitTask');
+    
+    // Real-time preview updates
+    titleInput.addEventListener('input', updatePreview);
+    document.querySelectorAll('input[name="priority"]').forEach(radio => {
+        radio.addEventListener('change', updatePreview);
+    });
+    
+    // Template button handlers
+    document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const template = templates[this.dataset.template];
+            if (template) {
+                titleInput.value = template.title;
+                descriptionInput.value = template.description;
+                updatePreview();
+                updateSummary();
+            }
+        });
+    });
+    
+    // Step navigation
+    nextBtn.addEventListener('click', nextStep);
+    prevBtn.addEventListener('click', prevStep);
+    
+    // Form submission with animation
+    document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+        submitBtn.disabled = true;
+    });
+    
+    // Reset modal when closed
+    modal.addEventListener('hidden.bs.modal', resetModal);
+    
+    // Update summary when form values change
+    document.querySelectorAll('#createTaskForm input, #createTaskForm select, #createTaskForm textarea').forEach(element => {
+        element.addEventListener('change', updateSummary);
+        element.addEventListener('input', updateSummary);
+    });
+}
+
+function nextStep() {
+    if (currentStep < totalSteps) {
+        // Validate current step
+        if (validateStep(currentStep)) {
+            currentStep++;
+            updateStepDisplay();
+            updateSummary();
+        }
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        currentStep--;
+        updateStepDisplay();
+    }
+}
+
+function validateStep(step) {
+    if (step === 1) {
+        const title = document.getElementById('title').value.trim();
+        if (!title) {
+            showNotification('Please enter a task title', 'warning');
+            return false;
+        }
+    }
+    return true;
+}
+
+function updateStepDisplay() {
+    // Update progress indicator
+    document.querySelectorAll('.step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 === currentStep);
+    });
+    
+    // Update form steps
+    document.querySelectorAll('.form-step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 === currentStep);
+    });
+    
+    // Update navigation buttons
+    document.getElementById('prevStep').style.display = currentStep > 1 ? 'block' : 'none';
+    document.getElementById('nextStep').style.display = currentStep < totalSteps ? 'block' : 'none';
+    document.getElementById('submitTask').style.display = currentStep === totalSteps ? 'block' : 'none';
+}
+
+function updatePreview() {
+    const title = document.getElementById('title').value || 'Enter task title...';
+    const priority = document.querySelector('input[name="priority"]:checked')?.value || 'medium';
+    
+    document.getElementById('previewTitle').textContent = title;
+    
+    const priorityBadge = document.getElementById('previewPriority');
+    const priorityColors = {
+        low: 'bg-primary',
+        medium: 'bg-success',
+        high: 'bg-warning',
+        urgent: 'bg-danger'
+    };
+    
+    priorityBadge.innerHTML = `<span class="badge ${priorityColors[priority]}">${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority</span>`;
+}
+
+function updateSummary() {
+    const title = document.getElementById('title').value || 'Not set';
+    const priority = document.querySelector('input[name="priority"]:checked')?.value || 'medium';
+    const team = document.querySelector('input[name="team_id"]:checked')?.nextElementSibling?.textContent?.trim() || 'No Team';
+    const assignee = document.getElementById('assignee_id').selectedOptions[0]?.text || 'Unassigned';
+    
+    document.getElementById('summaryTitle').textContent = title;
+    document.getElementById('summaryPriority').textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+    document.getElementById('summaryTeam').textContent = team;
+    document.getElementById('summaryAssignee').textContent = assignee;
+}
+
+function resetModal() {
+    currentStep = 1;
+    updateStepDisplay();
+    document.getElementById('createTaskForm').reset();
+    document.getElementById('submitTask').innerHTML = '<i data-feather="check" class="me-2"></i>Create Task';
+    document.getElementById('submitTask').disabled = false;
+    updatePreview();
+    updateSummary();
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Simple notification system
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
+    initializeModal();
 });
 </script>
 {% endblock %}
