@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TaskFlow{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+    
+    .metric-card.success {
+        background: linear-gradient(135deg, #36B37E 0%, #00875A 100%);
+    }
+    
+    .metric-card.warning {
+        background: linear-gradient(135deg, #FFAB00 0%, #FF8B00 100%);
+    }
+    
+    .metric-card.info {
+        background: linear-gradient(135deg, #0052CC 0%, #0747A6 100%);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #0052CC, #36B37E);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+    
+    .progress-ring {
+        width: 60px;
+        height: 60px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-1">Performance Dashboard</h1>
+            <p class="text-muted mb-0">Track team productivity and task completion metrics</p>
+        </div>
+    </div>
+
+    <!-- Metrics Overview -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value">{{ total_tasks }}</div>
+                        <div class="opacity-75">Total Tasks</div>
+                    </div>
+                    <i data-feather="clipboard" class="opacity-75" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value">{{ completed_tasks }}</div>
+                        <div class="opacity-75">Completed</div>
+                    </div>
+                    <i data-feather="check-circle" class="opacity-75" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value">{{ in_progress_tasks }}</div>
+                        <div class="opacity-75">In Progress</div>
+                    </div>
+                    <i data-feather="clock" class="opacity-75" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value">{{ "%.1f"|format(completion_rate) }}%</div>
+                        <div class="opacity-75">Completion Rate</div>
+                    </div>
+                    <i data-feather="trending-up" class="opacity-75" style="width: 24px; height: 24px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Task Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Priority Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Team Performance</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_stats %}
+                        <div class="row g-3">
+                            {% for user_id, stats in user_stats.items() %}
+                                {% if stats.total_tasks > 0 %}
+                                <div class="col-lg-6 col-xl-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="user-avatar me-3">
+                                                    {{ stats.user.username[0].upper() }}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">{{ stats.user.username }}</h6>
+                                                    <div class="d-flex align-items-center">
+                                                        <small class="text-muted me-2">{{ stats.user.role.title() }}</small>
+                                                        {% if stats.user.role == 'manager' %}
+                                                            <span class="badge bg-warning text-dark">Manager</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <div class="h5 mb-0 text-primary">{{ stats.total_tasks }}</div>
+                                                    <small class="text-muted">Total</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="h5 mb-0 text-success">{{ stats.completed_tasks }}</div>
+                                                    <small class="text-muted">Done</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="h5 mb-0 text-info">{{ "%.0f"|format(stats.completion_rate) }}%</div>
+                                                    <small class="text-muted">Rate</small>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-3">
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar bg-success" 
+                                                         style="width: {{ stats.completion_rate }}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i data-feather="users" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                            <h5 class="text-muted">No team performance data available</h5>
+                            <p class="text-muted">Assign tasks to team members to see performance metrics</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+// Pass data to JavaScript
+window.dashboardData = {
+    statusData: {
+        todo: {{ todo_tasks }},
+        inProgress: {{ in_progress_tasks }},
+        completed: {{ completed_tasks }}
+    },
+    priorityData: {{ priority_stats | tojson }},
+    userStats: {{ user_stats | tojson }}
+};
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+});
+</script>
+{% endblock %}
