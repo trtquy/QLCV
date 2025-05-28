@@ -19,19 +19,28 @@
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 {% if task.assignee_id %}
+                    {% set assignee_found = false %}
                     {% for user in users %}
-                        {% if user.id == task.assignee_id %}
+                        {% if user.id == task.assignee_id and user.username and not assignee_found %}
+                            {% set assignee_found = true %}
                             <div class="avatar me-2" title="{{ user.username }}">
-                                {{ user.username[0].upper() }}
+                                {{ user.username|string|first|upper }}
                             </div>
                             <small class="text-muted">{{ user.username }}</small>
                         {% endif %}
                     {% endfor %}
+                    {% if not assignee_found %}
+                        <small class="text-muted">Assigned</small>
+                    {% endif %}
                 {% else %}
                     <small class="text-muted">Unassigned</small>
                 {% endif %}
             </div>
-            <small class="text-muted">{{ task.created_at.strftime('%m/%d') if task.created_at else '' }}</small>
+            <small class="text-muted">
+                {% if task.created_at %}
+                    {{ task.created_at.strftime('%m/%d') }}
+                {% endif %}
+            </small>
         </div>
     </div>
 </div>

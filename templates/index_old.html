@@ -38,6 +38,15 @@
         border-left-color: #0065FF;
     }
     
+    .kanban-column.drag-over {
+        background-color: var(--bs-primary-bg-subtle);
+        border: 2px dashed var(--bs-primary);
+    }
+    
+    .task-card.dragging {
+        opacity: 0.5;
+    }
+    
     .avatar {
         width: 24px;
         height: 24px;
@@ -61,7 +70,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h1 class="h3 mb-1">Project Board</h1>
-                    <p class="text-muted mb-0">Manage your banking team tasks efficiently</p>
+                    <p class="text-muted mb-0">Manage your team's tasks efficiently</p>
                 </div>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
                     <i data-feather="plus" class="me-2"></i>
@@ -122,7 +131,10 @@
                     {% for task in todo_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              draggable="true" 
-                             data-task-id="{{ task.id }}">
+                             data-task-id="{{ task.id }}"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#editTaskModal"
+                             onclick="loadTaskForEdit('{{ task.id }}')">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -136,8 +148,21 @@
                                 {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #{{ task.id }}</small>
-                                    <small class="text-muted">{{ task.priority.title() }} Priority</small>
+                                    <div class="d-flex align-items-center">
+                                        {% if task.assignee_id %}
+                                            {% for user in users %}
+                                                {% if user.id == task.assignee_id %}
+                                                    <div class="avatar me-2" title="{{ user.username }}">
+                                                        {{ user.username[0].upper() }}
+                                                    </div>
+                                                    <small class="text-muted">{{ user.username }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <small class="text-muted">Unassigned</small>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ task.created_at.date() if task.created_at else '' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -161,7 +186,10 @@
                     {% for task in in_progress_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              draggable="true" 
-                             data-task-id="{{ task.id }}">
+                             data-task-id="{{ task.id }}"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#editTaskModal"
+                             onclick="loadTaskForEdit('{{ task.id }}')">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -175,8 +203,21 @@
                                 {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #{{ task.id }}</small>
-                                    <small class="text-muted">{{ task.priority.title() }} Priority</small>
+                                    <div class="d-flex align-items-center">
+                                        {% if task.assignee_id %}
+                                            {% for user in users %}
+                                                {% if user.id == task.assignee_id %}
+                                                    <div class="avatar me-2" title="{{ user.username }}">
+                                                        {{ user.username[0].upper() }}
+                                                    </div>
+                                                    <small class="text-muted">{{ user.username }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <small class="text-muted">Unassigned</small>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ task.created_at.date() if task.created_at else '' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -200,7 +241,10 @@
                     {% for task in completed_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              draggable="true" 
-                             data-task-id="{{ task.id }}">
+                             data-task-id="{{ task.id }}"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#editTaskModal"
+                             onclick="loadTaskForEdit('{{ task.id }}')">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -214,8 +258,21 @@
                                 {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #{{ task.id }}</small>
-                                    <small class="text-muted">{{ task.priority.title() }} Priority</small>
+                                    <div class="d-flex align-items-center">
+                                        {% if task.assignee_id %}
+                                            {% for user in users %}
+                                                {% if user.id == task.assignee_id %}
+                                                    <div class="avatar me-2" title="{{ user.username }}">
+                                                        {{ user.username[0].upper() }}
+                                                    </div>
+                                                    <small class="text-muted">{{ user.username }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <small class="text-muted">Unassigned</small>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ task.created_at.date() if task.created_at else '' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -246,14 +303,29 @@
                         <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="priority" class="form-label">Priority</label>
-                        <select class="form-select" id="priority" name="priority">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="assignee_id" class="form-label">Assignee</label>
+                                <select class="form-select" id="assignee_id" name="assignee_id">
+                                    <option value="">Unassigned</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -264,10 +336,84 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Task Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editTaskForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editTitle" class="form-label">Task Title *</label>
+                        <input type="text" class="form-control" id="editTitle" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editPriority" class="form-label">Priority</label>
+                                <select class="form-select" id="editPriority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editAssignee" class="form-label">Assignee</label>
+                                <select class="form-select" id="editAssignee" name="assignee_id">
+                                    <option value="">Unassigned</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editStatus" class="form-label">Status</label>
+                        <select class="form-select" id="editStatus" name="status">
+                            <option value="todo">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="deleteTask()">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/kanban.js') }}"></script>
 <script>
+// Global tasks data for JavaScript
+window.tasksData = {{ tasks_dict | tojson }};
+window.usersData = {{ users_dict | tojson }};
+
+// Initialize kanban functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initializeKanban();
+});
+
 // Team filtering function
 function filterByTeam() {
     const teamSelect = document.getElementById('teamFilter');
@@ -279,12 +425,5 @@ function filterByTeam() {
         window.location.href = '/';
     }
 }
-
-// Initialize Feather icons
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
-});
 </script>
 {% endblock %}
