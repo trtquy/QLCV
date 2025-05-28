@@ -317,4 +317,4 @@ def login_page():
 def require_login():
     allowed_endpoints = ['login', 'login_page', 'static']
     if request.endpoint not in allowed_endpoints and not data_manager.get_current_user():
-        return redirect(url_for('login_page'))
+        return redirect(url_for('login'))
