@@ -36,7 +36,7 @@ db.init_app(app)
 
 with app.app_context():
     # Import models after db initialization
-    from models import User, Task
+    from models import User, Task, Team
     
     # Create all tables
     db.create_all()

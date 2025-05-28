@@ -1,5 +1,5 @@
 from typing import List, Optional
-from models import User, Task
+from models import User, Task, Team
 from app import db
 from flask import session
 import logging
@@ -127,6 +127,23 @@ class DataManager:
         """Logout current user"""
         self.current_user_id = None
         session.pop('user_id', None)
+    
+    # Team management
+    def get_all_teams(self) -> List[Team]:
+        """Get all teams"""
+        return Team.query.all()
+    
+    def get_team(self, team_id: str) -> Optional[Team]:
+        """Get team by ID"""
+        return Team.query.get(int(team_id))
+    
+    def get_tasks_by_team(self, team_id: str) -> List[Task]:
+        """Get tasks by team"""
+        return Task.query.filter_by(team_id=int(team_id)).all()
+    
+    def get_users_by_team(self, team_id: str) -> List[User]:
+        """Get users by team"""
+        return User.query.filter_by(team_id=int(team_id)).all()
 
 # Global instance
 data_manager = DataManager()
