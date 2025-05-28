@@ -202,8 +202,8 @@ def dashboard():
         user_tasks = [t for t in tasks if t.assignee_id == user.id]
         user_completed = len([t for t in user_tasks if t.status == 'completed'])
         user_total = len(user_tasks)
-        user_stats[user.id] = {
-            'user': user,
+        user_stats[str(user.id)] = {
+            'user': user.to_dict(),
             'total_tasks': user_total,
             'completed_tasks': user_completed,
             'completion_rate': (user_completed / user_total * 100) if user_total > 0 else 0
