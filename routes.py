@@ -262,59 +262,11 @@ def inject_current_user():
     """Make current user available in all templates"""
     return dict(current_user=data_manager.get_current_user())
 
-# Create login template
-@app.route('/login_page')
-def login_page():
-    return '''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Login - TaskFlow</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
-    </head>
-    <body class="bg-light">
-        <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
-            <div class="card shadow-lg" style="max-width: 400px; width: 100%;">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <h2 class="text-primary fw-bold">TaskFlow</h2>
-                        <p class="text-muted">Team Task Management</p>
-                    </div>
-                    
-                    <form method="POST" action="{{ url_for('login') }}">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email (for new users)</label>
-                            <input type="email" class="form-control" id="email" name="email">
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="role" class="form-label">Role (for new users)</label>
-                            <select class="form-select" id="role" name="role">
-                                <option value="member">Team Member</option>
-                                <option value="manager">Manager</option>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100">Login / Register</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
+
 
 # If no current user, redirect to login
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'login_page', 'static']
+    allowed_endpoints = ['login', 'static']
     if request.endpoint not in allowed_endpoints and not data_manager.get_current_user():
         return redirect(url_for('login'))
