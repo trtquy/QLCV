@@ -128,7 +128,14 @@ function initializeMemberInteractions() {
 
 function initializeQuickActions() {
     // Add quick action buttons (if manager)
-    const isManager = document.querySelector('.badge:contains("Manager Access")');
+    const badges = document.querySelectorAll('.badge');
+    let isManager = false;
+    
+    badges.forEach(badge => {
+        if (badge.textContent.includes("Manager Access")) {
+            isManager = true;
+        }
+    });
     
     if (isManager) {
         addManagerQuickActions();
