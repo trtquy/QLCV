@@ -13,6 +13,12 @@ def index():
     
     tasks = data_manager.get_all_tasks()
     users = data_manager.get_all_users()
+    teams = data_manager.get_all_teams()
+    
+    # Filter by team if specified
+    team_filter = request.args.get('team')
+    if team_filter:
+        tasks = [t for t in tasks if str(t.team_id) == team_filter]
     
     # Organize tasks by status
     todo_tasks = [t for t in tasks if t.status == 'todo']
@@ -22,15 +28,19 @@ def index():
     # Convert to dictionaries for JSON serialization
     tasks_dict = [t.to_dict() for t in tasks]
     users_dict = [u.to_dict() for u in users]
+    teams_dict = [team.to_dict() for team in teams]
     
     return render_template('index.html', 
                          todo_tasks=todo_tasks,
                          in_progress_tasks=in_progress_tasks,
                          completed_tasks=completed_tasks,
                          users=users,
+                         teams=teams,
                          current_user=current_user,
                          tasks_dict=tasks_dict,
-                         users_dict=users_dict)
+                         users_dict=users_dict,
+                         teams_dict=teams_dict,
+                         selected_team=team_filter)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -236,11 +246,13 @@ def team():
     
     users = data_manager.get_all_users()
     tasks = data_manager.get_all_tasks()
+    teams = data_manager.get_all_teams()
     
     return render_template('team.html',
                          current_user=current_user,
                          users=users,
-                         tasks=tasks)
+                         tasks=tasks,
+                         teams=teams)
 
 @app.route('/update_user_role/<user_id>', methods=['POST'])
 def update_user_role(user_id):
