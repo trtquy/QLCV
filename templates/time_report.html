@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Time Tracking Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">
+        <i data-feather="clock" class="me-2"></i>
+        Time Tracking Report
+    </h1>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                           value="{{ start_date or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                           value="{{ end_date or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="team_id" class="form-label">Team</label>
+                    <select class="form-select" id="team_id" name="team_id">
+                        <option value="">All Teams</option>
+                        {% for team in teams %}
+                        <option value="{{ team.id }}" {% if selected_team_id == team.id|string %}selected{% endif %}>
+                            {{ team.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i data-feather="filter" class="me-1"></i>
+                        Filter
+                    </button>
+                    <a href="{{ url_for('time_report') }}" class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Total Hours</h5>
+                    <h2 class="mb-0">{{ "%.1f"|format(report_data.total_hours) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Tasks Worked</h5>
+                    <h2 class="mb-0">{{ report_data.total_tasks }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">Active Users</h5>
+                    <h2 class="mb-0">{{ report_data.total_users }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Avg Hours/Task</h5>
+                    <h2 class="mb-0">
+                        {% if report_data.total_tasks > 0 %}
+                            {{ "%.1f"|format(report_data.total_hours / report_data.total_tasks) }}
+                        {% else %}
+                            0.0
+                        {% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Performance -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="users" class="me-2"></i>
+                        User Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if report_data.user_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Total Hours</th>
+                                    <th>Tasks</th>
+                                    <th>Avg Hours/Task</th>
+                                    <th>Efficiency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_id, stats in report_data.user_stats.items() %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                {{ stats.user.username[0]|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ stats.user.username }}</div>
+                                                <small class="text-muted">{{ stats.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ "%.1f"|format(stats.total_hours) }}h</span>
+                                    </td>
+                                    <td>{{ stats.task_count }}</td>
+                                    <td>
+                                        {% if stats.task_count > 0 %}
+                                            {{ "%.1f"|format(stats.total_hours / stats.task_count) }}h
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set efficiency_score = (stats.total_hours / report_data.total_hours * 100) if report_data.total_hours > 0 else 0 %}
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ efficiency_score }}%"
+                                                 aria-valuenow="{{ efficiency_score }}" 
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small class="text-muted">{{ "%.1f"|format(efficiency_score) }}%</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="clock" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                        <h6 class="text-muted">No time logs found for the selected period</h6>
+                        <p class="text-muted mb-0">Try adjusting the date range or team filter</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="pie-chart" class="me-2"></i>
+                        Time Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if report_data.user_stats %}
+                    <canvas id="timeDistributionChart" width="400" height="400"></canvas>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="pie-chart" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                        <p class="text-muted mb-0">No data to display</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Time Logs -->
+    {% if report_data.time_logs %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i data-feather="list" class="me-2"></i>
+                Recent Time Logs
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>User</th>
+                            <th>Task</th>
+                            <th>Duration</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in report_data.time_logs[-20:] %}
+                        <tr>
+                            <td>
+                                <small>{{ log.start_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </td>
+                            <td>
+                                <small>{{ log.user.username }}</small>
+                            </td>
+                            <td>
+                                <small class="text-truncate" style="max-width: 200px;">
+                                    {{ log.task.title }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if log.duration_hours %}
+                                <span class="badge bg-secondary">{{ "%.2f"|format(log.duration_hours) }}h</span>
+                                {% else %}
+                                <span class="badge bg-warning">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ log.description or '-' }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Initialize chart if we have data
+{% if report_data.user_stats %}
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('timeDistributionChart').getContext('2d');
+    
+    const userData = [
+        {% for user_id, stats in report_data.user_stats.items() %}
+        {
+            label: '{{ stats.user.username }}',
+            data: {{ stats.total_hours }},
+            backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`
+        },
+        {% endfor %}
+    ];
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: userData.map(u => u.label),
+            datasets: [{
+                data: userData.map(u => u.data),
+                backgroundColor: userData.map(u => u.backgroundColor),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

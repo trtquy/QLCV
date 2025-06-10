@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from app import app
 from data_manager import data_manager
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 @app.route('/')
@@ -266,6 +266,123 @@ def update_user_role(user_id):
     
     return redirect(url_for('team'))
 
+# Time tracking routes
+@app.route('/time/start/<task_id>', methods=['POST'])
+def start_time_tracking(task_id):
+    """Start time tracking for a task"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    description = request.form.get('description', '')
+    time_log = data_manager.start_time_tracking(task_id, str(current_user.id), description)
+    
+    if time_log:
+        return jsonify({
+            'success': True,
+            'time_log_id': str(time_log.id),
+            'message': 'Time tracking started'
+        })
+    else:
+        return jsonify({'error': 'Failed to start time tracking'}), 400
+
+@app.route('/time/stop/<time_log_id>', methods=['POST'])
+def stop_time_tracking(time_log_id):
+    """Stop time tracking"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    time_log = data_manager.stop_time_tracking(time_log_id)
+    
+    if time_log:
+        return jsonify({
+            'success': True,
+            'duration_hours': time_log.duration_hours,
+            'message': f'Time tracking stopped. Duration: {time_log.duration_hours:.2f} hours'
+        })
+    else:
+        return jsonify({'error': 'Failed to stop time tracking'}), 400
+
+@app.route('/time/active')
+def get_active_time_log():
+    """Get active time log for current user"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    active_log = data_manager.get_active_time_log(str(current_user.id))
+    
+    if active_log:
+        return jsonify({
+            'active': True,
+            'time_log': active_log.to_dict()
+        })
+    else:
+        return jsonify({'active': False})
+
+@app.route('/time/report')
+def time_report():
+    """Time tracking report page"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    # Get date range from query parameters
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    team_id = request.args.get('team_id')
+    
+    start_date = None
+    end_date = None
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid start date format', 'error')
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid end date format', 'error')
+    
+    report_data = data_manager.get_time_report_data(team_id, start_date, end_date)
+    teams = data_manager.get_all_teams()
+    
+    return render_template('time_report.html', 
+                         report_data=report_data,
+                         teams=teams,
+                         current_user=current_user,
+                         selected_team_id=team_id,
+                         start_date=start_date_str,
+                         end_date=end_date_str)
+
+@app.route('/task/estimate/<task_id>', methods=['POST'])
+def update_task_estimate(task_id):
+    """Update task time estimate"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    estimated_hours = request.form.get('estimated_hours')
+    try:
+        estimated_hours = float(estimated_hours)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid hours format'}), 400
+    
+    task = data_manager.update_task_estimate(task_id, estimated_hours)
+    
+    if task:
+        return jsonify({
+            'success': True,
+            'estimated_hours': task.estimated_hours,
+            'message': 'Task estimate updated'
+        })
+    else:
+        return jsonify({'error': 'Task not found'}), 404
+
 # Template context processors
 @app.context_processor
 def inject_current_user():
@@ -277,6 +394,6 @@ def inject_current_user():
 # If no current user, redirect to login
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'static']
+    allowed_endpoints = ['login', 'static', 'time_report']
     if request.endpoint not in allowed_endpoints and not data_manager.get_current_user():
         return redirect(url_for('login'))

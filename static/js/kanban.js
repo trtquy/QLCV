@@ -11,6 +11,9 @@ function initializeKanban() {
     // Add task editing functionality
     initializeTaskEditing();
     
+    // Add time tracking functionality
+    initializeTimeTracking();
+    
     // Initialize feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();
