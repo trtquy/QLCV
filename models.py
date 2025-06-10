@@ -65,6 +65,12 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Time tracking fields
+    estimated_hours = db.Column(db.Float, nullable=True)
+    actual_hours = db.Column(db.Float, nullable=True, default=0.0)
+    started_at = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
     # Foreign Keys
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -81,6 +87,16 @@ class Task(db.Model):
     def __repr__(self):
         return f'<Task {self.title}>'
     
+    def get_total_time_logged(self):
+        """Calculate total time logged from time entries"""
+        return sum(log.duration_hours for log in self.time_logs if log.duration_hours) if hasattr(self, 'time_logs') else 0.0
+    
+    def get_time_variance(self):
+        """Calculate variance between estimated and actual time"""
+        if self.estimated_hours and self.actual_hours:
+            return self.actual_hours - self.estimated_hours
+        return None
+    
     def to_dict(self):
         return {
             'id': str(self.id),
@@ -92,5 +108,57 @@ class Task(db.Model):
             'created_by': str(self.created_by),
             'team_id': str(self.team_id) if self.team_id else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'estimated_hours': self.estimated_hours,
+            'actual_hours': self.actual_hours,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'total_time_logged': self.get_total_time_logged(),
+            'time_variance': self.get_time_variance()
+        }
+
+
+class TimeLog(db.Model):
+    __tablename__ = 'time_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=True)
+    duration_hours = db.Column(db.Float, nullable=True)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='time_logs')
+    task = db.relationship('Task', backref='time_logs')
+    
+    # Indexes
+    __table_args__ = (
+        db.Index('idx_time_log_task', 'task_id'),
+        db.Index('idx_time_log_user', 'user_id'),
+        db.Index('idx_time_log_date', 'start_time'),
+    )
+    
+    def __repr__(self):
+        return f'<TimeLog {self.id}: Task {self.task_id} - {self.duration_hours}h>'
+    
+    def calculate_duration(self):
+        """Calculate duration between start and end time"""
+        if self.start_time and self.end_time:
+            delta = self.end_time - self.start_time
+            self.duration_hours = delta.total_seconds() / 3600
+        return self.duration_hours
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'task_id': str(self.task_id),
+            'user_id': str(self.user_id),
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'duration_hours': self.duration_hours,
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
