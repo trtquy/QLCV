@@ -190,232 +190,130 @@
     </div>
 </div>
 
-<!-- Sleek Animated Create Task Modal -->
-<div class="modal fade" id="createTaskModal" tabindex="-1" data-bs-backdrop="static">
+<!-- Clean Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content animated-modal">
-            <div class="modal-header border-0 pb-0">
-                <div class="d-flex align-items-center">
-                    <div class="modal-icon me-3">
-                        <i data-feather="plus-circle" class="text-primary"></i>
-                    </div>
-                    <div>
-                        <h4 class="modal-title mb-1">Create New Banking Task</h4>
-                        <p class="text-muted small mb-0">Add a new task to your banking workflow</p>
-                    </div>
+        <div class="modal-content clean-modal">
+            <div class="modal-header border-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-dark mb-1">Create New Task</h4>
+                    <p class="text-muted small mb-0">Add a task to your banking workflow</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
             <form method="POST" action="{{ url_for('create_task') }}" id="createTaskForm">
-                <div class="modal-body px-4">
-                    <!-- Progress Indicator -->
-                    <div class="progress-indicator mb-4">
-                        <div class="step active" data-step="1">
-                            <div class="step-circle">1</div>
-                            <span>Basic Info</span>
-                        </div>
-                        <div class="step" data-step="2">
-                            <div class="step-circle">2</div>
-                            <span>Details</span>
-                        </div>
-                        <div class="step" data-step="3">
-                            <div class="step-circle">3</div>
-                            <span>Assignment</span>
-                        </div>
+                <div class="modal-body p-4">
+                    <!-- Task Title -->
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-medium mb-2">Task Title</label>
+                        <input type="text" class="form-control form-control-lg clean-input" 
+                               id="title" name="title" required
+                               placeholder="Enter task title...">
                     </div>
-
-                    <!-- Step 1: Basic Information -->
-                    <div class="form-step active" data-step="1">
-                        <div class="step-header mb-4">
-                            <h5 class="step-title">Task Information</h5>
-                            <p class="step-subtitle text-muted">Define the core details of your banking task</p>
-                        </div>
-                        
-                        <div class="floating-label mb-4">
-                            <input type="text" class="form-control form-control-lg" id="title" name="title" required 
-                                   placeholder=" ">
-                            <label for="title">Task Title *</label>
-                            <div class="label-helper">
-                                <i data-feather="edit-3" class="me-1"></i>
-                                e.g., Credit Risk Assessment - Q4 Portfolio Review
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="priority-selector mb-4">
-                                    <label class="form-label mb-3">Priority Level</label>
-                                    <div class="priority-options">
-                                        <input type="radio" id="priority-low" name="priority" value="low" class="priority-radio">
-                                        <label for="priority-low" class="priority-card low">
-                                            <div class="priority-icon">🟢</div>
-                                            <span>Low</span>
-                                        </label>
-                                        
-                                        <input type="radio" id="priority-medium" name="priority" value="medium" class="priority-radio" checked>
-                                        <label for="priority-medium" class="priority-card medium">
-                                            <div class="priority-icon">🟡</div>
-                                            <span>Medium</span>
-                                        </label>
-                                        
-                                        <input type="radio" id="priority-high" name="priority" value="high" class="priority-radio">
-                                        <label for="priority-high" class="priority-card high">
-                                            <div class="priority-icon">🟠</div>
-                                            <span>High</span>
-                                        </label>
-                                        
-                                        <input type="radio" id="priority-urgent" name="priority" value="urgent" class="priority-radio">
-                                        <label for="priority-urgent" class="priority-card urgent">
-                                            <div class="priority-icon">🔴</div>
-                                            <span>Urgent</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="task-preview">
-                                    <h6 class="text-muted mb-2">Task Preview</h6>
-                                    <div class="preview-card">
-                                        <div class="preview-title" id="previewTitle">Enter task title...</div>
-                                        <div class="preview-priority" id="previewPriority">
-                                            <span class="badge bg-success">Medium Priority</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-medium mb-2">Description</label>
+                        <textarea class="form-control clean-input" id="description" name="description" 
+                                  rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
                     </div>
-
-                    <!-- Step 2: Task Details -->
-                    <div class="form-step" data-step="2">
-                        <div class="step-header mb-4">
-                            <h5 class="step-title">Task Details</h5>
-                            <p class="step-subtitle text-muted">Provide comprehensive information about the task</p>
-                        </div>
-                        
-                        <div class="floating-label mb-4">
-                            <textarea class="form-control" id="description" name="description" rows="5" 
-                                      placeholder=" "></textarea>
-                            <label for="description">Task Description</label>
-                            <div class="label-helper">
-                                <i data-feather="file-text" class="me-1"></i>
-                                Describe requirements, objectives, and expected outcomes
-                            </div>
-                        </div>
-                        
-                        <div class="task-templates mb-4">
-                            <label class="form-label mb-3">Quick Templates</label>
-                            <div class="template-options">
-                                <button type="button" class="template-btn" data-template="risk">
-                                    <i data-feather="shield" class="me-2"></i>
+                    
+                    <!-- Quick Templates -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-3">Quick Templates</label>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100 template-btn" 
+                                        data-template="risk">
                                     Risk Assessment
                                 </button>
-                                <button type="button" class="template-btn" data-template="compliance">
-                                    <i data-feather="check-circle" class="me-2"></i>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-success btn-sm w-100 template-btn" 
+                                        data-template="compliance">
                                     Compliance Review
                                 </button>
-                                <button type="button" class="template-btn" data-template="analysis">
-                                    <i data-feather="trending-up" class="me-2"></i>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-warning btn-sm w-100 template-btn" 
+                                        data-template="analysis">
                                     Market Analysis
                                 </button>
-                                <button type="button" class="template-btn" data-template="audit">
-                                    <i data-feather="search" class="me-2"></i>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-info btn-sm w-100 template-btn" 
+                                        data-template="audit">
                                     Audit Task
                                 </button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Step 3: Assignment -->
-                    <div class="form-step" data-step="3">
-                        <div class="step-header mb-4">
-                            <h5 class="step-title">Task Assignment</h5>
-                            <p class="step-subtitle text-muted">Assign the task to team members and departments</p>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="team-selector mb-4">
-                                    <label class="form-label mb-3">Banking Team</label>
-                                    <div class="team-options">
-                                        <input type="radio" id="team-none" name="team_id" value="" class="team-radio" checked>
-                                        <label for="team-none" class="team-card">
-                                            <div class="team-icon">👥</div>
-                                            <span>No Team</span>
+                    
+                    <div class="row">
+                        <!-- Priority Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label class="form-label fw-medium mb-3">Priority Level</label>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="radio" class="btn-check" name="priority" id="priority-low" value="low">
+                                        <label class="btn btn-outline-secondary w-100" for="priority-low">
+                                            <small>Low</small>
                                         </label>
-                                        
-                                        {% for team in teams %}
-                                        <input type="radio" id="team-{{ team.id }}" name="team_id" value="{{ team.id }}" class="team-radio">
-                                        <label for="team-{{ team.id }}" class="team-card">
-                                            <div class="team-icon">
-                                                {% if 'Credit' in team.name %}💳
-                                                {% elif 'Market' in team.name %}📈
-                                                {% elif 'Operational' in team.name %}⚙️
-                                                {% elif 'Compliance' in team.name %}✅
-                                                {% elif 'Quantitative' in team.name %}📊
-                                                {% else %}🏦{% endif %}
-                                            </div>
-                                            <span>{{ team.name }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="radio" class="btn-check" name="priority" id="priority-medium" value="medium" checked>
+                                        <label class="btn btn-outline-success w-100" for="priority-medium">
+                                            <small>Medium</small>
                                         </label>
-                                        {% endfor %}
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="radio" class="btn-check" name="priority" id="priority-high" value="high">
+                                        <label class="btn btn-outline-warning w-100" for="priority-high">
+                                            <small>High</small>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="radio" class="btn-check" name="priority" id="priority-urgent" value="urgent">
+                                        <label class="btn btn-outline-danger w-100" for="priority-urgent">
+                                            <small>Urgent</small>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="floating-label mb-4">
-                                    <select class="form-select" id="assignee_id" name="assignee_id">
-                                        <option value="">Unassigned</option>
-                                        {% for user in users %}
-                                            <option value="{{ user.id }}">{{ user.username }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <label for="assignee_id">Assign To</label>
-                                    <div class="label-helper">
-                                        <i data-feather="user" class="me-1"></i>
-                                        Select a team member to assign this task
-                                    </div>
-                                </div>
-                                
-                                <div class="task-summary">
-                                    <h6 class="text-muted mb-2">Task Summary</h6>
-                                    <div class="summary-card">
-                                        <div class="summary-item">
-                                            <strong>Title:</strong> <span id="summaryTitle">Not set</span>
-                                        </div>
-                                        <div class="summary-item">
-                                            <strong>Priority:</strong> <span id="summaryPriority">Medium</span>
-                                        </div>
-                                        <div class="summary-item">
-                                            <strong>Team:</strong> <span id="summaryTeam">No Team</span>
-                                        </div>
-                                        <div class="summary-item">
-                                            <strong>Assignee:</strong> <span id="summaryAssignee">Unassigned</span>
-                                        </div>
-                                    </div>
-                                </div>
+                        </div>
+                        
+                        <!-- Assignment -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="assignee_id" class="form-label fw-medium mb-2">Assign To</label>
+                                <select class="form-select clean-input" id="assignee_id" name="assignee_id">
+                                    <option value="">Select team member...</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="team_id" class="form-label fw-medium mb-2">Banking Team</label>
+                                <select class="form-select clean-input" id="team_id" name="team_id">
+                                    <option value="">Select team...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="modal-footer border-0 pt-0">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <button type="button" class="btn btn-outline-secondary" id="prevStep" style="display: none;">
-                            <i data-feather="arrow-left" class="me-2"></i>
-                            Previous
-                        </button>
-                        <div class="flex-grow-1"></div>
-                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="nextStep">
-                            Next
-                            <i data-feather="arrow-right" class="ms-2"></i>
-                        </button>
-                        <button type="submit" class="btn btn-success" id="submitTask" style="display: none;">
-                            <i data-feather="check" class="me-2"></i>
-                            Create Task
-                        </button>
-                    </div>
+                <div class="modal-footer border-0 pt-0 pb-4">
+                    <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        Create Task
+                    </button>
                 </div>
             </form>
         </div>
@@ -425,273 +323,117 @@
 
 {% block extra_js %}
 <style>
-/* Sleek Modal Animations */
-.animated-modal {
-    transform: scale(0.9);
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Clean Modal Styling */
+.clean-modal {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
 
-.modal.show .animated-modal {
-    transform: scale(1);
-    opacity: 1;
+.clean-modal .modal-header {
+    padding: 2rem 2rem 1rem 2rem;
 }
 
-.modal-icon i {
-    width: 32px;
-    height: 32px;
-    animation: pulse 2s infinite;
+.clean-modal .modal-body {
+    padding: 0 2rem;
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+.clean-modal .modal-footer {
+    padding: 1rem 2rem 2rem 2rem;
 }
 
-/* Progress Indicator */
-.progress-indicator {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    opacity: 0.5;
-}
-
-.step.active {
-    opacity: 1;
-}
-
-.step-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.step.active .step-circle {
-    background: linear-gradient(45deg, #0052CC, #36B37E);
-    color: white;
-    transform: scale(1.1);
-    box-shadow: 0 4px 15px rgba(0, 82, 204, 0.3);
-}
-
-.step span {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #6c757d;
-    transition: color 0.3s ease;
-}
-
-.step.active span {
-    color: #0052CC;
-}
-
-/* Form Steps */
-.form-step {
-    display: none;
-    animation: slideIn 0.5s ease-out;
-}
-
-.form-step.active {
-    display: block;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Floating Labels */
-.floating-label {
-    position: relative;
-    margin-bottom: 1.5rem;
-}
-
-.floating-label input,
-.floating-label select,
-.floating-label textarea {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e9ecef;
+/* Clean Input Styling */
+.clean-input {
+    border: 1px solid #e1e5e9;
     border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
     background: #fff;
 }
 
-.floating-label input:focus,
-.floating-label select:focus,
-.floating-label textarea:focus {
-    outline: none;
+.clean-input:focus {
     border-color: #0052CC;
     box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
-    transform: translateY(-2px);
+    outline: none;
 }
 
-.floating-label label {
-    position: absolute;
-    left: 1rem;
-    top: 1rem;
-    color: #6c757d;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    background: white;
-    padding: 0 0.5rem;
+.clean-input::placeholder {
+    color: #9ca3af;
 }
 
-.floating-label input:focus + label,
-.floating-label input:not(:placeholder-shown) + label,
-.floating-label select:focus + label,
-.floating-label textarea:focus + label,
-.floating-label textarea:not(:placeholder-shown) + label {
-    top: -0.5rem;
-    left: 0.75rem;
-    font-size: 0.875rem;
-    color: #0052CC;
-    transform: scale(0.9);
-}
-
-.label-helper {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-top: 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-/* Priority and Team Selectors */
-.priority-options,
-.team-options {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-}
-
-.priority-radio,
-.team-radio {
-    display: none;
-}
-
-.priority-card,
-.team-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: white;
-    text-align: center;
-}
-
-.priority-card:hover,
-.team-card:hover {
-    border-color: #0052CC;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.priority-radio:checked + .priority-card,
-.team-radio:checked + .team-card {
-    border-color: #0052CC;
-    background: linear-gradient(145deg, #f8f9ff, #ffffff);
-    box-shadow: 0 4px 15px rgba(0, 82, 204, 0.2);
-}
-
-.priority-icon,
-.team-icon {
-    font-size: 1.5rem;
+/* Form Labels */
+.form-label.fw-medium {
+    color: #374151;
+    font-size: 0.9rem;
     margin-bottom: 0.5rem;
 }
 
 /* Template Buttons */
-.template-options {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-}
-
 .template-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    background: white;
-    color: #495057;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
 }
 
 .template-btn:hover {
-    border-color: #FF8B00;
-    color: #FF8B00;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 139, 0, 0.2);
+    transform: translateY(-1px);
 }
 
-/* Preview and Summary Cards */
-.preview-card,
-.summary-card {
-    background: linear-gradient(145deg, #f8f9fa, #ffffff);
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 0.5rem;
+/* Priority Button Styling */
+.btn-check:checked + .btn {
+    transform: none;
 }
 
-.preview-title {
-    font-weight: 600;
-    color: #172B4D;
-    margin-bottom: 0.5rem;
+.btn-outline-secondary:hover,
+.btn-outline-success:hover,
+.btn-outline-warning:hover,
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
 }
 
-.summary-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
+/* Modal Animation */
+.modal.fade .modal-dialog {
+    transform: scale(0.95);
+    transition: transform 0.3s ease-out;
 }
 
-.summary-item:last-child {
-    margin-bottom: 0;
+.modal.show .modal-dialog {
+    transform: scale(1);
 }
 
-/* Button Animations */
+/* Clean Button Styling */
 .btn {
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: #0052CC;
+    border-color: #0052CC;
+}
+
+.btn-primary:hover {
+    background: #003d99;
+    border-color: #003d99;
+}
+
+.btn-light {
+    background: #f8f9fa;
+    border-color: #e9ecef;
+    color: #6c757d;
+}
+
+.btn-light:hover {
+    background: #e9ecef;
+    border-color: #dfe3e8;
+    color: #495057;
 }
 </style>
 
@@ -708,180 +450,61 @@ function filterByTeam() {
     }
 }
 
-// Sleek Modal Functionality
-let currentStep = 1;
-const totalSteps = 3;
-
 // Task creation templates
 const templates = {
     risk: {
-        title: "Risk Assessment - ",
-        description: "Conduct comprehensive risk analysis including:\n• Risk identification and classification\n• Impact assessment and probability analysis\n• Risk mitigation strategies\n• Compliance verification\n• Reporting and documentation"
+        title: "Risk Assessment - Q4 Portfolio Review",
+        description: "Conduct comprehensive risk analysis including risk identification, impact assessment, mitigation strategies, and compliance verification."
     },
     compliance: {
-        title: "Compliance Review - ",
-        description: "Perform regulatory compliance review including:\n• Regulatory requirement analysis\n• Policy and procedure validation\n• Control effectiveness testing\n• Gap analysis and remediation\n• Compliance reporting"
+        title: "Compliance Review - Regulatory Requirements",
+        description: "Perform regulatory compliance review including policy validation, control testing, gap analysis, and compliance reporting."
     },
     analysis: {
-        title: "Market Analysis - ",
-        description: "Execute market risk analysis including:\n• Market data collection and validation\n• VaR calculations and stress testing\n• Portfolio performance analysis\n• Risk exposure measurement\n• Strategic recommendations"
+        title: "Market Analysis - VaR Calculations",
+        description: "Execute market risk analysis including data validation, VaR calculations, stress testing, and portfolio performance analysis."
     },
     audit: {
-        title: "Audit Task - ",
-        description: "Complete audit procedures including:\n• Documentation review and testing\n• Control evaluation and assessment\n• Sample testing and validation\n• Finding documentation\n• Recommendation development"
+        title: "Audit Task - Control Evaluation",
+        description: "Complete audit procedures including documentation review, control assessment, sample testing, and finding documentation."
     }
 };
 
+// Clean modal functionality
 function initializeModal() {
-    const modal = document.getElementById('createTaskModal');
     const titleInput = document.getElementById('title');
     const descriptionInput = document.getElementById('description');
-    const nextBtn = document.getElementById('nextStep');
-    const prevBtn = document.getElementById('prevStep');
-    const submitBtn = document.getElementById('submitTask');
-    
-    // Real-time preview updates
-    titleInput.addEventListener('input', updatePreview);
-    document.querySelectorAll('input[name="priority"]').forEach(radio => {
-        radio.addEventListener('change', updatePreview);
-    });
     
     // Template button handlers
     document.querySelectorAll('.template-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             const template = templates[this.dataset.template];
             if (template) {
                 titleInput.value = template.title;
                 descriptionInput.value = template.description;
-                updatePreview();
-                updateSummary();
             }
         });
     });
     
-    // Step navigation
-    nextBtn.addEventListener('click', nextStep);
-    prevBtn.addEventListener('click', prevStep);
-    
-    // Form submission with animation
+    // Form submission with loading state
     document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
         submitBtn.disabled = true;
     });
     
-    // Reset modal when closed
-    modal.addEventListener('hidden.bs.modal', resetModal);
-    
-    // Update summary when form values change
-    document.querySelectorAll('#createTaskForm input, #createTaskForm select, #createTaskForm textarea').forEach(element => {
-        element.addEventListener('change', updateSummary);
-        element.addEventListener('input', updateSummary);
+    // Reset form when modal is hidden
+    document.getElementById('createTaskModal').addEventListener('hidden.bs.modal', function() {
+        const form = document.getElementById('createTaskForm');
+        form.reset();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = 'Create Task';
+        submitBtn.disabled = false;
     });
 }
 
-function nextStep() {
-    if (currentStep < totalSteps) {
-        // Validate current step
-        if (validateStep(currentStep)) {
-            currentStep++;
-            updateStepDisplay();
-            updateSummary();
-        }
-    }
-}
-
-function prevStep() {
-    if (currentStep > 1) {
-        currentStep--;
-        updateStepDisplay();
-    }
-}
-
-function validateStep(step) {
-    if (step === 1) {
-        const title = document.getElementById('title').value.trim();
-        if (!title) {
-            showNotification('Please enter a task title', 'warning');
-            return false;
-        }
-    }
-    return true;
-}
-
-function updateStepDisplay() {
-    // Update progress indicator
-    document.querySelectorAll('.step').forEach((step, index) => {
-        step.classList.toggle('active', index + 1 === currentStep);
-    });
-    
-    // Update form steps
-    document.querySelectorAll('.form-step').forEach((step, index) => {
-        step.classList.toggle('active', index + 1 === currentStep);
-    });
-    
-    // Update navigation buttons
-    document.getElementById('prevStep').style.display = currentStep > 1 ? 'block' : 'none';
-    document.getElementById('nextStep').style.display = currentStep < totalSteps ? 'block' : 'none';
-    document.getElementById('submitTask').style.display = currentStep === totalSteps ? 'block' : 'none';
-}
-
-function updatePreview() {
-    const title = document.getElementById('title').value || 'Enter task title...';
-    const priority = document.querySelector('input[name="priority"]:checked')?.value || 'medium';
-    
-    document.getElementById('previewTitle').textContent = title;
-    
-    const priorityBadge = document.getElementById('previewPriority');
-    const priorityColors = {
-        low: 'bg-primary',
-        medium: 'bg-success',
-        high: 'bg-warning',
-        urgent: 'bg-danger'
-    };
-    
-    priorityBadge.innerHTML = `<span class="badge ${priorityColors[priority]}">${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority</span>`;
-}
-
-function updateSummary() {
-    const title = document.getElementById('title').value || 'Not set';
-    const priority = document.querySelector('input[name="priority"]:checked')?.value || 'medium';
-    const team = document.querySelector('input[name="team_id"]:checked')?.nextElementSibling?.textContent?.trim() || 'No Team';
-    const assignee = document.getElementById('assignee_id').selectedOptions[0]?.text || 'Unassigned';
-    
-    document.getElementById('summaryTitle').textContent = title;
-    document.getElementById('summaryPriority').textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
-    document.getElementById('summaryTeam').textContent = team;
-    document.getElementById('summaryAssignee').textContent = assignee;
-}
-
-function resetModal() {
-    currentStep = 1;
-    updateStepDisplay();
-    document.getElementById('createTaskForm').reset();
-    document.getElementById('submitTask').innerHTML = '<i data-feather="check" class="me-2"></i>Create Task';
-    document.getElementById('submitTask').disabled = false;
-    updatePreview();
-    updateSummary();
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
-}
-
-function showNotification(message, type = 'info') {
-    // Simple notification system
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-
-// Initialize everything when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
