@@ -77,6 +77,8 @@ def create_task():
     description = request.form.get('description', '')
     assignee_id = request.form.get('assignee_id') or None
     priority = request.form.get('priority', 'medium')
+    team_id = request.form.get('team_id') or None
+    estimated_hours = request.form.get('estimated_hours')
     
     if title:
         task = data_manager.create_task(
@@ -86,6 +88,19 @@ def create_task():
             assignee_id=assignee_id,
             priority=priority
         )
+        
+        # Set team if provided
+        if team_id:
+            data_manager.update_task(task.id, team_id=team_id)
+        
+        # Set estimated hours if provided
+        if estimated_hours:
+            try:
+                est_hours = float(estimated_hours)
+                data_manager.update_task_estimate(str(task.id), est_hours)
+            except (ValueError, TypeError):
+                pass  # Ignore invalid estimates
+        
         flash('Task created successfully!', 'success')
     else:
         flash('Task title is required', 'error')

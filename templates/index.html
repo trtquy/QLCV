@@ -305,6 +305,17 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            
+                            <div class="mb-4">
+                                <label for="estimated_hours" class="form-label fw-medium mb-2">
+                                    <i data-feather="clock" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Time Estimate (hours)
+                                </label>
+                                <input type="number" class="form-control clean-input" id="estimated_hours" 
+                                       name="estimated_hours" min="0.5" max="200" step="0.5" 
+                                       placeholder="e.g. 4.5">
+                                <div class="form-text">Optional: Estimated time to complete this task</div>
+                            </div>
                         </div>
                     </div>
                 </div>

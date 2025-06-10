@@ -308,8 +308,147 @@ function refreshIcons() {
     }
 }
 
+// Time tracking functionality
+let activeTimeLog = null;
+
+function initializeTimeTracking() {
+    // Check for active time tracking on page load
+    checkActiveTimeLog();
+    
+    // Set up periodic checks
+    setInterval(checkActiveTimeLog, 30000); // Check every 30 seconds
+}
+
+function checkActiveTimeLog() {
+    fetch('/time/active')
+        .then(response => response.json())
+        .then(data => {
+            if (data.active) {
+                activeTimeLog = data.time_log;
+                updateTimeTrackingUI();
+            } else {
+                activeTimeLog = null;
+                updateTimeTrackingUI();
+            }
+        })
+        .catch(error => console.error('Error checking active time log:', error));
+}
+
+function toggleTimeTracking(taskId) {
+    if (activeTimeLog && activeTimeLog.task_id === taskId) {
+        // Stop tracking
+        stopTimeTracking(activeTimeLog.id);
+    } else if (activeTimeLog) {
+        // Already tracking another task - confirm switch
+        if (confirm('You are already tracking time on another task. Switch to this task?')) {
+            stopTimeTracking(activeTimeLog.id, () => {
+                startTimeTracking(taskId);
+            });
+        }
+    } else {
+        // Start tracking
+        startTimeTracking(taskId);
+    }
+}
+
+function startTimeTracking(taskId) {
+    const formData = new FormData();
+    formData.append('description', '');
+    
+    fetch(`/time/start/${taskId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            checkActiveTimeLog();
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error starting time tracking:', error);
+        showNotification('Failed to start time tracking', 'error');
+    });
+}
+
+function stopTimeTracking(timeLogId, callback = null) {
+    fetch(`/time/stop/${timeLogId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            activeTimeLog = null;
+            updateTimeTrackingUI();
+            if (callback) callback();
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error stopping time tracking:', error);
+        showNotification('Failed to stop time tracking', 'error');
+    });
+}
+
+function updateTimeTrackingUI() {
+    const timeButtons = document.querySelectorAll('.time-tracking-btn');
+    
+    timeButtons.forEach(button => {
+        const taskId = button.dataset.taskId;
+        const icon = button.querySelector('i');
+        
+        if (activeTimeLog && activeTimeLog.task_id === taskId) {
+            // This task is being tracked
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-danger');
+            icon.setAttribute('data-feather', 'stop-circle');
+            button.title = 'Stop time tracking';
+        } else {
+            // This task is not being tracked
+            button.classList.remove('btn-danger');
+            button.classList.add('btn-outline-primary');
+            icon.setAttribute('data-feather', 'play');
+            button.title = 'Start time tracking';
+        }
+    });
+    
+    // Refresh icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function updateTaskEstimate(taskId, estimatedHours) {
+    const formData = new FormData();
+    formData.append('estimated_hours', estimatedHours);
+    
+    fetch(`/task/estimate/${taskId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating task estimate:', error);
+        showNotification('Failed to update estimate', 'error');
+    });
+}
+
 // Export functions for global use
 window.loadTaskForEdit = loadTaskForEdit;
 window.updateTaskStatus = updateTaskStatus;
 window.showNotification = showNotification;
 window.refreshIcons = refreshIcons;
+window.toggleTimeTracking = toggleTimeTracking;
+window.updateTaskEstimate = updateTaskEstimate;
