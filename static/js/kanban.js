@@ -171,7 +171,10 @@ function loadTaskForEdit(taskId) {
     document.getElementById('edit_description').value = task.description || '';
     document.getElementById('edit_assignee_id').value = task.assignee_id || '';
     document.getElementById('edit_priority').value = task.priority || 'medium';
+    document.getElementById('edit_complexity').value = task.complexity || 'medium';
     document.getElementById('edit_status').value = task.status || 'todo';
+    document.getElementById('edit_team_id').value = task.team_id || '';
+    document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
     
     // Set form action
     document.getElementById('editTaskForm').action = `/update_task/${taskId}`;

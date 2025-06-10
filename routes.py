@@ -130,7 +130,10 @@ def update_task(task_id):
     description = request.form.get('description', '')
     assignee_id = request.form.get('assignee_id') or None
     priority = request.form.get('priority', 'medium')
+    complexity = request.form.get('complexity', 'medium')
     status = request.form.get('task_status', 'todo')
+    team_id = request.form.get('team_id') or None
+    estimated_hours = request.form.get('estimated_hours')
     
     if title:
         task = data_manager.update_task(
@@ -139,8 +142,18 @@ def update_task(task_id):
             description=description,
             assignee_id=assignee_id,
             priority=priority,
-            status=status
+            complexity=complexity,
+            status=status,
+            team_id=team_id
         )
+        
+        # Update estimated hours if provided
+        if estimated_hours:
+            try:
+                est_hours = float(estimated_hours)
+                data_manager.update_task_estimate(task_id, est_hours)
+            except (ValueError, TypeError):
+                pass  # Ignore invalid estimates
         if task:
             flash('Task updated successfully!', 'success')
         else:

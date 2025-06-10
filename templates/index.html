@@ -295,6 +295,132 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Task Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content clean-modal">
+            <div class="modal-header border-0">
+                <div>
+                    <h4 class="modal-title fw-bold text-dark mb-1">Edit Task</h4>
+                    <p class="text-muted small mb-0">Update task details</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form method="POST" id="editTaskForm">
+                <div class="modal-body p-4">
+                    <!-- Task Title -->
+                    <div class="mb-4">
+                        <label for="edit_title" class="form-label fw-medium mb-2">Task Title</label>
+                        <input type="text" class="form-control form-control-lg clean-input" 
+                               id="edit_title" name="title" required
+                               placeholder="Enter task title...">
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="edit_description" class="form-label fw-medium mb-2">Description</label>
+                        <textarea class="form-control clean-input" id="edit_description" name="description" 
+                                  rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Priority Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_priority" class="form-label fw-medium mb-2">Priority Level</label>
+                                <select class="form-select clean-input" id="edit_priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Complexity Level -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_complexity" class="form-label fw-medium mb-2">Complexity Level</label>
+                                <select class="form-select clean-input" id="edit_complexity" name="complexity">
+                                    <option value="very_simple">Very Simple</option>
+                                    <option value="simple">Simple</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="complex">Complex</option>
+                                    <option value="very_complex">Very Complex</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_status" class="form-label fw-medium mb-2">Status</label>
+                                <select class="form-select clean-input" id="edit_status" name="task_status">
+                                    <option value="todo">To Do</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Assignment -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_assignee_id" class="form-label fw-medium mb-2">Assign To</label>
+                                <select class="form-select clean-input" id="edit_assignee_id" name="assignee_id">
+                                    <option value="">Select team member...</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Team Assignment -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_team_id" class="form-label fw-medium mb-2">Banking Team</label>
+                                <select class="form-select clean-input" id="edit_team_id" name="team_id">
+                                    <option value="">Select team...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Estimate -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_estimated_hours" class="form-label fw-medium mb-2">
+                                    <i data-feather="clock" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Time Estimate (hours)
+                                </label>
+                                <input type="number" class="form-control clean-input" id="edit_estimated_hours" 
+                                       name="estimated_hours" min="0.5" max="200" step="0.5" 
+                                       placeholder="e.g. 4.5">
+                                <div class="form-text">Optional: Estimated time to complete this task</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 pt-0 pb-4">
+                    <button type="button" class="btn btn-danger me-auto" id="deleteTaskBtn">
+                        <i data-feather="trash-2" class="me-1" style="width: 16px; height: 16px;"></i>
+                        Delete
+                    </button>
+                    <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        Update Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -480,12 +606,30 @@ function initializeModal() {
     });
 }
 
+// Task data for editing
+window.tasksData = [
+    {% for task in todo_tasks + in_progress_tasks + completed_tasks %}
+    {
+        id: "{{ task.id }}",
+        title: "{{ task.title|e }}",
+        description: "{{ task.description|e if task.description else '' }}",
+        status: "{{ task.status }}",
+        priority: "{{ task.priority }}",
+        complexity: "{{ task.complexity if task.complexity else 'medium' }}",
+        assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
+        team_id: "{{ task.team_id if task.team_id else '' }}",
+        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
     initializeModal();
+    initializeKanban();
 });
 </script>
 {% endblock %}
