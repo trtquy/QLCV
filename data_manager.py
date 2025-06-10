@@ -50,7 +50,8 @@ class DataManager:
     
     # Task management
     def create_task(self, title: str, description: str, created_by: str, 
-                   assignee_id: Optional[str] = None, priority: str = 'medium') -> Task:
+                   assignee_id: Optional[str] = None, priority: str = 'medium', 
+                   complexity: str = 'medium') -> Task:
         """Create a new task"""
         task = Task(
             title=title,
@@ -58,6 +59,7 @@ class DataManager:
             created_by=int(created_by),
             assignee_id=int(assignee_id) if assignee_id else None,
             priority=priority,
+            complexity=complexity,
             status='todo'
         )
         db.session.add(task)

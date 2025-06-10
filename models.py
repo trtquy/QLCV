@@ -62,6 +62,7 @@ class Task(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(20), nullable=False, default='todo')  # 'todo', 'in_progress', 'completed'
     priority = db.Column(db.String(20), nullable=False, default='medium')  # 'low', 'medium', 'high', 'urgent'
+    complexity = db.Column(db.String(20), nullable=False, default='medium')  # 'very_simple', 'simple', 'medium', 'complex', 'very_complex'
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -104,6 +105,7 @@ class Task(db.Model):
             'description': self.description,
             'status': self.status,
             'priority': self.priority,
+            'complexity': self.complexity,
             'assignee_id': str(self.assignee_id) if self.assignee_id else None,
             'created_by': str(self.created_by),
             'team_id': str(self.team_id) if self.team_id else None,

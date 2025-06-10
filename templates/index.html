@@ -219,68 +219,33 @@
                                   rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
                     </div>
                     
-                    <!-- Quick Templates -->
-                    <div class="mb-4">
-                        <label class="form-label fw-medium mb-3">Quick Templates</label>
-                        <div class="row g-2">
-                            <div class="col-6 col-md-3">
-                                <button type="button" class="btn btn-outline-primary btn-sm w-100 template-btn" 
-                                        data-template="risk">
-                                    Risk Assessment
-                                </button>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <button type="button" class="btn btn-outline-success btn-sm w-100 template-btn" 
-                                        data-template="compliance">
-                                    Compliance Review
-                                </button>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <button type="button" class="btn btn-outline-warning btn-sm w-100 template-btn" 
-                                        data-template="analysis">
-                                    Market Analysis
-                                </button>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <button type="button" class="btn btn-outline-info btn-sm w-100 template-btn" 
-                                        data-template="audit">
-                                    Audit Task
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+
                     
                     <div class="row">
                         <!-- Priority Selection -->
                         <div class="col-md-6">
                             <div class="mb-4">
-                                <label class="form-label fw-medium mb-3">Priority Level</label>
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <input type="radio" class="btn-check" name="priority" id="priority-low" value="low">
-                                        <label class="btn btn-outline-secondary w-100" for="priority-low">
-                                            <small>Low</small>
-                                        </label>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="radio" class="btn-check" name="priority" id="priority-medium" value="medium" checked>
-                                        <label class="btn btn-outline-success w-100" for="priority-medium">
-                                            <small>Medium</small>
-                                        </label>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="radio" class="btn-check" name="priority" id="priority-high" value="high">
-                                        <label class="btn btn-outline-warning w-100" for="priority-high">
-                                            <small>High</small>
-                                        </label>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="radio" class="btn-check" name="priority" id="priority-urgent" value="urgent">
-                                        <label class="btn btn-outline-danger w-100" for="priority-urgent">
-                                            <small>Urgent</small>
-                                        </label>
-                                    </div>
-                                </div>
+                                <label for="priority" class="form-label fw-medium mb-2">Priority Level</label>
+                                <select class="form-select clean-input" id="priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Complexity Level -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="complexity" class="form-label fw-medium mb-2">Complexity Level</label>
+                                <select class="form-select clean-input" id="complexity" name="complexity">
+                                    <option value="very_simple">Very Simple</option>
+                                    <option value="simple">Simple</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="complex">Complex</option>
+                                    <option value="very_complex">Very Complex</option>
+                                </select>
                             </div>
                         </div>
                         

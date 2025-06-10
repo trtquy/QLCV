@@ -77,6 +77,7 @@ def create_task():
     description = request.form.get('description', '')
     assignee_id = request.form.get('assignee_id') or None
     priority = request.form.get('priority', 'medium')
+    complexity = request.form.get('complexity', 'medium')
     team_id = request.form.get('team_id') or None
     estimated_hours = request.form.get('estimated_hours')
     
@@ -86,7 +87,8 @@ def create_task():
             description=description,
             created_by=current_user.id,
             assignee_id=assignee_id,
-            priority=priority
+            priority=priority,
+            complexity=complexity
         )
         
         # Set team if provided
