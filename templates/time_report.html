@@ -159,10 +159,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                {{ stats.user.username[0]|upper }}
+                                                {{ (stats.user.display_name or stats.user.username)[0]|upper }}
                                             </div>
                                             <div>
-                                                <div class="fw-bold">{{ stats.user.username }}</div>
+                                                <div class="fw-bold">{{ stats.user.display_name or stats.user.username }}</div>
                                                 <small class="text-muted">{{ stats.user.email }}</small>
                                             </div>
                                         </div>
@@ -254,7 +254,7 @@
                                 <small>{{ log.start_time.strftime('%Y-%m-%d %H:%M') }}</small>
                             </td>
                             <td>
-                                <small>{{ log.user.username }}</small>
+                                <small>{{ log.user.display_name or log.user.username }}</small>
                             </td>
                             <td>
                                 <small class="text-truncate" style="max-width: 200px;">
@@ -290,21 +290,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const userData = [
         {% for user_id, stats in report_data.user_stats.items() %}
         {
-            label: '{{ stats.user.username }}',
+            label: '{{ stats.user.display_name or stats.user.username }}',
             data: {{ stats.total_hours }},
-            backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`
-        },
+            backgroundColor: `hsl({{ loop.index * 360 // loop.length }}, 70%, 60%)`
+        }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
     
+    // Time Distribution Pie Chart
     new Chart(ctx, {
-        type: 'doughnut',
+        type: 'pie',
         data: {
             labels: userData.map(u => u.label),
             datasets: [{
                 data: userData.map(u => u.data),
                 backgroundColor: userData.map(u => u.backgroundColor),
-                borderWidth: 0
+                borderWidth: 2,
+                borderColor: '#ffffff'
             }]
         },
         options: {
@@ -314,13 +316,163 @@ document.addEventListener('DOMContentLoaded', function() {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        padding: 20,
+                        padding: 15,
                         usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const percentage = ((context.parsed / {{ report_data.total_hours }}) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed.toFixed(1) + 'h (' + percentage + '%)';
+                        }
                     }
                 }
             }
         }
     });
+    
+    // Daily Time Chart
+    const dailyCtx = document.getElementById('dailyTimeChart').getContext('2d');
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ report_data.daily_data.dates | tojson }},
+            datasets: [{
+                label: 'Hours Logged',
+                data: {{ report_data.daily_data.hours | tojson }},
+                borderColor: '#006B68',
+                backgroundColor: 'rgba(0, 107, 104, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Hours'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Team Time Chart
+    const teamCtx = document.getElementById('teamTimeChart').getContext('2d');
+    new Chart(teamCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ report_data.team_data.names | tojson }},
+            datasets: [{
+                data: {{ report_data.team_data.hours | tojson }},
+                backgroundColor: [
+                    '#006B68', '#FFC62F', '#28a745', '#dc3545', '#6f42c1', '#fd7e14'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed.toFixed(1) + 'h (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Interactive sorting functionality
+    const sortButtons = document.querySelectorAll('input[name="sortBy"]');
+    const tableBody = document.querySelector('.table tbody');
+    
+    sortButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            const sortBy = this.id;
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(sortBy) {
+                    case 'sortHours':
+                        aValue = parseFloat(a.cells[1].textContent.replace('h', ''));
+                        bValue = parseFloat(b.cells[1].textContent.replace('h', ''));
+                        break;
+                    case 'sortTasks':
+                        aValue = parseInt(a.cells[2].textContent);
+                        bValue = parseInt(b.cells[2].textContent);
+                        break;
+                    case 'sortEfficiency':
+                        const aProgress = a.querySelector('.progress-bar');
+                        const bProgress = b.querySelector('.progress-bar');
+                        aValue = parseFloat(aProgress.style.width.replace('%', ''));
+                        bValue = parseFloat(bProgress.style.width.replace('%', ''));
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                return bValue - aValue; // Descending order
+            });
+            
+            // Clear and re-append sorted rows
+            tableBody.innerHTML = '';
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+    });
+    
+    // Auto-refresh functionality
+    let refreshInterval;
+    const refreshButton = document.createElement('button');
+    refreshButton.className = 'btn btn-outline-primary btn-sm ms-2';
+    refreshButton.innerHTML = '<i data-feather="refresh-cw" class="me-1"></i>Auto-refresh';
+    refreshButton.onclick = function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-outline-primary');
+            this.innerHTML = '<i data-feather="refresh-cw" class="me-1"></i>Auto-refresh';
+        } else {
+            refreshInterval = setInterval(() => {
+                window.location.reload();
+            }, 30000);
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            this.innerHTML = '<i data-feather="refresh-cw" class="me-1"></i>Auto-refresh (30s)';
+        }
+        feather.replace();
+    };
+    
+    document.querySelector('.card-header .btn-group').after(refreshButton);
+    
+    // Initialize feather icons
+    feather.replace();
 });
 {% endif %}
 </script>
