@@ -101,8 +101,8 @@ def import_excel_tasks():
                 complexity = complexity_mapping.get(row['Complexity'], 'medium')
                 priority = priority_mapping.get(row['Priority'], 'medium')
                 
-                # Random status distribution (70% todo, 20% in_progress, 10% completed)
-                status_weights = [0.7, 0.2, 0.1]
+                # Even distribution across statuses (40% todo, 35% in_progress, 25% completed)
+                status_weights = [0.40, 0.35, 0.25]
                 status = random.choices(status_options, weights=status_weights)[0]
                 
                 # Get creator (use first admin user)
