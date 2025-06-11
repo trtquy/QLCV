@@ -18,7 +18,7 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
         background-color: rgba(102, 126, 234, 0.05);
     }
     
-    .team-icon, .user-avatar {
+    .team-icon {
         width: 40px;
         height: 40px;
         display: flex;
@@ -30,19 +30,27 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
         font-weight: 600;
     }
     
-    .avatar-circle {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #6c757d;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 600;
-        text-transform: uppercase;
-        border: 2px solid #f8f9fa;
+    /* Inline Editing Styles */
+    .team-name-edit, .team-desc-edit, .user-name-edit, .user-email-edit {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .team-name-edit:hover, .team-desc-edit:hover, .user-name-edit:hover, .user-email-edit:hover {
+        background-color: rgba(102, 126, 234, 0.1);
+        border-radius: 4px;
+        padding: 2px 4px;
+        margin: -2px -4px;
+    }
+    
+    .inline-edit-input {
+        border: 1px solid #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    .inline-edit-saving {
+        opacity: 0.6;
+        pointer-events: none;
     }
     
     /* Enhanced Button Groups */
@@ -253,9 +261,15 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
                                                 <div class="team-icon me-3">
                                                     <i data-feather="users" class="text-primary"></i>
                                                 </div>
-                                                <div>
-                                                    <h6 class="mb-0 fw-semibold">{{ team.name }}</h6>
-                                                    <small class="text-muted">{{ team.description[:50] }}...</small>
+                                                <div class="flex-grow-1">
+                                                    <div class="team-name-edit" data-team-id="{{ team.id }}">
+                                                        <h6 class="mb-0 fw-semibold team-name-display">{{ team.name }}</h6>
+                                                        <input type="text" class="form-control form-control-sm team-name-input d-none" value="{{ team.name }}">
+                                                    </div>
+                                                    <div class="team-desc-edit" data-team-id="{{ team.id }}">
+                                                        <small class="text-muted team-desc-display">{{ team.description[:50] }}{% if team.description|length > 50 %}...{% endif %}</small>
+                                                        <textarea class="form-control form-control-sm team-desc-input d-none" rows="2">{{ team.description }}</textarea>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -339,22 +353,14 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
                                     
                                     <tr class="user-row">
                                         <td class="ps-3 align-middle">
-                                            <div class="d-flex align-items-center">
-                                                <div class="user-avatar me-3">
-                                                    <div class="avatar-circle">
-                                                        {% set name_parts = (user.display_name or user.username).split() %}
-                                                        {% if name_parts|length >= 2 %}
-                                                            {{ name_parts[0][0] + name_parts[1][0] }}
-                                                        {% elif name_parts|length == 1 %}
-                                                            {{ name_parts[0][:2] }}
-                                                        {% else %}
-                                                            {{ user.username[:2] }}
-                                                        {% endif %}
-                                                    </div>
+                                            <div class="user-details-edit" data-user-id="{{ user.id }}">
+                                                <div class="user-name-edit">
+                                                    <h6 class="mb-0 fw-semibold user-name-display">{{ user.display_name or user.username }}</h6>
+                                                    <input type="text" class="form-control form-control-sm user-name-input d-none" value="{{ user.display_name or user.username }}">
                                                 </div>
-                                                <div>
-                                                    <h6 class="mb-0 fw-semibold">{{ user.display_name or user.username }}</h6>
-                                                    <small class="text-muted">{{ user.email }}</small>
+                                                <div class="user-email-edit">
+                                                    <small class="text-muted user-email-display">{{ user.email }}</small>
+                                                    <input type="email" class="form-control form-control-sm user-email-input d-none" value="{{ user.email }}">
                                                 </div>
                                             </div>
                                         </td>

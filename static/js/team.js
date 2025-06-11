@@ -12,6 +12,9 @@ function initializeTeam() {
     // Initialize member interactions
     initializeMemberInteractions();
     
+    // Initialize inline editing
+    initializeInlineEditing();
+    
     // Initialize feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();
@@ -542,6 +545,165 @@ function deleteUser(userId) {
         document.body.appendChild(form);
         form.submit();
     }
+}
+
+// Inline Editing Functionality
+function initializeInlineEditing() {
+    // Team name editing
+    document.querySelectorAll('.team-name-edit').forEach(element => {
+        element.addEventListener('click', function() {
+            if (!this.classList.contains('editing')) {
+                startInlineEdit(this, 'team-name', 'team');
+            }
+        });
+    });
+    
+    // Team description editing
+    document.querySelectorAll('.team-desc-edit').forEach(element => {
+        element.addEventListener('click', function() {
+            if (!this.classList.contains('editing')) {
+                startInlineEdit(this, 'team-desc', 'team');
+            }
+        });
+    });
+    
+    // User name editing
+    document.querySelectorAll('.user-name-edit').forEach(element => {
+        element.addEventListener('click', function() {
+            if (!this.classList.contains('editing')) {
+                startInlineEdit(this, 'user-name', 'user');
+            }
+        });
+    });
+    
+    // User email editing
+    document.querySelectorAll('.user-email-edit').forEach(element => {
+        element.addEventListener('click', function() {
+            if (!this.classList.contains('editing')) {
+                startInlineEdit(this, 'user-email', 'user');
+            }
+        });
+    });
+}
+
+function startInlineEdit(element, fieldType, entityType) {
+    const display = element.querySelector(`.${fieldType}-display`);
+    const input = element.querySelector(`.${fieldType}-input`);
+    const originalValue = display.textContent.trim();
+    
+    // Mark as editing
+    element.classList.add('editing');
+    
+    // Hide display, show input
+    display.classList.add('d-none');
+    input.classList.remove('d-none');
+    input.classList.add('inline-edit-input');
+    
+    // Focus and select text
+    input.focus();
+    if (input.tagName === 'INPUT') {
+        input.select();
+    }
+    
+    // Handle save/cancel
+    const saveEdit = () => {
+        const newValue = input.value.trim();
+        if (newValue && newValue !== originalValue) {
+            saveInlineEdit(element, fieldType, entityType, newValue, originalValue);
+        } else {
+            cancelInlineEdit(element, fieldType, originalValue);
+        }
+    };
+    
+    const cancelEdit = () => {
+        cancelInlineEdit(element, fieldType, originalValue);
+    };
+    
+    // Event listeners
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveEdit();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEdit();
+        }
+    });
+}
+
+function saveInlineEdit(element, fieldType, entityType, newValue, originalValue) {
+    const id = element.dataset[`${entityType}Id`];
+    element.classList.add('inline-edit-saving');
+    
+    // Determine field name and endpoint
+    let fieldName, endpoint;
+    if (entityType === 'team') {
+        endpoint = `/edit_team/${id}`;
+        fieldName = fieldType === 'team-name' ? 'name' : 'description';
+    } else {
+        endpoint = `/user/${id}/update`;
+        fieldName = fieldType === 'user-name' ? 'display_name' : 'email';
+    }
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append(fieldName, newValue);
+    
+    // Send update request
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            // Update display with new value
+            finishInlineEdit(element, fieldType, newValue);
+            showNotification(`${entityType.charAt(0).toUpperCase() + entityType.slice(1)} updated successfully!`, 'success');
+        } else {
+            throw new Error('Update failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating:', error);
+        showNotification('Failed to update. Please try again.', 'error');
+        cancelInlineEdit(element, fieldType, originalValue);
+    })
+    .finally(() => {
+        element.classList.remove('inline-edit-saving');
+    });
+}
+
+function cancelInlineEdit(element, fieldType, originalValue) {
+    const display = element.querySelector(`.${fieldType}-display`);
+    const input = element.querySelector(`.${fieldType}-input`);
+    
+    // Restore original value
+    input.value = originalValue;
+    
+    // Show display, hide input
+    display.classList.remove('d-none');
+    input.classList.add('d-none');
+    input.classList.remove('inline-edit-input');
+    
+    // Remove editing state
+    element.classList.remove('editing');
+}
+
+function finishInlineEdit(element, fieldType, newValue) {
+    const display = element.querySelector(`.${fieldType}-display`);
+    const input = element.querySelector(`.${fieldType}-input`);
+    
+    // Update display text
+    display.textContent = newValue;
+    
+    // Show display, hide input
+    display.classList.remove('d-none');
+    input.classList.add('d-none');
+    input.classList.remove('inline-edit-input');
+    
+    // Remove editing state
+    element.classList.remove('editing');
 }
 
 // Export functions for global use

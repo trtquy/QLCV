@@ -695,6 +695,69 @@ def update_task_estimate(task_id):
         return jsonify({'error': 'Task not found'}), 404
 
 # Template context processors
+@app.route('/user/<int:user_id>/update', methods=['POST'])
+def update_user_inline(user_id):
+    """Update user details via inline editing"""
+    current_user = data_manager.get_current_user()
+    if not current_user or not current_user.is_administrator:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    user = data_manager.get_user(str(user_id))
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Get the field being updated
+    display_name = request.form.get('display_name')
+    email = request.form.get('email')
+    
+    try:
+        if display_name is not None:
+            data_manager.update_user(str(user_id), display_name=display_name)
+        elif email is not None:
+            # Check if email is already taken by another user
+            existing_user = data_manager.get_user_by_email(email)
+            if existing_user and existing_user.id != user.id:
+                return jsonify({'error': 'Email already in use'}), 400
+            data_manager.update_user(str(user_id), email=email)
+        
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        logging.error(f"Error updating user {user_id}: {e}")
+        return jsonify({'error': 'Update failed'}), 500
+
+@app.route('/edit_team/<int:team_id>', methods=['POST'])
+def edit_team_inline(team_id):
+    """Update team details via inline editing"""
+    current_user = data_manager.get_current_user()
+    if not current_user or not current_user.is_administrator:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    team = data_manager.get_team(str(team_id))
+    if not team:
+        return jsonify({'error': 'Team not found'}), 404
+    
+    # Get the field being updated
+    name = request.form.get('name')
+    description = request.form.get('description')
+    
+    try:
+        if name is not None:
+            # Check if team name is already taken
+            existing_teams = data_manager.get_all_teams()
+            if any(t.name == name and t.id != team.id for t in existing_teams):
+                return jsonify({'error': 'Team name already exists'}), 400
+            
+            team.name = name
+        elif description is not None:
+            team.description = description
+        
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        logging.error(f"Error updating team {team_id}: {e}")
+        db.session.rollback()
+        return jsonify({'error': 'Update failed'}), 500
+
 @app.context_processor
 def inject_current_user():
     """Make current user available in all templates"""
