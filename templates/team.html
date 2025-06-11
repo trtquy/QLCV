@@ -439,18 +439,19 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                                 <input type="email" class="form-control" name="email" required 
                                        placeholder="user@company.com">
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3" id="teamAssignmentDiv">
                                 <label class="form-label">Assign to Team</label>
-                                <select class="form-select" name="team_id" required>
+                                <select class="form-select" name="team_id" id="teamAssignmentSelect">
                                     <option value="">Choose team...</option>
                                     {% for team in teams %}
                                         <option value="{{ team.id }}">{{ team.name }}</option>
                                     {% endfor %}
                                 </select>
+                                <small class="text-muted">Directors and Admins don't require team assignment</small>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Role</label>
-                                <select class="form-select" name="role" required>
+                                <select class="form-select" name="role" required id="roleSelect" onchange="handleRoleChange()">
                                     <option value="analyst">Analyst</option>
                                     <option value="manager">Manager</option>
                                     <option value="director">Director</option>
@@ -578,6 +579,45 @@ function setRoleModalData(userId, username, currentRole) {
         if (adminRadio) adminRadio.checked = true;
     } else {
         document.getElementById('roleAnalyst').checked = true;
+    }
+}
+
+function loadTeamData() {
+    const select = document.getElementById('teamSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        const teamName = selectedOption.getAttribute('data-name');
+        const teamDescription = selectedOption.getAttribute('data-description');
+        
+        document.getElementById('editTeamName').value = teamName;
+        document.getElementById('editTeamDescription').value = teamDescription || '';
+        document.getElementById('editTeamBtn').disabled = false;
+        
+        // Set form action
+        document.getElementById('editTeamForm').action = "{{ url_for('edit_team', team_id='TEAM_ID') }}".replace('TEAM_ID', selectedOption.value);
+    } else {
+        document.getElementById('editTeamName').value = '';
+        document.getElementById('editTeamDescription').value = '';
+        document.getElementById('editTeamBtn').disabled = true;
+        document.getElementById('editTeamForm').action = '';
+    }
+}
+
+function handleRoleChange() {
+    const roleSelect = document.getElementById('roleSelect');
+    const teamAssignmentDiv = document.getElementById('teamAssignmentDiv');
+    const teamAssignmentSelect = document.getElementById('teamAssignmentSelect');
+    
+    if (roleSelect.value === 'director' || roleSelect.value === 'admin') {
+        // Directors and Admins don't require team assignment
+        teamAssignmentSelect.removeAttribute('required');
+        teamAssignmentDiv.style.opacity = '0.6';
+        teamAssignmentSelect.value = '';
+    } else {
+        // Analysts and Managers require team assignment
+        teamAssignmentSelect.setAttribute('required', 'required');
+        teamAssignmentDiv.style.opacity = '1';
     }
 }
 </script>

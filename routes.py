@@ -1,6 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from app import app
+from app import app, db
 from data_manager import data_manager
+from models import Team
 from datetime import datetime, timedelta
 import logging
 
