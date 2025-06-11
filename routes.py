@@ -39,23 +39,20 @@ def index():
 def login():
     """Login page"""
     if request.method == 'POST':
-        username = request.form.get('username')
-        if username:
-            user = data_manager.get_user_by_username(username)
-            if not user:
-                # Create new user if doesn't exist
-                email = request.form.get('email', f"{username}@company.com")
-                role = request.form.get('role', 'member')
-                user = data_manager.create_user(username, email, role)
-                flash(f'Welcome {username}! New account created.', 'success')
+        username_or_email = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username_or_email and password:
+            user = data_manager.authenticate_user(username_or_email, password)
+            if user:
+                data_manager.set_current_user(user.id)
+                session['user_id'] = user.id
+                flash(f'Welcome back, {user.username}!', 'success')
+                return redirect(url_for('index'))
             else:
-                flash(f'Welcome back, {username}!', 'success')
-            
-            data_manager.set_current_user(user.id)
-            session['user_id'] = user.id
-            return redirect(url_for('index'))
+                flash('Invalid username/email or password', 'error')
         else:
-            flash('Please enter a username', 'error')
+            flash('Please enter both username/email and password', 'error')
     
     return render_template('login.html')
 

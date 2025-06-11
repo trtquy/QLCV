@@ -10,9 +10,10 @@ class DataManager:
         self.current_user_id = None
     
     # User management
-    def create_user(self, username: str, email: str, role: str = 'member') -> User:
+    def create_user(self, username: str, email: str, role: str = 'analyst', password: str = '123') -> User:
         """Create a new user"""
         user = User(username=username, email=email, role=role)
+        user.set_password(password)
         db.session.add(user)
         db.session.commit()
         return user
@@ -24,6 +25,25 @@ class DataManager:
     def get_user_by_username(self, username: str) -> Optional[User]:
         """Get user by username"""
         return User.query.filter_by(username=username).first()
+    
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user by email"""
+        return User.query.filter_by(email=email).first()
+    
+    def authenticate_user(self, username_or_email: str, password: str) -> Optional[User]:
+        """Authenticate user by username/email and password"""
+        # Try to find user by username first
+        user = self.get_user_by_username(username_or_email)
+        
+        # If not found, try by email
+        if not user:
+            user = self.get_user_by_email(username_or_email)
+        
+        # Check password if user exists
+        if user and user.check_password(password):
+            return user
+        
+        return None
     
     def get_all_users(self) -> List[User]:
         """Get all users"""

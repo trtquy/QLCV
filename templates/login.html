@@ -35,57 +35,24 @@
                 
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">Username or Email</label>
                         <input type="text" class="form-control" id="username" name="username" required 
-                               placeholder="Enter your username">
-                        <div class="form-text">Enter any username to login or create a new account</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email <span class="text-muted">(for new users)</span></label>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               placeholder="your.email@company.com">
-                        <div class="form-text">Only required if creating a new account</div>
+                               placeholder="Enter your username or email">
                     </div>
                     
                     <div class="mb-4">
-                        <label for="role" class="form-label">Role <span class="text-muted">(for new users)</span></label>
-                        <select class="form-select" id="role" name="role">
-                            <option value="member">Team Member</option>
-                            <option value="manager">Manager</option>
-                        </select>
-                        <div class="form-text">Managers can edit team member roles</div>
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Enter your password">
                     </div>
                     
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i data-feather="log-in" class="me-2"></i>
-                            Login / Register
+                            Login
                         </button>
                     </div>
                 </form>
-                
-                <hr class="my-4">
-                
-                <div class="text-center">
-                    <h6 class="text-muted mb-3">Quick Start Options:</h6>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <button type="button" class="btn btn-outline-primary btn-sm w-100" 
-                                    onclick="quickLogin('admin', 'manager')">
-                                <i data-feather="shield" class="me-1"></i>
-                                Login as Manager
-                            </button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-outline-secondary btn-sm w-100" 
-                                    onclick="quickLogin('user', 'member')">
-                                <i data-feather="user" class="me-1"></i>
-                                Login as Member
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -93,13 +60,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         feather.replace();
-        
-        function quickLogin(username, role) {
-            document.getElementById('username').value = username;
-            document.getElementById('email').value = username + '@taskflow.com';
-            document.getElementById('role').value = role;
-            document.querySelector('form').submit();
-        }
     </script>
 </body>
 </html>
