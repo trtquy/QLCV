@@ -117,7 +117,7 @@ window.tasksData = [
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-text"><i data-feather="filter"></i></span>
-                        <select class="form-select" id="teamFilter" onchange="window.filterByTeam()">
+                        <select class="form-select" id="teamFilter">
                             <option value="">All Banking Teams</option>
                             {% for team in teams %}
                                 <option value="{{ team.id }}" {% if selected_team == team.id|string %}selected{% endif %}>
@@ -648,17 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Team filtering function
-window.filterByTeam = function() {
-    const teamSelect = document.getElementById('teamFilter');
-    if (teamSelect && teamSelect.value) {
-        // Redirect to filtered view
-        window.location.href = '/?team=' + teamSelect.value;
-    } else {
-        // Show all teams
-        window.location.href = '/';
-    }
-}
+// Team filtering is now handled by event listener in DOMContentLoaded
 
 // Task creation templates
 const templates = {
@@ -758,6 +748,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup edit functionality
     console.log('Setting up edit functionality');
     setupEditHandlers();
+    
+    // Setup team filter
+    const teamFilter = document.getElementById('teamFilter');
+    if (teamFilter) {
+        teamFilter.addEventListener('change', function() {
+            if (this.value) {
+                window.location.href = '/?team=' + this.value;
+            } else {
+                window.location.href = '/';
+            }
+        });
+    }
 });
 
 // Setup edit handlers function
