@@ -334,7 +334,7 @@ window.tasksData = [
                                     {% if current_user and current_user.team %}
                                         {% for user in users %}
                                             {% if user.team_id == current_user.team_id %}
-                                                <option value="{{ user.id }}">{{ user.username }} ({{ user.role|title }})</option>
+                                                <option value="{{ user.id }}">{{ user.display_name or user.username }} ({{ user.role|title }})</option>
                                             {% endif %}
                                         {% endfor %}
                                     {% endif %}

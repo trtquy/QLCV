@@ -328,10 +328,13 @@ function filterMembers() {
         const matchesSearch = !searchTerm || memberName.includes(searchTerm);
         const matchesRole = !roleFilter || memberRole.includes(roleFilter);
         
-        if (matchesSearch && matchesRole) {
-            card.closest('.col-lg-6').style.display = '';
-        } else {
-            card.closest('.col-lg-6').style.display = 'none';
+        const colElement = card.closest('.col-lg-4') || card.closest('.col-md-6') || card.closest('.col-lg-6');
+        if (colElement) {
+            if (matchesSearch && matchesRole) {
+                colElement.style.display = '';
+            } else {
+                colElement.style.display = 'none';
+            }
         }
     });
 }

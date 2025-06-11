@@ -403,7 +403,7 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                                     {% for user in users %}
                                         {% if user.id != current_user.id %}
                                             <option value="{{ user.id }}">
-                                                {{ user.username }} 
+                                                {{ user.display_name or user.username }} 
                                                 ({{ user.team.name if user.team else 'No Team' }})
                                             </option>
                                         {% endif %}
