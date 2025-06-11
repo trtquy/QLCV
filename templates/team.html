@@ -145,8 +145,8 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
         <div class="col-lg-2 col-md-4 col-6">
             <div class="card border-0 bg-dark text-white">
                 <div class="card-body text-center py-2">
-                    <div class="h6 mb-0">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</div>
-                    <small class="opacity-75">Admins</small>
+                    <div class="h6 mb-0">{{ users|selectattr('is_administrator', 'equalto', true)|list|length }}</div>
+                    <small class="opacity-75">Administrators</small>
                 </div>
             </div>
         </div>
