@@ -304,6 +304,66 @@ def update_user_role(user_id):
     
     return redirect(url_for('team'))
 
+@app.route('/move_member_to_team', methods=['POST'])
+def move_member_to_team():
+    """Move a team member to a different team (manager only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or current_user.role != 'manager':
+        flash('Only managers can move team members', 'error')
+        return redirect(url_for('team'))
+    
+    user_id = request.form.get('user_id')
+    team_id = request.form.get('team_id')
+    
+    if user_id and team_id:
+        user = data_manager.get_user(user_id)
+        team = data_manager.get_team(team_id)
+        
+        if user and team:
+            # Update user's team
+            data_manager.update_user(user_id, team_id=int(team_id))
+            flash(f'{user.username} moved to {team.name} successfully', 'success')
+        else:
+            flash('User or team not found', 'error')
+    else:
+        flash('Please select both user and team', 'error')
+    
+    return redirect(url_for('team'))
+
+@app.route('/add_team_member', methods=['POST'])
+def add_team_member():
+    """Add a new team member (manager only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or current_user.role != 'manager':
+        flash('Only managers can add team members', 'error')
+        return redirect(url_for('team'))
+    
+    username = request.form.get('username')
+    email = request.form.get('email')
+    team_id = request.form.get('team_id')
+    role = request.form.get('role', 'member')
+    
+    if username and email and team_id:
+        # Check if user already exists
+        existing_user = data_manager.get_user_by_username(username)
+        if existing_user:
+            flash(f'User {username} already exists', 'error')
+            return redirect(url_for('team'))
+        
+        # Create new user
+        user = data_manager.create_user(username, email, role)
+        if user:
+            # Assign to team
+            data_manager.update_user(str(user.id), team_id=int(team_id))
+            team = data_manager.get_team(team_id)
+            flash(f'User {username} added to {team.name if team else "team"} successfully', 'success')
+        else:
+            flash('Failed to create user', 'error')
+    else:
+        flash('Please fill in all required fields', 'error')
+    
+    return redirect(url_for('team'))
+
 # Time tracking routes
 @app.route('/time/start/<task_id>', methods=['POST'])
 def start_time_tracking(task_id):

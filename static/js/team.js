@@ -147,19 +147,22 @@ function addManagerQuickActions() {
     const headerActions = document.querySelector('.row.mb-4 .col');
     if (headerActions) {
         const actionsContainer = document.createElement('div');
-        actionsContainer.className = 'mt-2';
-        actionsContainer.innerHTML = `
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMemberSelection()">
-                    <i data-feather="check-square" class="me-1"></i>
-                    Select Members
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportTeamData()">
-                    <i data-feather="download" class="me-1"></i>
-                    Export Data
-                </button>
-            </div>
-        `;
+        // Only show team management actions for managers
+        if (window.currentUserRole === 'manager') {
+            actionsContainer.className = 'mt-2';
+            actionsContainer.innerHTML = `
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#teamManagementModal">
+                        <i data-feather="users" class="me-1"></i>
+                        Manage Teams
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportTeamData()">
+                        <i data-feather="download" class="me-1"></i>
+                        Export Data
+                    </button>
+                </div>
+            `;
+        }
         
         headerActions.appendChild(actionsContainer);
         

@@ -3,6 +3,10 @@
 {% block title %}Team Management - TaskFlow{% endblock %}
 
 {% block extra_head %}
+<script>
+// Pass current user role to JavaScript
+window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
+</script>
 <style>
     .team-member-card {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -343,6 +347,117 @@
                     <button type="submit" class="btn btn-primary">Update Role</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Team Management Modal (for managers only) -->
+{% if current_user and current_user.role == 'manager' %}
+<div class="modal fade" id="teamManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Team Management</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Move Members Between Teams -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Move Member to Different Team</h6>
+                        <form action="{{ url_for('move_member_to_team') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Select Member</label>
+                                <select class="form-select" name="user_id" required>
+                                    <option value="">Choose member...</option>
+                                    {% for user in users %}
+                                        {% if user.id != current_user.id %}
+                                            <option value="{{ user.id }}">
+                                                {{ user.username }} 
+                                                ({{ user.team.name if user.team else 'No Team' }})
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Move to Team</label>
+                                <select class="form-select" name="team_id" required>
+                                    <option value="">Choose team...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i data-feather="arrow-right" class="me-1"></i>
+                                Move Member
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Add New Team Member</h6>
+                        <form action="{{ url_for('add_team_member') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" name="username" required 
+                                       placeholder="Enter username">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" required 
+                                       placeholder="user@company.com">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Assign to Team</label>
+                                <select class="form-select" name="team_id" required>
+                                    <option value="">Choose team...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" name="role" required>
+                                    <option value="member">Member</option>
+                                    <option value="manager">Manager</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i data-feather="user-plus" class="me-1"></i>
+                                Add Member
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Team Overview -->
+                <hr class="my-4">
+                <h6 class="mb-3">Team Overview</h6>
+                <div class="row g-3">
+                    {% for team in teams %}
+                    <div class="col-md-4">
+                        <div class="card border">
+                            <div class="card-body p-3">
+                                <h6 class="card-title">{{ team.name }}</h6>
+                                <p class="card-text small text-muted">{{ team.description }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {{ users|selectattr('team_id', 'equalto', team.id)|list|length }} members
+                                    </small>
+                                    <span class="badge bg-light text-dark">
+                                        {{ users|selectattr('team_id', 'equalto', team.id)|selectattr('role', 'equalto', 'manager')|list|length }} managers
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
