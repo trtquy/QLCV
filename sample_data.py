@@ -2,7 +2,7 @@
 Sample data for TaskFlow - Banking and Financial Risk Management
 """
 from app import app, db
-from models import User, Task
+from models import User, Task, Team
 from data_manager import data_manager
 
 def create_sample_data():

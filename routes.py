@@ -68,17 +68,26 @@ def logout():
 
 @app.route('/create_task', methods=['POST'])
 def create_task():
-    """Create a new task"""
+    """Create a new task - Only managers can create tasks"""
     current_user = data_manager.get_current_user()
     if not current_user:
         return redirect(url_for('login'))
+    
+    # Check if user is a manager
+    if current_user.role != 'manager':
+        flash('Only managers can create tasks', 'error')
+        return redirect(url_for('index'))
+    
+    # Check if manager has a team assigned
+    if not current_user.team_id:
+        flash('Manager must be assigned to a team to create tasks', 'error')
+        return redirect(url_for('index'))
     
     title = request.form.get('title')
     description = request.form.get('description', '')
     assignee_id = request.form.get('assignee_id') or None
     priority = request.form.get('priority', 'medium')
     complexity = request.form.get('complexity', 'medium')
-    team_id = request.form.get('team_id') or None
     estimated_hours = request.form.get('estimated_hours')
     
     if title:
@@ -91,9 +100,8 @@ def create_task():
             complexity=complexity
         )
         
-        # Set team if provided
-        if team_id:
-            data_manager.update_task(task.id, team_id=team_id)
+        # Automatically set task team to manager's team
+        data_manager.update_task(task.id, team_id=current_user.team_id)
         
         # Set estimated hours if provided
         if estimated_hours:

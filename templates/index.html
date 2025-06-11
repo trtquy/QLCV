@@ -99,10 +99,17 @@ window.tasksData = [
                     <h1 class="h3 mb-1">Banking Task Board</h1>
                     <p class="text-muted mb-0">Manage your banking operations efficiently</p>
                 </div>
+                {% if current_user and current_user.role == 'manager' %}
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
                     <i data-feather="plus" class="me-2"></i>
                     Create New Task
                 </button>
+                {% else %}
+                <div class="text-muted">
+                    <i data-feather="info" class="me-2"></i>
+                    Only managers can create tasks
+                </div>
+                {% endif %}
             </div>
             
             <!-- Team Filter -->
@@ -324,21 +331,27 @@ window.tasksData = [
                                 <label for="assignee_id" class="form-label fw-medium mb-2">Assign To</label>
                                 <select class="form-select clean-input" id="assignee_id" name="assignee_id">
                                     <option value="">Select team member...</option>
-                                    {% for user in users %}
-                                        <option value="{{ user.id }}">{{ user.username }}</option>
-                                    {% endfor %}
+                                    {% if current_user and current_user.team %}
+                                        {% for user in users %}
+                                            {% if user.team_id == current_user.team_id %}
+                                                <option value="{{ user.id }}">{{ user.username }} ({{ user.role|title }})</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
                                 </select>
                             </div>
                             
+                            <!-- Team automatically set to manager's team -->
+                            {% if current_user and current_user.team %}
                             <div class="mb-4">
-                                <label for="team_id" class="form-label fw-medium mb-2">Banking Team</label>
-                                <select class="form-select clean-input" id="team_id" name="team_id">
-                                    <option value="">Select team...</option>
-                                    {% for team in teams %}
-                                        <option value="{{ team.id }}">{{ team.name }}</option>
-                                    {% endfor %}
-                                </select>
+                                <label class="form-label fw-medium mb-2">Banking Team</label>
+                                <div class="form-control clean-input bg-light text-muted">
+                                    <i data-feather="users" class="me-2" style="width: 16px; height: 16px;"></i>
+                                    {{ current_user.team.name }} (Auto-assigned)
+                                </div>
+                                <div class="form-text">Tasks are automatically assigned to your team</div>
                             </div>
+                            {% endif %}
                             
                             <div class="mb-4">
                                 <label for="estimated_hours" class="form-label fw-medium mb-2">
