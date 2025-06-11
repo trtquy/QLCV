@@ -484,6 +484,33 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// Set role modal data with administrator privileges
+function setRoleModalData(userId, username, currentRole, isAdmin) {
+    const modal = document.getElementById('roleModal');
+    const form = document.getElementById('roleForm');
+    const modalUsername = document.getElementById('modalUsername');
+    const adminCheckbox = document.getElementById('isAdministrator');
+    
+    if (modal && form && modalUsername) {
+        // Set form action URL
+        form.action = `/update_user_role/${userId}`;
+        
+        // Set username in modal
+        modalUsername.textContent = username;
+        
+        // Check current role
+        const roleRadios = form.querySelectorAll('input[name="role"]');
+        roleRadios.forEach(radio => {
+            radio.checked = radio.value === currentRole;
+        });
+        
+        // Set administrator checkbox
+        if (adminCheckbox) {
+            adminCheckbox.checked = isAdmin;
+        }
+    }
+}
+
 // Member profile modal (future enhancement)
 function showMemberProfile(userId) {
     // This would show detailed member information
@@ -498,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Export functions for global use
 window.initializeTeam = initializeTeam;
 window.exportTeamData = exportTeamData;
+window.setRoleModalData = setRoleModalData;
 window.showMemberProfile = showMemberProfile;
 window.toggleMemberSelection = toggleMemberSelection;
 window.bulkUpdateRole = bulkUpdateRole;
