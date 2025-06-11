@@ -98,7 +98,6 @@
                     {% for task in todo_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
-                             onclick="openEditModal('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -549,13 +548,33 @@
 </style>
 
 <script>
-// Define edit functionality globally first
+// Task data for editing - define first
+window.tasksData = [
+    {% for task in todo_tasks + in_progress_tasks + completed_tasks %}
+    {
+        id: "{{ task.id }}",
+        title: "{{ task.title|e }}",
+        description: "{{ task.description|e if task.description else '' }}",
+        status: "{{ task.status }}",
+        priority: "{{ task.priority }}",
+        complexity: "{{ task.complexity if task.complexity else 'medium' }}",
+        assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
+        team_id: "{{ task.team_id if task.team_id else '' }}",
+        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
+// Define edit functionality globally
 window.openEditModal = function(taskId) {
     console.log('Opening edit modal for task:', taskId);
+    console.log('Available task data:', window.tasksData);
     
     const task = window.tasksData?.find(t => t.id == taskId);
+    console.log('Found task:', task);
+    
     if (!task) {
-        alert('Task not found');
+        alert('Task not found. Available tasks: ' + window.tasksData.map(t => t.id).join(', '));
         return;
     }
     
@@ -571,6 +590,7 @@ window.openEditModal = function(taskId) {
     
     document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
     
+    console.log('Showing modal...');
     const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
     modal.show();
 };
@@ -641,22 +661,7 @@ function initializeModal() {
     });
 }
 
-// Task data for editing
-window.tasksData = [
-    {% for task in todo_tasks + in_progress_tasks + completed_tasks %}
-    {
-        id: "{{ task.id }}",
-        title: "{{ task.title|e }}",
-        description: "{{ task.description|e if task.description else '' }}",
-        status: "{{ task.status }}",
-        priority: "{{ task.priority }}",
-        complexity: "{{ task.complexity if task.complexity else 'medium' }}",
-        assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
-        team_id: "{{ task.team_id if task.team_id else '' }}",
-        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}"
-    }{% if not loop.last %},{% endif %}
-    {% endfor %}
-];
+
 
 
 
