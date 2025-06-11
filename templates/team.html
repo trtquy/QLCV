@@ -15,7 +15,7 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
     }
     
     .team-row:hover, .user-row:hover {
-        background-color: rgba(0, 107, 104, 0.05);
+        background-color: rgba(102, 126, 234, 0.05);
     }
     
     .team-icon, .user-avatar {
@@ -25,7 +25,7 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
         align-items: center;
         justify-content: center;
         border-radius: 8px;
-        background: linear-gradient(45deg, #006B68, #FFC62F);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         font-weight: 600;
     }
@@ -34,7 +34,7 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: linear-gradient(45deg, #006B68, #FFC62F);
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
         display: flex;
         align-items: center;
@@ -53,10 +53,10 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
     }
     
     .btn-outline-primary.btn-xs:hover {
-        background-color: #006B68;
-        border-color: #006B68;
+        background-color: #667eea;
+        border-color: #667eea;
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 107, 104, 0.3);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
     
     .btn-outline-secondary.btn-xs:hover {
@@ -67,11 +67,11 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
     }
     
     .btn-outline-warning.btn-xs:hover {
-        background-color: #FFC62F;
-        border-color: #FFC62F;
-        color: #000;
+        background-color: #ff9a56;
+        border-color: #ff9a56;
+        color: #fff;
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(255, 198, 47, 0.3);
+        box-shadow: 0 2px 8px rgba(255, 154, 86, 0.3);
     }
     
     .btn-outline-danger.btn-xs:hover {
@@ -341,7 +341,14 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
                                             <div class="d-flex align-items-center">
                                                 <div class="user-avatar me-3">
                                                     <div class="avatar-circle">
-                                                        {{ user.display_name[:2] if user.display_name else user.username[:2] }}
+                                                        {% set name_parts = (user.display_name or user.username).split() %}
+                                                        {% if name_parts|length >= 2 %}
+                                                            {{ name_parts[0][0] + name_parts[1][0] }}
+                                                        {% elif name_parts|length == 1 %}
+                                                            {{ name_parts[0][:2] }}
+                                                        {% else %}
+                                                            {{ user.username[:2] }}
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                                 <div>
