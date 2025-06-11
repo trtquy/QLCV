@@ -117,7 +117,7 @@ window.tasksData = [
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-text"><i data-feather="filter"></i></span>
-                        <select class="form-select" id="teamFilter" onchange="filterByTeam()">
+                        <select class="form-select" id="teamFilter" onchange="window.filterByTeam()">
                             <option value="">All Banking Teams</option>
                             {% for team in teams %}
                                 <option value="{{ team.id }}" {% if selected_team == team.id|string %}selected{% endif %}>
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Team filtering function
-function filterByTeam() {
+window.filterByTeam = function() {
     const teamSelect = document.getElementById('teamFilter');
     if (teamSelect && teamSelect.value) {
         // Redirect to filtered view
