@@ -18,6 +18,13 @@ function initializeKanban() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
+    
+    // Debug: Check if filterByTeam is accessible
+    if (typeof window.filterByTeam === 'function') {
+        console.log('filterByTeam function is available globally');
+    } else {
+        console.log('filterByTeam function is NOT available globally');
+    }
 }
 
 function initializeDragAndDrop() {
