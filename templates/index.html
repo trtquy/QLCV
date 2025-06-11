@@ -135,7 +135,6 @@
                     {% for task in in_progress_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
-                             onclick="openEditModal('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -173,7 +172,6 @@
                     {% for task in completed_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
-                             onclick="openEditModal('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -595,6 +593,23 @@ window.openEditModal = function(taskId) {
     modal.show();
 };
 
+// Add click event delegation for task cards
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up click handlers');
+    
+    document.addEventListener('click', function(e) {
+        const taskCard = e.target.closest('.task-card');
+        if (taskCard && !e.target.closest('button')) {
+            e.preventDefault();
+            const taskId = taskCard.dataset.taskId;
+            console.log('Task card clicked, ID:', taskId);
+            if (taskId && window.openEditModal) {
+                window.openEditModal(taskId);
+            }
+        }
+    });
+});
+
 // Team filtering
 function filterByTeam() {
     const teamSelect = document.getElementById('teamFilter');
@@ -701,7 +716,71 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof initializeKanban === 'function') {
         initializeKanban();
     }
+    
+    // Setup edit functionality
+    console.log('Setting up edit functionality');
+    setupEditHandlers();
 });
+
+// Setup edit handlers function
+function setupEditHandlers() {
+    document.addEventListener('click', function(e) {
+        const taskCard = e.target.closest('.task-card');
+        if (taskCard && !e.target.closest('button')) {
+            e.preventDefault();
+            const taskId = taskCard.dataset.taskId;
+            console.log('Task card clicked, ID:', taskId);
+            if (taskId) {
+                openTaskEditModal(taskId);
+            }
+        }
+    });
+}
+
+// Actual edit function
+function openTaskEditModal(taskId) {
+    console.log('Opening edit modal for task:', taskId);
+    
+    const task = window.tasksData?.find(t => t.id == taskId);
+    if (!task) {
+        alert('Task not found');
+        return;
+    }
+    
+    // Populate form fields
+    const titleInput = document.getElementById('edit_title');
+    const descInput = document.getElementById('edit_description');
+    const prioritySelect = document.getElementById('edit_priority');
+    const complexitySelect = document.getElementById('edit_complexity');
+    const statusSelect = document.getElementById('edit_status');
+    const assigneeSelect = document.getElementById('edit_assignee_id');
+    const teamSelect = document.getElementById('edit_team_id');
+    const hoursInput = document.getElementById('edit_estimated_hours');
+    
+    if (titleInput) titleInput.value = task.title || '';
+    if (descInput) descInput.value = task.description || '';
+    if (prioritySelect) prioritySelect.value = task.priority || 'medium';
+    if (complexitySelect) complexitySelect.value = task.complexity || 'medium';
+    if (statusSelect) statusSelect.value = task.status || 'todo';
+    if (assigneeSelect) assigneeSelect.value = task.assignee_id || '';
+    if (teamSelect) teamSelect.value = task.team_id || '';
+    if (hoursInput) hoursInput.value = task.estimated_hours || '';
+    
+    // Set form action
+    const form = document.getElementById('editTaskForm');
+    if (form) {
+        form.action = '/update_task/' + taskId;
+    }
+    
+    // Show modal
+    const modalElement = document.getElementById('editTaskModal');
+    if (modalElement && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        alert('Modal not available');
+    }
+}
 </script>
 
 <!-- Kanban Board JavaScript -->

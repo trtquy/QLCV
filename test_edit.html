@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Edit Functionality Test</h2>
+        
+        <!-- Test Task Card -->
+        <div class="card task-card mb-3" data-task-id="14" style="cursor: pointer; width: 300px;">
+            <div class="card-body">
+                <h6>Test Task</h6>
+                <p>Click this card to test edit modal</p>
+            </div>
+        </div>
+        
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editTaskModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>Edit Task</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="editTaskForm" method="POST">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input type="text" class="form-control" id="edit_title" name="title">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="edit_description" name="description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Priority</label>
+                                <select class="form-select" id="edit_priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Complexity</label>
+                                <select class="form-select" id="edit_complexity" name="complexity">
+                                    <option value="very_simple">Very Simple</option>
+                                    <option value="simple">Simple</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="complex">Complex</option>
+                                    <option value="very_complex">Very Complex</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update Task</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Test data
+        window.tasksData = [
+            {
+                id: "14",
+                title: "Test Task Title",
+                description: "Test description",
+                priority: "high",
+                complexity: "medium",
+                status: "todo",
+                assignee_id: "",
+                team_id: "",
+                estimated_hours: ""
+            }
+        ];
+
+        // Edit function
+        window.openEditModal = function(taskId) {
+            console.log('Opening edit modal for task:', taskId);
+            
+            const task = window.tasksData.find(t => t.id == taskId);
+            if (!task) {
+                alert('Task not found');
+                return;
+            }
+            
+            document.getElementById('edit_title').value = task.title || '';
+            document.getElementById('edit_description').value = task.description || '';
+            document.getElementById('edit_priority').value = task.priority || 'medium';
+            document.getElementById('edit_complexity').value = task.complexity || 'medium';
+            
+            document.getElementById('editTaskForm').action = '/update_task/' + taskId;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+            modal.show();
+        };
+
+        // Event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('click', function(e) {
+                const taskCard = e.target.closest('.task-card');
+                if (taskCard) {
+                    const taskId = taskCard.dataset.taskId;
+                    if (taskId) {
+                        window.openEditModal(taskId);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
