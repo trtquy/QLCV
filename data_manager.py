@@ -303,6 +303,12 @@ class DataManager:
         for user_id in user_stats:
             user_stats[user_id]['task_count'] = len(user_stats[user_id]['task_count'])
         
+        # Generate daily time data for charts
+        daily_data = self._generate_daily_time_data(time_logs, start_date, end_date)
+        
+        # Generate team time data for charts
+        team_data = self._generate_team_time_data(time_logs)
+        
         return {
             'total_hours': total_hours,
             'total_tasks': total_tasks,
@@ -310,7 +316,59 @@ class DataManager:
             'user_stats': user_stats,
             'time_logs': time_logs,
             'start_date': start_date,
-            'end_date': end_date
+            'end_date': end_date,
+            'daily_data': daily_data,
+            'team_data': team_data
+        }
+    
+    def _generate_daily_time_data(self, time_logs, start_date, end_date):
+        """Generate daily time tracking data for charts"""
+        from collections import defaultdict
+        
+        daily_hours = defaultdict(float)
+        current_date = start_date.date()
+        end_date_only = end_date.date()
+        
+        # Initialize all dates with 0 hours
+        while current_date <= end_date_only:
+            daily_hours[current_date.strftime('%Y-%m-%d')] = 0
+            current_date += timedelta(days=1)
+        
+        # Aggregate hours by date
+        for log in time_logs:
+            if log.duration_hours and log.start_time:
+                date_key = log.start_time.strftime('%Y-%m-%d')
+                daily_hours[date_key] += log.duration_hours
+        
+        # Sort by date and prepare for Chart.js
+        sorted_dates = sorted(daily_hours.keys())
+        return {
+            'dates': sorted_dates,
+            'hours': [daily_hours[date] for date in sorted_dates]
+        }
+    
+    def _generate_team_time_data(self, time_logs):
+        """Generate team-based time tracking data for charts"""
+        from collections import defaultdict
+        
+        team_hours = defaultdict(float)
+        
+        # Aggregate hours by team
+        for log in time_logs:
+            if log.duration_hours and log.task and log.task.team:
+                team_name = log.task.team.name
+                team_hours[team_name] += log.duration_hours
+        
+        # If no team data, use individual user data
+        if not team_hours:
+            for log in time_logs:
+                if log.duration_hours and log.user:
+                    user_name = log.user.display_name or log.user.username
+                    team_hours[user_name] += log.duration_hours
+        
+        return {
+            'names': list(team_hours.keys()),
+            'hours': list(team_hours.values())
         }
 
 # Global instance
