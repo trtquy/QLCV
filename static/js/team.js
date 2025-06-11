@@ -127,51 +127,11 @@ function initializeMemberInteractions() {
 }
 
 function initializeQuickActions() {
-    // Add quick action buttons (if manager)
-    const badges = document.querySelectorAll('.badge');
-    let isManager = false;
-    
-    badges.forEach(badge => {
-        if (badge.textContent.includes("Manager Access")) {
-            isManager = true;
-        }
-    });
-    
-    if (isManager) {
-        addManagerQuickActions();
-    }
+    // Remove quick action button creation to avoid duplicates
+    // Administrator controls are now handled directly in the template
 }
 
-function addManagerQuickActions() {
-    // Add bulk role update functionality
-    const headerActions = document.querySelector('.row.mb-4 .col');
-    if (headerActions) {
-        const actionsContainer = document.createElement('div');
-        // Only show team management actions for managers and admins
-        if (window.currentUserRole === 'manager' || window.currentUserRole === 'admin') {
-            actionsContainer.className = 'mt-2';
-            actionsContainer.innerHTML = `
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#teamManagementModal">
-                        <i data-feather="users" class="me-1"></i>
-                        Manage Teams
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportTeamData()">
-                        <i data-feather="download" class="me-1"></i>
-                        Export Data
-                    </button>
-                </div>
-            `;
-        }
-        
-        headerActions.appendChild(actionsContainer);
-        
-        // Refresh icons
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-    }
-}
+
 
 function toggleMemberSelection() {
     const memberCards = document.querySelectorAll('.team-member-card');
