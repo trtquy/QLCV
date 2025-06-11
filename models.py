@@ -10,7 +10,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     display_name = db.Column(db.String(200), nullable=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='analyst')  # 'analyst', 'manager', 'director', or 'admin'
+    role = db.Column(db.String(20), nullable=False, default='analyst')  # 'analyst', 'manager', 'director'
+    is_administrator = db.Column(db.Boolean, nullable=False, default=False)  # Administrator privilege
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     
@@ -36,7 +37,9 @@ class User(db.Model):
             'id': str(self.id),
             'username': self.username,
             'email': self.email,
+            'display_name': self.display_name,
             'role': self.role,
+            'is_administrator': self.is_administrator,
             'team_id': str(self.team_id) if self.team_id else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

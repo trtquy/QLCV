@@ -285,15 +285,17 @@ def team():
 
 @app.route('/update_user_role/<user_id>', methods=['POST'])
 def update_user_role(user_id):
-    """Update user role (manager only)"""
+    """Update user role (administrator only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role != 'manager':
-        flash('Access denied. Manager role required.', 'error')
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('team'))
     
     new_role = request.form.get('role')
-    if new_role in ['member', 'manager']:
-        user = data_manager.update_user(user_id, role=new_role)
+    is_admin = request.form.get('is_administrator') == 'on'
+    
+    if new_role in ['analyst', 'manager', 'director']:
+        user = data_manager.update_user(user_id, role=new_role, is_administrator=is_admin)
         if user:
             flash(f'User role updated successfully!', 'success')
         else:
@@ -305,10 +307,10 @@ def update_user_role(user_id):
 
 @app.route('/move_member_to_team', methods=['POST'])
 def move_member_to_team():
-    """Move a team member to a different team (manager only)"""
+    """Move a team member to a different team (administrator only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role not in ['manager', 'admin']:
-        flash('Only managers and admins can move team members', 'error')
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('team'))
     
     user_id = request.form.get('user_id')
