@@ -549,6 +549,13 @@ function deleteUser(userId) {
 
 // Inline Editing Functionality
 function initializeInlineEditing() {
+    // Check if user is administrator
+    const isAdmin = window.currentUserIsAdmin || false;
+    
+    if (!isAdmin) {
+        return; // Skip inline editing for non-administrators
+    }
+    
     // Team name editing
     document.querySelectorAll('.team-name-edit').forEach(element => {
         element.addEventListener('click', function() {
