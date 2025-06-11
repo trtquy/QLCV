@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Search Results</h2>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i data-feather="arrow-left" class="me-1"></i>
+            Back to Board
+        </a>
+    </div>
+
+    {% if query %}
+    <div class="mb-3">
+        <p class="text-muted">Found {{ tasks|length }} result(s) for "<strong>{{ query }}</strong>"</p>
+    </div>
+    {% endif %}
+
+    {% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card task-card priority-{{ task.priority }}" 
+                 data-task-id="{{ task.id }}" 
+                 style="cursor: pointer;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">{{ task.title }}</h6>
+                        <span class="badge bg-{{ 'danger' if task.priority == 'urgent' else 'warning' if task.priority == 'high' else 'success' if task.priority == 'medium' else 'primary' }}">
+                            {{ task.priority.title() }}
+                        </span>
+                    </div>
+                    
+                    {% if task.description %}
+                    <p class="card-text text-muted small mb-2">
+                        {{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Status: {{ task.status.replace('_', ' ').title() }}
+                        </small>
+                        <small class="text-muted">
+                            Task #{{ task.id }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i data-feather="search" class="mb-3" style="width: 48px; height: 48px; color: #6c757d;"></i>
+        <h4 class="text-muted">No tasks found</h4>
+        <p class="text-muted">Try adjusting your search terms</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
