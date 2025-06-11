@@ -3,6 +3,66 @@
 {% block title %}Banking Task Board - TaskFlow{% endblock %}
 
 {% block extra_head %}
+<script>
+// Define edit function globally before page loads
+function openTaskEditModal(taskId) {
+    // Find task data
+    var task = null;
+    if (window.tasksData) {
+        for (var i = 0; i < window.tasksData.length; i++) {
+            if (window.tasksData[i].id == taskId) {
+                task = window.tasksData[i];
+                break;
+            }
+        }
+    }
+    
+    if (!task) {
+        alert('Task not found');
+        return;
+    }
+    
+    // Wait for DOM to be ready
+    setTimeout(function() {
+        // Set form values
+        document.getElementById('edit_title').value = task.title || '';
+        document.getElementById('edit_description').value = task.description || '';
+        document.getElementById('edit_priority').value = task.priority || 'medium';
+        document.getElementById('edit_complexity').value = task.complexity || 'medium';
+        document.getElementById('edit_status').value = task.status || 'todo';
+        document.getElementById('edit_assignee_id').value = task.assignee_id || '';
+        document.getElementById('edit_team_id').value = task.team_id || '';
+        document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
+        
+        // Set form action
+        document.getElementById('editTaskForm').action = '/update_task/' + taskId;
+        
+        // Show modal
+        var modalEl = document.getElementById('editTaskModal');
+        if (modalEl && bootstrap && bootstrap.Modal) {
+            var modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    }, 100);
+}
+
+// Initialize task data early
+window.tasksData = [
+    {% for task in todo_tasks + in_progress_tasks + completed_tasks %}
+    {
+        id: "{{ task.id }}",
+        title: "{{ task.title|e }}",
+        description: "{{ task.description|e if task.description else '' }}",
+        status: "{{ task.status }}",
+        priority: "{{ task.priority }}",
+        complexity: "{{ task.complexity if task.complexity else 'medium' }}",
+        assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
+        team_id: "{{ task.team_id if task.team_id else '' }}",
+        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+</script>
 <style>
     .kanban-column {
         min-height: 600px;
@@ -549,22 +609,7 @@
 </style>
 
 <script>
-// Task data for editing - define first
-window.tasksData = [
-    {% for task in todo_tasks + in_progress_tasks + completed_tasks %}
-    {
-        id: "{{ task.id }}",
-        title: "{{ task.title|e }}",
-        description: "{{ task.description|e if task.description else '' }}",
-        status: "{{ task.status }}",
-        priority: "{{ task.priority }}",
-        complexity: "{{ task.complexity if task.complexity else 'medium' }}",
-        assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
-        team_id: "{{ task.team_id if task.team_id else '' }}",
-        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}"
-    }{% if not loop.last %},{% endif %}
-    {% endfor %}
-];
+
 
 
 
@@ -695,40 +740,7 @@ function setupEditHandlers() {
     });
 }
 
-// Simple working edit function
-function openTaskEditModal(taskId) {
-    // Find task data
-    var task = null;
-    for (var i = 0; i < window.tasksData.length; i++) {
-        if (window.tasksData[i].id == taskId) {
-            task = window.tasksData[i];
-            break;
-        }
-    }
-    
-    if (!task) {
-        alert('Task not found');
-        return;
-    }
-    
-    // Set form values directly
-    document.getElementById('edit_title').value = task.title || '';
-    document.getElementById('edit_description').value = task.description || '';
-    document.getElementById('edit_priority').value = task.priority || 'medium';
-    document.getElementById('edit_complexity').value = task.complexity || 'medium';
-    document.getElementById('edit_status').value = task.status || 'todo';
-    document.getElementById('edit_assignee_id').value = task.assignee_id || '';
-    document.getElementById('edit_team_id').value = task.team_id || '';
-    document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
-    
-    // Set form action
-    document.getElementById('editTaskForm').action = '/update_task/' + taskId;
-    
-    // Show modal using Bootstrap
-    var modalEl = document.getElementById('editTaskModal');
-    var modal = new bootstrap.Modal(modalEl);
-    modal.show();
-}
+
 </script>
 
 <!-- Kanban Board JavaScript -->
