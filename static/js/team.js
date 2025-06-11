@@ -271,6 +271,11 @@ function bulkUpdateRole(newRole) {
 }
 
 function initializeMemberFiltering() {
+    // Check if filter controls already exist to prevent duplicates
+    if (document.getElementById('memberSearch')) {
+        return;
+    }
+    
     // Add filter controls
     const cardHeader = document.querySelector('.card-header');
     if (cardHeader) {
@@ -286,7 +291,9 @@ function initializeMemberFiltering() {
                     <select class="form-select form-select-sm" id="roleFilter">
                         <option value="">All Roles</option>
                         <option value="manager">Managers</option>
-                        <option value="member">Members</option>
+                        <option value="analyst">Analysts</option>
+                        <option value="director">Directors</option>
+                        <option value="admin">Admins</option>
                     </select>
                 </div>
                 <div class="col-md-3">
