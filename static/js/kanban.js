@@ -229,6 +229,11 @@ function loadTaskForEdit(taskId) {
     document.getElementById('edit_team_id').value = task.team_id || '';
     document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
     
+    // Populate date fields
+    document.getElementById('edit_started_at').value = task.started_at ? task.started_at.split('T')[0] : '';
+    document.getElementById('edit_due_date').value = task.due_date ? task.due_date.split('T')[0] : '';
+    document.getElementById('edit_completed_at').value = task.completed_at ? task.completed_at.split('T')[0] : '';
+    
     // Set form action
     document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
     

@@ -87,15 +87,37 @@ def create_task():
     priority = request.form.get('priority', 'medium')
     complexity = request.form.get('complexity', 'medium')
     estimated_hours = request.form.get('estimated_hours')
+    started_at = request.form.get('started_at')
+    due_date = request.form.get('due_date')
     
     if title:
+        # Parse date fields
+        parsed_started_at = None
+        parsed_due_date = None
+        
+        if started_at:
+            try:
+                from datetime import datetime
+                parsed_started_at = datetime.strptime(started_at, '%Y-%m-%d')
+            except ValueError:
+                pass
+                
+        if due_date:
+            try:
+                from datetime import datetime
+                parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
+            except ValueError:
+                pass
+        
         task = data_manager.create_task(
             title=title,
             description=description,
             created_by=current_user.id,
             assignee_id=assignee_id,
             priority=priority,
-            complexity=complexity
+            complexity=complexity,
+            started_at=parsed_started_at,
+            due_date=parsed_due_date
         )
         
         # Automatically set task team to manager's team (if manager has team)
@@ -141,8 +163,42 @@ def update_task(task_id):
     status = request.form.get('task_status', 'todo')
     team_id = request.form.get('team_id') or None
     estimated_hours = request.form.get('estimated_hours')
+    started_at = request.form.get('started_at')
+    due_date = request.form.get('due_date')
+    completed_at = request.form.get('completed_at')
     
     if title:
+        # Parse date fields
+        parsed_started_at = None
+        parsed_due_date = None
+        parsed_completed_at = None
+        
+        if started_at:
+            try:
+                from datetime import datetime
+                parsed_started_at = datetime.strptime(started_at, '%Y-%m-%d')
+            except ValueError:
+                pass
+                
+        if due_date:
+            try:
+                from datetime import datetime
+                parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
+            except ValueError:
+                pass
+                
+        if completed_at:
+            try:
+                from datetime import datetime
+                parsed_completed_at = datetime.strptime(completed_at, '%Y-%m-%d')
+            except ValueError:
+                pass
+        
+        # Auto-set completed date when status changes to completed
+        if status == 'completed' and not parsed_completed_at:
+            from datetime import datetime
+            parsed_completed_at = datetime.utcnow()
+        
         task = data_manager.update_task(
             task_id,
             title=title,
@@ -151,7 +207,10 @@ def update_task(task_id):
             priority=priority,
             complexity=complexity,
             status=status,
-            team_id=team_id
+            team_id=team_id,
+            started_at=parsed_started_at,
+            due_date=parsed_due_date,
+            completed_at=parsed_completed_at
         )
         
         # Update estimated hours if provided
