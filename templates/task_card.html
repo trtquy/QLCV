@@ -32,7 +32,7 @@
             </small>
             {% endif %}
             {% if task.due_date %}
-            <small class="{% if task.due_date < task.due_date.__class__.today() and task.status != 'completed' %}text-danger{% else %}text-muted{% endif %} me-2">
+            <small class="text-muted me-2">
                 <i data-feather="calendar" style="width: 12px; height: 12px;"></i>
                 Due: {{ task.due_date.strftime('%m/%d/%Y') }}
             </small>

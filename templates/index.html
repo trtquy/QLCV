@@ -34,6 +34,11 @@ function openTaskEditModal(taskId) {
         document.getElementById('edit_team_id').value = task.team_id || '';
         document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
         
+        // Set date fields
+        document.getElementById('edit_started_at').value = task.started_at ? task.started_at.split('T')[0] : '';
+        document.getElementById('edit_due_date').value = task.due_date ? task.due_date.split('T')[0] : '';
+        document.getElementById('edit_completed_at').value = task.completed_at ? task.completed_at.split('T')[0] : '';
+        
         // Set form action
         document.getElementById('editTaskForm').action = '/update_task/' + taskId;
         
@@ -58,7 +63,10 @@ window.tasksData = [
         complexity: "{{ task.complexity if task.complexity else 'medium' }}",
         assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
         team_id: "{{ task.team_id if task.team_id else '' }}",
-        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}"
+        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}",
+        started_at: "{{ task.started_at.isoformat() if task.started_at else '' }}",
+        due_date: "{{ task.due_date.isoformat() if task.due_date else '' }}",
+        completed_at: "{{ task.completed_at.isoformat() if task.completed_at else '' }}"
     }{% if not loop.last %},{% endif %}
     {% endfor %}
 ];
