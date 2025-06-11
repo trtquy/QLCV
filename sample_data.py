@@ -62,7 +62,9 @@ def create_sample_data():
         
         # Create users and assign to teams
         created_users = []
-        for i, user_data in enumerate(users_data):
+        team_lookup = {team.name: team.id for team in created_teams}
+        
+        for user_data in users_data:
             user = User(
                 username=user_data['username'],
                 email=user_data['email'],
@@ -74,15 +76,9 @@ def create_sample_data():
             # Admin and Directors don't need team assignments
             if user_data['role'] in ['admin', 'director']:
                 user.team_id = None
-            # Assign sarah_chen (manager) to Risk Assessment Team
-            elif user_data['username'] == 'sarah_chen':
-                user.team_id = created_teams[0].id
-            # Assign analysts to teams
-            elif user_data['role'] == 'analyst':
-                if i <= 3:  # mike_rodriguez, emily_watson to Risk Assessment
-                    user.team_id = created_teams[0].id
-                else:  # jennifer_lopez to other teams
-                    user.team_id = created_teams[1].id
+            # Assign analysts and managers to their specified teams
+            elif 'team_name' in user_data and user_data['team_name'] in team_lookup:
+                user.team_id = team_lookup[user_data['team_name']]
                 
             db.session.add(user)
             created_users.append(user)
