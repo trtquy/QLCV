@@ -14,8 +14,13 @@ def create_sample_data():
         db.session.query(User).delete()
         db.session.commit()
         
-        # Create sample users
+        # Create sample users with new role structure
         users_data = [
+            {
+                'username': 'admin',
+                'email': 'admin@globalbank.com',
+                'role': 'admin'
+            },
             {
                 'username': 'sarah_chen',
                 'email': 'sarah.chen@globalbank.com',
@@ -24,22 +29,22 @@ def create_sample_data():
             {
                 'username': 'mike_rodriguez',
                 'email': 'mike.rodriguez@globalbank.com',
-                'role': 'member'
+                'role': 'analyst'
             },
             {
                 'username': 'emily_watson',
                 'email': 'emily.watson@globalbank.com',
-                'role': 'member'
+                'role': 'analyst'
             },
             {
                 'username': 'david_kim',
                 'email': 'david.kim@globalbank.com',
-                'role': 'member'
+                'role': 'director'
             },
             {
                 'username': 'jennifer_lopez',
                 'email': 'jennifer.lopez@globalbank.com',
-                'role': 'member'
+                'role': 'analyst'
             }
         ]
         
@@ -71,14 +76,18 @@ def create_sample_data():
         created_users = []
         for i, user_data in enumerate(users_data):
             user = User(**user_data)
+            # Admin and Directors don't need team assignments
+            if user_data['role'] in ['admin', 'director']:
+                user.team_id = None
             # Assign sarah_chen (manager) to Risk Assessment Team
-            if user_data['username'] == 'sarah_chen':
+            elif user_data['username'] == 'sarah_chen':
                 user.team_id = created_teams[0].id
-            # Assign other users to same team as manager
-            elif i <= 2:  # mike_rodriguez, emily_watson 
-                user.team_id = created_teams[0].id
-            else:  # david_kim, jennifer_lopez to other teams
-                user.team_id = created_teams[1].id if i == 3 else created_teams[2].id
+            # Assign analysts to teams
+            elif user_data['role'] == 'analyst':
+                if i <= 3:  # mike_rodriguez, emily_watson to Risk Assessment
+                    user.team_id = created_teams[0].id
+                else:  # jennifer_lopez to other teams
+                    user.team_id = created_teams[1].id
                 
             db.session.add(user)
             created_users.append(user)

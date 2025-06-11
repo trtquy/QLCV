@@ -73,13 +73,13 @@ def create_task():
     if not current_user:
         return redirect(url_for('login'))
     
-    # Check if user is a manager
-    if current_user.role != 'manager':
-        flash('Only managers can create tasks', 'error')
+    # Check if user is a manager or admin
+    if current_user.role not in ['manager', 'admin']:
+        flash('Only managers and admins can create tasks', 'error')
         return redirect(url_for('index'))
     
-    # Check if manager has a team assigned
-    if not current_user.team_id:
+    # Check if manager has a team assigned (admins can create tasks without teams)
+    if current_user.role == 'manager' and not current_user.team_id:
         flash('Manager must be assigned to a team to create tasks', 'error')
         return redirect(url_for('index'))
     
@@ -100,8 +100,9 @@ def create_task():
             complexity=complexity
         )
         
-        # Automatically set task team to manager's team
-        data_manager.update_task(task.id, team_id=current_user.team_id)
+        # Automatically set task team to manager's team (if manager has team)
+        if current_user.team_id:
+            data_manager.update_task(task.id, team_id=current_user.team_id)
         
         # Set estimated hours if provided
         if estimated_hours:
@@ -308,8 +309,8 @@ def update_user_role(user_id):
 def move_member_to_team():
     """Move a team member to a different team (manager only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role != 'manager':
-        flash('Only managers can move team members', 'error')
+    if not current_user or current_user.role not in ['manager', 'admin']:
+        flash('Only managers and admins can move team members', 'error')
         return redirect(url_for('team'))
     
     user_id = request.form.get('user_id')
@@ -334,8 +335,8 @@ def move_member_to_team():
 def add_team_member():
     """Add a new team member (manager only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role != 'manager':
-        flash('Only managers can add team members', 'error')
+    if not current_user or current_user.role not in ['manager', 'admin']:
+        flash('Only managers and admins can add team members', 'error')
         return redirect(url_for('team'))
     
     username = request.form.get('username')
