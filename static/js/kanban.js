@@ -136,17 +136,27 @@ function updateTaskStatus(taskId, newStatus) {
 }
 
 function initializeTaskEditing() {
+    console.log('Initializing task editing...');
+    
     // Add click handlers for task cards (but not during drag)
     document.addEventListener('click', function(e) {
+        console.log('Click detected:', e.target);
+        
         // Check if clicked element is a button or inside a button
         if (e.target.closest('button') || e.target.closest('.time-tracking-btn')) {
+            console.log('Button click, ignoring');
             return; // Don't trigger edit for button clicks
         }
         
         const taskCard = e.target.closest('.task-card');
+        console.log('Task card found:', taskCard);
+        
         if (taskCard && !taskCard.classList.contains('dragging')) {
             const taskId = taskCard.dataset.taskId;
+            console.log('Task ID:', taskId);
+            
             if (taskId) {
+                console.log('Loading task for edit:', taskId);
                 loadTaskForEdit(taskId);
             }
         }
@@ -189,10 +199,16 @@ function initializeTaskEditing() {
 }
 
 function loadTaskForEdit(taskId) {
+    console.log('loadTaskForEdit called with ID:', taskId);
+    console.log('Available task data:', window.tasksData);
+    
     // Find task data
-    const task = window.tasksData?.find(t => t.id === taskId);
+    const task = window.tasksData?.find(t => t.id == taskId);
+    console.log('Found task:', task);
+    
     if (!task) {
         console.error('Task not found:', taskId);
+        alert('Task data not found. Please refresh the page.');
         return;
     }
     
@@ -208,6 +224,8 @@ function loadTaskForEdit(taskId) {
     
     // Set form action
     document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
+    
+    console.log('Showing modal...');
     
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
