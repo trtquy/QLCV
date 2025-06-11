@@ -333,10 +333,10 @@ def move_member_to_team():
 
 @app.route('/add_team_member', methods=['POST'])
 def add_team_member():
-    """Add a new team member (manager only)"""
+    """Add a new team member (administrator only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role not in ['manager', 'admin']:
-        flash('Only managers and admins can add team members', 'error')
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('team'))
     
     username = request.form.get('username')

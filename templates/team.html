@@ -4,8 +4,9 @@
 
 {% block extra_head %}
 <script>
-// Pass current user role to JavaScript
+// Pass current user role and admin status to JavaScript
 window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
+window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_administrator else 'false' }};
 </script>
 <style>
     .team-member-card {
@@ -225,14 +226,18 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                                         <div class="card-body position-relative p-3">
                                             <!-- Role Badge -->
                                             <div class="role-badge">
-                                                {% if user.role == 'admin' %}
-                                                    <span class="badge bg-dark">Admin</span>
-                                                {% elif user.role == 'manager' %}
-                                                    <span class="badge bg-warning text-dark">Manager</span>
+                                                {% if user.is_administrator %}
+                                                    <span class="badge bg-dark">
+                                                        <i data-feather="shield" class="me-1" style="width: 12px; height: 12px;"></i>
+                                                        Administrator
+                                                    </span>
+                                                {% endif %}
+                                                {% if user.role == 'manager' %}
+                                                    <span class="badge bg-warning text-dark {% if user.is_administrator %}ms-1{% endif %}">Manager</span>
                                                 {% elif user.role == 'director' %}
-                                                    <span class="badge bg-secondary">Director</span>
+                                                    <span class="badge bg-secondary {% if user.is_administrator %}ms-1{% endif %}">Director</span>
                                                 {% else %}
-                                                    <span class="badge bg-primary">Analyst</span>
+                                                    <span class="badge bg-primary {% if user.is_administrator %}ms-1{% endif %}">Analyst</span>
                                                 {% endif %}
                                             </div>
                                             
@@ -295,12 +300,12 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                                             {% endif %}
                                             
                                             <!-- Actions -->
-                                            {% if current_user.role == 'manager' and user.id != current_user.id %}
+                                            {% if current_user.is_administrator and user.id != current_user.id %}
                                                 <div class="d-grid">
                                                     <button class="btn btn-outline-primary btn-sm" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#roleModal"
-                                                            onclick="setRoleModalData('{{ user.id }}', '{{ user.display_name or user.username }}', '{{ user.role }}')">
+                                                            onclick="setRoleModalData('{{ user.id }}', '{{ user.display_name or user.username }}', '{{ user.role }}', {{ 'true' if user.is_administrator else 'false' }})">
                                                         <i data-feather="settings" class="me-1" style="width: 14px; height: 14px;"></i>
                                                         Manage Role
                                                     </button>
@@ -325,17 +330,17 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
 </div>
 
 <!-- Role Management Modal -->
-{% if current_user.role == 'manager' %}
+{% if current_user.is_administrator %}
 <div class="modal fade" id="roleModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Manage User Role</h5>
+                <h5 class="modal-title">Manage User Role & Privileges</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" id="roleForm">
                 <div class="modal-body">
-                    <p>Update role for <strong id="modalUsername"></strong>:</p>
+                    <p>Update role and privileges for <strong id="modalUsername"></strong>:</p>
                     
                     <div class="mb-3">
                         <label class="form-label">Select Role</label>
@@ -360,15 +365,16 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                                 <br><small class="text-muted">Executive oversight, not assigned to teams</small>
                             </label>
                         </div>
-                        {% if current_user.role == 'admin' %}
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="radio" name="role" value="admin" id="roleAdmin">
-                            <label class="form-check-label" for="roleAdmin">
-                                <strong>Admin</strong>
-                                <br><small class="text-muted">Full system access and management</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_administrator" id="isAdministrator">
+                            <label class="form-check-label" for="isAdministrator">
+                                <strong>Administrator Privileges</strong>
+                                <br><small class="text-muted">Can manage user roles and system settings</small>
                             </label>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
                 <div class="modal-footer">
