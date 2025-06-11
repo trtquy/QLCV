@@ -486,6 +486,45 @@ window.tasksData = [
                                 <div class="form-text">Optional: Estimated time to complete this task</div>
                             </div>
                         </div>
+                        
+                        <!-- Start Date -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_started_at" class="form-label fw-medium mb-2">
+                                    <i data-feather="play-circle" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Start Date
+                                </label>
+                                <input type="date" class="form-control clean-input" id="edit_started_at" 
+                                       name="started_at">
+                                <div class="form-text">When work on this task began</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Due Date -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_due_date" class="form-label fw-medium mb-2">
+                                    <i data-feather="calendar" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Due Date
+                                </label>
+                                <input type="date" class="form-control clean-input" id="edit_due_date" 
+                                       name="due_date">
+                                <div class="form-text">Target completion date</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Completed Date -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_completed_at" class="form-label fw-medium mb-2">
+                                    <i data-feather="check-circle" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Completed Date
+                                </label>
+                                <input type="date" class="form-control clean-input" id="edit_completed_at" 
+                                       name="completed_at" readonly>
+                                <div class="form-text">Automatically set when task is completed</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 

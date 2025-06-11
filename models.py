@@ -91,6 +91,7 @@ class Task(db.Model):
     estimated_hours = db.Column(db.Float, nullable=True)
     actual_hours = db.Column(db.Float, nullable=True, default=0.0)
     started_at = db.Column(db.DateTime, nullable=True)
+    due_date = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     
     # Foreign Keys
@@ -135,6 +136,7 @@ class Task(db.Model):
             'estimated_hours': self.estimated_hours,
             'actual_hours': self.actual_hours,
             'started_at': self.started_at.isoformat() if self.started_at else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'total_time_logged': self.get_total_time_logged(),
             'time_variance': self.get_time_variance()
