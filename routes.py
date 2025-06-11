@@ -344,21 +344,31 @@ def add_team_member():
     role = request.form.get('role', 'member')
     
     if username and email and team_id:
-        # Check if user already exists
+        # Check if user already exists by username
         existing_user = data_manager.get_user_by_username(username)
         if existing_user:
-            flash(f'User {username} already exists', 'error')
+            flash(f'Username {username} already exists', 'error')
             return redirect(url_for('team'))
         
-        # Create new user
-        user = data_manager.create_user(username, email, role)
-        if user:
-            # Assign to team
-            data_manager.update_user(str(user.id), team_id=int(team_id))
-            team = data_manager.get_team(team_id)
-            flash(f'User {username} added to {team.name if team else "team"} successfully', 'success')
-        else:
-            flash('Failed to create user', 'error')
+        # Check if email already exists
+        existing_users = data_manager.get_all_users()
+        for user in existing_users:
+            if user.email.lower() == email.lower():
+                flash(f'Email {email} already exists', 'error')
+                return redirect(url_for('team'))
+        
+        try:
+            # Create new user
+            user = data_manager.create_user(username, email, role)
+            if user:
+                # Assign to team
+                data_manager.update_user(str(user.id), team_id=int(team_id))
+                team = data_manager.get_team(team_id)
+                flash(f'User {username} added to {team.name if team else "team"} successfully', 'success')
+            else:
+                flash('Failed to create user', 'error')
+        except Exception as e:
+            flash('Email or username already exists', 'error')
     else:
         flash('Please fill in all required fields', 'error')
     
