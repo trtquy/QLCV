@@ -623,13 +623,54 @@ window.tasksData = [
     {% endfor %}
 ];
 
+// Simple edit functionality directly in template
+function openEditModal(taskId) {
+    console.log('Opening edit modal for task:', taskId);
+    
+    const task = window.tasksData?.find(t => t.id == taskId);
+    if (!task) {
+        alert('Task not found');
+        return;
+    }
+    
+    // Populate form
+    document.getElementById('edit_title').value = task.title || '';
+    document.getElementById('edit_description').value = task.description || '';
+    document.getElementById('edit_assignee_id').value = task.assignee_id || '';
+    document.getElementById('edit_priority').value = task.priority || 'medium';
+    document.getElementById('edit_complexity').value = task.complexity || 'medium';
+    document.getElementById('edit_status').value = task.status || 'todo';
+    document.getElementById('edit_team_id').value = task.team_id || '';
+    document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
+    
+    document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+    modal.show();
+}
+
+// Add click event to task cards
+document.addEventListener('click', function(e) {
+    const taskCard = e.target.closest('.task-card');
+    if (taskCard && !e.target.closest('button')) {
+        const taskId = taskCard.dataset.taskId;
+        if (taskId) {
+            openEditModal(taskId);
+        }
+    }
+});
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
     initializeModal();
-    initializeKanban();
+    
+    // Initialize kanban if function exists
+    if (typeof initializeKanban === 'function') {
+        initializeKanban();
+    }
 });
 </script>
 
