@@ -94,19 +94,26 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container-fluid mt-3">
+    <!-- Toast Container for Bottom-Left Notifications -->
+    <div class="toast-container position-fixed bottom-0 start-0 p-3" style="z-index: 1060;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="toast show" role="alert" data-bs-autohide="true" data-bs-delay="4000">
+                        <div class="toast-header">
+                            <div class="rounded me-2" style="width: 16px; height: 16px; background-color: {{ '#dc3545' if category == 'error' else '#198754' if category == 'success' else '#0d6efd' }};"></div>
+                            <strong class="me-auto">{{ 'Error' if category == 'error' else 'Success' if category == 'success' else 'Info' }}</strong>
+                            <small class="text-muted">now</small>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
                     </div>
                 {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <!-- Main Content -->
     <main>
