@@ -391,10 +391,10 @@ def add_team_member():
 
 @app.route('/create_team', methods=['POST'])
 def create_team():
-    """Create a new team (admin only)"""
+    """Create a new team (administrator only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role != 'admin':
-        flash('Only admins can create teams', 'error')
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('team'))
     
     team_name = request.form.get('team_name')
@@ -415,10 +415,10 @@ def create_team():
 
 @app.route('/edit_team/<team_id>', methods=['POST'])
 def edit_team(team_id):
-    """Edit team details (admin only)"""
+    """Edit team details (administrator only)"""
     current_user = data_manager.get_current_user()
-    if not current_user or current_user.role != 'admin':
-        flash('Only admins can edit teams', 'error')
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
         return redirect(url_for('team'))
     
     team = data_manager.get_team(team_id)

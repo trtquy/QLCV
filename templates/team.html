@@ -92,6 +92,12 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
                 
                 <div class="d-flex align-items-center gap-3">
                     {% if current_user and current_user.is_administrator %}
+                    <button type="button" class="btn btn-primary btn-sm" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#adminManagementModal">
+                        <i data-feather="users" class="me-1"></i>
+                        Manage Users
+                    </button>
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportTeamData()">
                         <i data-feather="download" class="me-1"></i>
                         Export Data
@@ -618,6 +624,114 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
     </div>
 </div>
 {% endif %}
+
+<!-- Administrator Management Modal -->
+{% if current_user and current_user.is_administrator %}
+<div class="modal fade" id="adminManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Administrator Panel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Add New User</h6>
+                        <form action="{{ url_for('add_team_member') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" name="username" required 
+                                       placeholder="Enter username">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" required 
+                                       placeholder="user@bidv.com.vn">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" name="role" required id="adminRoleSelect" onchange="handleAdminRoleChange()">
+                                    <option value="analyst">Analyst</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="director">Director</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="adminTeamAssignmentDiv">
+                                <label class="form-label">Assign to Team</label>
+                                <select class="form-select" name="team_id" id="adminTeamSelect">
+                                    <option value="">Choose team...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Directors don't require team assignment</small>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i data-feather="user-plus" class="me-1"></i>
+                                Add User
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Create New Team</h6>
+                        <form action="{{ url_for('create_team') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Team Name</label>
+                                <input type="text" class="form-control" name="team_name" required 
+                                       placeholder="Enter team name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="team_description" rows="3" 
+                                          placeholder="Team description"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i data-feather="plus" class="me-1"></i>
+                                Create Team
+                            </button>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <h6 class="mb-3">Move User Between Teams</h6>
+                        <form action="{{ url_for('move_member_to_team') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Select User</label>
+                                <select class="form-select" name="user_id" required>
+                                    <option value="">Choose user...</option>
+                                    {% for user in users %}
+                                        {% if user.id != current_user.id %}
+                                            <option value="{{ user.id }}">
+                                                {{ user.display_name or user.username }} 
+                                                ({{ user.team.name if user.team else 'No Team' }})
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Move to Team</label>
+                                <select class="form-select" name="team_id" required>
+                                    <option value="">Choose team...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i data-feather="arrow-right" class="me-1"></i>
+                                Move User
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -677,6 +791,23 @@ function handleRoleChange() {
     
     if (roleSelect.value === 'director' || roleSelect.value === 'admin') {
         // Directors and Admins don't require team assignment
+        teamAssignmentSelect.removeAttribute('required');
+        teamAssignmentDiv.style.opacity = '0.6';
+        teamAssignmentSelect.value = '';
+    } else {
+        // Analysts and Managers require team assignment
+        teamAssignmentSelect.setAttribute('required', 'required');
+        teamAssignmentDiv.style.opacity = '1';
+    }
+}
+
+function handleAdminRoleChange() {
+    const roleSelect = document.getElementById('adminRoleSelect');
+    const teamAssignmentDiv = document.getElementById('adminTeamAssignmentDiv');
+    const teamAssignmentSelect = document.getElementById('adminTeamSelect');
+    
+    if (roleSelect.value === 'director') {
+        // Directors don't require team assignment
         teamAssignmentSelect.removeAttribute('required');
         teamAssignmentDiv.style.opacity = '0.6';
         teamAssignmentSelect.value = '';
