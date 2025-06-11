@@ -43,10 +43,43 @@ def create_sample_data():
             }
         ]
         
-        # Create users
+        # Create teams first
+        teams_data = [
+            {
+                'name': 'Risk Assessment Team',
+                'description': 'Responsible for credit risk, market risk, and operational risk assessment'
+            },
+            {
+                'name': 'Compliance & Regulatory Team',
+                'description': 'Handles regulatory compliance and policy implementation'
+            },
+            {
+                'name': 'Financial Analytics Team',
+                'description': 'Develops financial models and analytics solutions'
+            }
+        ]
+        
+        created_teams = []
+        for team_data in teams_data:
+            team = Team(**team_data)
+            db.session.add(team)
+            created_teams.append(team)
+        
+        db.session.commit()
+        
+        # Create users and assign to teams
         created_users = []
-        for user_data in users_data:
+        for i, user_data in enumerate(users_data):
             user = User(**user_data)
+            # Assign sarah_chen (manager) to Risk Assessment Team
+            if user_data['username'] == 'sarah_chen':
+                user.team_id = created_teams[0].id
+            # Assign other users to same team as manager
+            elif i <= 2:  # mike_rodriguez, emily_watson 
+                user.team_id = created_teams[0].id
+            else:  # david_kim, jennifer_lopez to other teams
+                user.team_id = created_teams[1].id if i == 3 else created_teams[2].id
+                
             db.session.add(user)
             created_users.append(user)
         
@@ -152,15 +185,18 @@ def create_sample_data():
             }
         ]
         
-        # Create tasks
+        # Create tasks and assign to teams
         for task_data in tasks_data:
             task = Task(**task_data)
+            # Assign tasks to the Risk Assessment Team (sarah_chen's team)
+            task.team_id = created_teams[0].id
             db.session.add(task)
         
         db.session.commit()
         
         print("Sample data created successfully!")
-        print(f"Created {len(created_users)} users and {len(tasks_data)} tasks")
+        print(f"Created {len(created_teams)} teams, {len(created_users)} users and {len(tasks_data)} tasks")
+        print("Manager sarah_chen assigned to Risk Assessment Team with team members")
 
 if __name__ == '__main__':
     create_sample_data()
