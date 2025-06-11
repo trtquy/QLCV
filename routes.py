@@ -48,7 +48,7 @@ def login():
                 data_manager.set_current_user(user.id)
                 session['user_id'] = user.id
                 flash(f'Welcome back, {user.username}!', 'success')
-                return redirect(url_for('index'))
+                return redirect(url_for('index', welcome='true'))
             else:
                 flash('Invalid username/email or password', 'error')
         else:
