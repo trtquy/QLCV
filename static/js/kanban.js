@@ -138,12 +138,29 @@ function updateTaskStatus(taskId, newStatus) {
 function initializeTaskEditing() {
     // Add click handlers for task cards (but not during drag)
     document.addEventListener('click', function(e) {
+        // Check if clicked element is a button or inside a button
+        if (e.target.closest('button') || e.target.closest('.time-tracking-btn')) {
+            return; // Don't trigger edit for button clicks
+        }
+        
         const taskCard = e.target.closest('.task-card');
         if (taskCard && !taskCard.classList.contains('dragging')) {
             const taskId = taskCard.dataset.taskId;
-            loadTaskForEdit(taskId);
+            if (taskId) {
+                loadTaskForEdit(taskId);
+            }
         }
     });
+    
+    // Add edit form submission handler
+    const editForm = document.getElementById('editTaskForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+            submitBtn.disabled = true;
+        });
+    }
     
     // Add delete button handler
     const deleteBtn = document.getElementById('deleteTaskBtn');
@@ -153,6 +170,19 @@ function initializeTaskEditing() {
             if (form && confirm('Are you sure you want to delete this task?')) {
                 const taskId = form.action.split('/').pop();
                 deleteTask(taskId);
+            }
+        });
+    }
+    
+    // Reset form when modal is hidden
+    const editModal = document.getElementById('editTaskModal');
+    if (editModal) {
+        editModal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('editTaskForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Update Task';
+                submitBtn.disabled = false;
             }
         });
     }
