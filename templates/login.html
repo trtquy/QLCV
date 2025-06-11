@@ -6,6 +6,7 @@
     <title>Login - TaskFlow</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/login-animations.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
@@ -47,9 +48,11 @@
                     </div>
                     
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i data-feather="log-in" class="me-2"></i>
-                            Login
+                        <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
+                            <span class="btn-text">
+                                <i data-feather="log-in" class="me-2"></i>
+                                Login
+                            </span>
                         </button>
                     </div>
                 </form>
@@ -57,9 +60,70 @@
         </div>
     </div>
 
+    <!-- Success Animation Overlay -->
+    <div class="login-success-overlay" id="successOverlay">
+        <div class="success-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+            </div>
+            <div class="success-message" id="successMessage">Welcome back!</div>
+            <div class="success-submessage">Redirecting to dashboard...</div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         feather.replace();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('form');
+            const loginBtn = document.getElementById('loginBtn');
+            const successOverlay = document.getElementById('successOverlay');
+            const successMessage = document.getElementById('successMessage');
+            
+            loginForm.addEventListener('submit', function(e) {
+                // Show loading state
+                loginBtn.classList.add('btn-loading');
+                
+                // Simulate form processing delay for better UX
+                setTimeout(() => {
+                    // The form will submit normally after this delay
+                }, 100);
+            });
+            
+            // Check if we have a success flash message
+            const flashMessages = document.querySelectorAll('.alert-success');
+            if (flashMessages.length > 0) {
+                // Extract username from flash message for personalization
+                const messageText = flashMessages[0].textContent;
+                const welcomeMatch = messageText.match(/Welcome back, (.+)!/);
+                if (welcomeMatch) {
+                    successMessage.textContent = `Welcome back, ${welcomeMatch[1]}!`;
+                }
+                
+                // Show success animation
+                showSuccessAnimation();
+            }
+        });
+        
+        function showSuccessAnimation() {
+            const successOverlay = document.getElementById('successOverlay');
+            
+            // Hide flash messages
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.display = 'none';
+            });
+            
+            // Show overlay
+            successOverlay.classList.add('show');
+            
+            // Redirect after animation completes
+            setTimeout(() => {
+                window.location.href = "{{ url_for('index') }}";
+            }, 2500);
+        }
     </script>
 </body>
 </html>

@@ -622,9 +622,31 @@ window.tasksData = [
 </style>
 
 <script>
-
-
-
+// Welcome animation for successful login
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're coming from a successful login
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromLogin = urlParams.get('welcome') === 'true' || sessionStorage.getItem('loginSuccess') === 'true';
+    
+    if (fromLogin) {
+        // Clear the session storage flag
+        sessionStorage.removeItem('loginSuccess');
+        
+        // Add page entrance animation
+        document.body.classList.add('page-enter');
+        
+        // Trigger the animation
+        setTimeout(() => {
+            document.body.classList.add('page-enter-active');
+        }, 50);
+        
+        // Clean up URL parameter
+        if (urlParams.get('welcome')) {
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }
+    }
+});
 
 // Team filtering
 function filterByTeam() {
