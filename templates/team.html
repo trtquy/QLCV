@@ -99,44 +99,53 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
         </div>
     </div>
 
-    <!-- Team Overview -->
-    <div class="row g-4 mb-5">
-        <div class="col-lg-3 col-md-6">
+    <!-- Compact Role Overview -->
+    <div class="row g-2 mb-4">
+        <div class="col-lg-2 col-md-4 col-6">
             <div class="card border-0 bg-primary text-white">
-                <div class="card-body text-center">
-                    <i data-feather="users" class="mb-2" style="width: 32px; height: 32px;"></i>
-                    <div class="h4 mb-1">{{ users|length }}</div>
-                    <div class="opacity-75">Total Members</div>
+                <div class="card-body text-center py-2">
+                    <div class="h6 mb-0">{{ users|length }}</div>
+                    <small class="opacity-75">Total</small>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-2 col-md-4 col-6">
             <div class="card border-0 bg-success text-white">
-                <div class="card-body text-center">
-                    <i data-feather="layers" class="mb-2" style="width: 32px; height: 32px;"></i>
-                    <div class="h4 mb-1">{{ teams|length }}</div>
-                    <div class="opacity-75">Banking Teams</div>
+                <div class="card-body text-center py-2">
+                    <div class="h6 mb-0">{{ teams|length }}</div>
+                    <small class="opacity-75">Teams</small>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-2 col-md-4 col-6">
             <div class="card border-0 bg-info text-white">
-                <div class="card-body text-center">
-                    <i data-feather="shield" class="mb-2" style="width: 32px; height: 32px;"></i>
-                    <div class="h4 mb-1">{{ users|selectattr('role', 'equalto', 'manager')|list|length }}</div>
-                    <div class="opacity-75">Managers</div>
+                <div class="card-body text-center py-2">
+                    <div class="h6 mb-0">{{ users|selectattr('role', 'equalto', 'manager')|list|length }}</div>
+                    <small class="opacity-75">Managers</small>
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-2 col-md-4 col-6">
             <div class="card border-0 bg-warning text-white">
-                <div class="card-body text-center">
-                    <i data-feather="activity" class="mb-2" style="width: 32px; height: 32px;"></i>
-                    <div class="h4 mb-1">{{ tasks|length }}</div>
-                    <div class="opacity-75">Active Tasks</div>
+                <div class="card-body text-center py-2">
+                    <div class="h6 mb-0">{{ users|selectattr('role', 'equalto', 'analyst')|list|length }}</div>
+                    <small class="opacity-75">Analysts</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="card border-0 bg-secondary text-white">
+                <div class="card-body text-center py-2">
+                    <div class="h6 mb-0">{{ users|selectattr('role', 'equalto', 'director')|list|length }}</div>
+                    <small class="opacity-75">Directors</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="card border-0 bg-dark text-white">
+                <div class="card-body text-center py-2">
+                    <div class="h6 mb-0">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</div>
+                    <small class="opacity-75">Admins</small>
                 </div>
             </div>
         </div>
@@ -211,15 +220,19 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                                 {% set in_progress_tasks = user_tasks|selectattr('status', 'equalto', 'in_progress')|list %}
                                 {% set todo_tasks = user_tasks|selectattr('status', 'equalto', 'todo')|list %}
                                 
-                                <div class="col-lg-6 col-xl-4">
+                                <div class="col-lg-4 col-md-6">
                                     <div class="card team-member-card h-100">
-                                        <div class="card-body position-relative">
+                                        <div class="card-body position-relative p-3">
                                             <!-- Role Badge -->
                                             <div class="role-badge">
-                                                {% if user.role == 'manager' %}
+                                                {% if user.role == 'admin' %}
+                                                    <span class="badge bg-dark">Admin</span>
+                                                {% elif user.role == 'manager' %}
                                                     <span class="badge bg-warning text-dark">Manager</span>
+                                                {% elif user.role == 'director' %}
+                                                    <span class="badge bg-secondary">Director</span>
                                                 {% else %}
-                                                    <span class="badge bg-primary">Member</span>
+                                                    <span class="badge bg-primary">Analyst</span>
                                                 {% endif %}
                                             </div>
                                             
