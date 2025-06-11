@@ -477,6 +477,27 @@ function showMemberProfile(userId) {
     console.log('Showing profile for user:', userId);
 }
 
+// Set edit team modal data
+function setEditTeamData(teamId, teamName, teamDescription) {
+    // Set the form action URL with the correct team ID
+    const form = document.getElementById('editTeamForm');
+    if (form) {
+        form.action = form.action.replace('/0', '/' + teamId);
+    }
+    
+    // Populate the form fields
+    const nameInput = document.getElementById('editTeamNameInput');
+    const descriptionInput = document.getElementById('editTeamDescriptionInput');
+    
+    if (nameInput) {
+        nameInput.value = teamName || '';
+    }
+    
+    if (descriptionInput) {
+        descriptionInput.value = teamDescription || '';
+    }
+}
+
 // Initialize team management when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeTeam();
