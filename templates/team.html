@@ -9,72 +9,120 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
 window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_administrator else 'false' }};
 </script>
 <style>
-    .team-member-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        border: none;
-        border-radius: 12px;
-        overflow: hidden;
+    /* Compact Table Design */
+    .team-row, .user-row {
+        transition: background-color 0.2s ease;
     }
     
-    .team-member-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    .team-row:hover, .user-row:hover {
+        background-color: rgba(0, 107, 104, 0.05);
     }
     
-    .member-avatar {
-        width: 64px;
-        height: 64px;
+    .team-icon, .user-avatar {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: linear-gradient(45deg, #006B68, #FFC62F);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        background: linear-gradient(45deg, #0052CC, #36B37E);
+        background: linear-gradient(45deg, #006B68, #FFC62F);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
-        font-weight: 700;
-        margin: 0 auto 1rem;
-    }
-    
-    .role-badge {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-    }
-    
-    .stats-item {
-        text-align: center;
-        padding: 0.5rem;
-    }
-    
-    .stats-value {
-        font-size: 1.5rem;
+        font-size: 14px;
         font-weight: 600;
-        margin-bottom: 0.25rem;
+        text-transform: uppercase;
     }
     
-    .member-tasks {
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    
-    .task-item {
-        background: var(--bs-gray-100);
+    /* Enhanced Button Groups */
+    .btn-xs {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
         border-radius: 6px;
-        padding: 0.5rem 0.75rem;
-        margin-bottom: 0.5rem;
-        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
     }
     
-    .task-item.status-todo {
-        border-left-color: #6c757d;
+    .btn-outline-primary.btn-xs:hover {
+        background-color: #006B68;
+        border-color: #006B68;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 107, 104, 0.3);
     }
     
-    .task-item.status-in_progress {
-        border-left-color: #ffc107;
+    .btn-outline-secondary.btn-xs:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
     }
     
-    .task-item.status-completed {
-        border-left-color: #36B37E;
+    .btn-outline-warning.btn-xs:hover {
+        background-color: #FFC62F;
+        border-color: #FFC62F;
+        color: #000;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(255, 198, 47, 0.3);
+    }
+    
+    .btn-outline-danger.btn-xs:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    /* Badge Improvements */
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+    
+    /* Table Header Styling */
+    .table-light th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #495057;
+    }
+    
+    /* Responsive Table */
+    @media (max-width: 768px) {
+        .btn-group .btn-xs {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+        }
+        
+        .avatar-circle {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+        
+        .team-icon, .user-avatar {
+            width: 36px;
+            height: 36px;
+        }
+    }
+    
+    /* Action Button Spacing */
+    .btn-group .btn + .btn {
+        margin-left: 2px;
+    }
+    
+    /* Icon Alignment */
+    [data-feather] {
+        vertical-align: middle;
     }
 </style>
 {% endblock %}
@@ -178,79 +226,82 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
     <div class="row mb-5">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Banking Teams</h5>
+                    <small class="text-muted">{{ teams|length }} teams</small>
                 </div>
-                <div class="card-body">
-                    <div class="row g-4">
-                        {% for team in teams %}
-                            {% set team_tasks = tasks|selectattr('team_id', 'equalto', team.id)|list %}
-                            {% set team_members = users|selectattr('team_id', 'equalto', team.id)|list %}
-                            <div class="col-lg-6">
-                                <div class="card border-0 bg-light h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <div>
-                                                <h6 class="fw-bold text-primary">{{ team.name }}</h6>
-                                                {% if not team.is_active %}
-                                                    <span class="badge bg-warning text-dark">Inactive Team</span>
-                                                {% endif %}
-                                            </div>
-                                            <span class="badge bg-secondary">{{ team_members|length }} members</span>
-                                        </div>
-                                        <p class="text-muted small mb-3">{{ team.description }}</p>
-                                        
-                                        <div class="row text-center mb-3">
-                                            <div class="col-4">
-                                                <div class="fw-bold text-success">{{ team_tasks|selectattr('status', 'equalto', 'completed')|list|length }}</div>
-                                                <small class="text-muted">Completed</small>
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="fw-bold text-warning">{{ team_tasks|selectattr('status', 'equalto', 'in_progress')|list|length }}</div>
-                                                <small class="text-muted">In Progress</small>
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="fw-bold text-primary">{{ team_tasks|selectattr('status', 'equalto', 'todo')|list|length }}</div>
-                                                <small class="text-muted">To Do</small>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">{{ team_tasks|length }} total tasks</small>
-                                            <div class="d-flex flex-column gap-2">
-                                                <a href="/?team={{ team.id }}" class="btn btn-outline-primary btn-sm">
-                                                    <i data-feather="eye" class="me-1" style="width: 12px; height: 12px;"></i>
-                                                    View Board
-                                                </a>
-                                                {% if current_user and current_user.is_administrator %}
-                                                <div class="btn-group" role="group">
-                                                    <button type="button" class="btn btn-primary btn-sm" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#editTeamModal"
-                                                            onclick="setEditTeamData({{ team.id }}, '{{ team.name }}', '{{ team.description }}')">
-                                                        <i data-feather="settings" class="me-1" style="width: 12px; height: 12px;"></i>
-                                                        Edit
-                                                    </button>
-                                                    <form action="{{ url_for('toggle_team_status', team_id=team.id) }}" method="POST" class="d-inline">
-                                                        <button type="submit" class="btn btn-outline-warning btn-sm"
-                                                                onclick="return confirm('{{ 'Activate' if not team.is_active else 'Deactivate' }} team {{ team.name }}?')">
-                                                            <i data-feather="{{ 'check-circle' if not team.is_active else 'x-circle' }}" style="width: 12px; height: 12px;"></i>
-                                                        </button>
-                                                    </form>
-                                                    <form action="{{ url_for('delete_team', team_id=team.id) }}" method="POST" class="d-inline">
-                                                        <button type="submit" class="btn btn-outline-danger btn-sm"
-                                                                onclick="return confirm('Permanently delete team {{ team.name }}? This will also delete all team tasks.')">
-                                                            <i data-feather="trash-2" style="width: 12px; height: 12px;"></i>
-                                                        </button>
-                                                    </form>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 ps-3">Team</th>
+                                    <th class="border-0">Members</th>
+                                    <th class="border-0">Tasks</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0 text-end pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team in teams %}
+                                    {% set team_tasks = tasks|selectattr('team_id', 'equalto', team.id)|list %}
+                                    {% set team_members = users|selectattr('team_id', 'equalto', team.id)|list %}
+                                    <tr class="team-row">
+                                        <td class="ps-3 align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="team-icon me-3">
+                                                    <i data-feather="users" class="text-primary"></i>
                                                 </div>
+                                                <div>
+                                                    <h6 class="mb-0 fw-semibold">{{ team.name }}</h6>
+                                                    <small class="text-muted">{{ team.description[:50] }}...</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge bg-light text-dark border">{{ team_members|length }} members</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge bg-primary">{{ team_tasks|length }} tasks</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            {% if team.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-middle text-end pe-3">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary btn-xs" 
+                                                        onclick="window.location.href='/dashboard?team={{ team.id }}'"
+                                                        title="View Dashboard">
+                                                    <i data-feather="bar-chart-2" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                {% if current_user and current_user.is_administrator %}
+                                                <button type="button" class="btn btn-outline-secondary btn-xs" 
+                                                        onclick="setEditTeamData('{{ team.id }}', '{{ team.name }}', '{{ team.description }}')"
+                                                        data-bs-toggle="modal" data-bs-target="#editTeamModal"
+                                                        title="Edit Team">
+                                                    <i data-feather="edit-2" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning btn-xs" 
+                                                        onclick="toggleTeamStatus('{{ team.id }}')"
+                                                        title="{{ 'Deactivate' if team.is_active else 'Activate' }}">
+                                                    <i data-feather="{{ 'pause' if team.is_active else 'play' }}" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-xs" 
+                                                        onclick="deleteTeam('{{ team.id }}')"
+                                                        title="Delete Team">
+                                                    <i data-feather="trash-2" style="width: 14px; height: 14px;"></i>
+                                                </button>
                                                 {% endif %}
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -261,136 +312,115 @@ window.currentUserIsAdmin = {{ 'true' if current_user and current_user.is_admini
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Team Members</h5>
+                    <small class="text-muted">{{ users|length }} members</small>
                 </div>
-                <div class="card-body">
-                    {% if users %}
-                        <div class="row g-4">
-                            {% for user in users %}
-                                {% set user_tasks = tasks|selectattr('assignee_id', 'equalto', user.id)|list %}
-                                {% set completed_tasks = user_tasks|selectattr('status', 'equalto', 'completed')|list %}
-                                {% set in_progress_tasks = user_tasks|selectattr('status', 'equalto', 'in_progress')|list %}
-                                {% set todo_tasks = user_tasks|selectattr('status', 'equalto', 'todo')|list %}
-                                
-                                <div class="col-lg-4 col-md-6">
-                                    <div class="card team-member-card h-100">
-                                        <div class="card-body position-relative p-3">
-                                            <!-- Role Badge -->
-                                            <div class="role-badge">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 ps-3">Member</th>
+                                    <th class="border-0">Role</th>
+                                    <th class="border-0">Team</th>
+                                    <th class="border-0">Tasks</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0 text-end pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                    {% set user_tasks = tasks|selectattr('assignee_id', 'equalto', user.id)|list %}
+                                    {% set completed_tasks = user_tasks|selectattr('status', 'equalto', 'completed')|list %}
+                                    {% set in_progress_tasks = user_tasks|selectattr('status', 'equalto', 'in_progress')|list %}
+                                    {% set todo_tasks = user_tasks|selectattr('status', 'equalto', 'todo')|list %}
+                                    
+                                    <tr class="user-row">
+                                        <td class="ps-3 align-middle">
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar me-3">
+                                                    <div class="avatar-circle">
+                                                        {{ user.display_name[:2] if user.display_name else user.username[:2] }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0 fw-semibold">{{ user.display_name or user.username }}</h6>
+                                                    <small class="text-muted">{{ user.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="d-flex align-items-center gap-1">
                                                 {% if user.is_administrator %}
                                                     <span class="badge bg-dark">
-                                                        <i data-feather="shield" class="me-1" style="width: 12px; height: 12px;"></i>
-                                                        Administrator
+                                                        <i data-feather="shield" style="width: 12px; height: 12px;"></i>
+                                                        Admin
                                                     </span>
                                                 {% endif %}
                                                 {% if user.role == 'manager' %}
-                                                    <span class="badge bg-warning text-dark {% if user.is_administrator %}ms-1{% endif %}">Manager</span>
+                                                    <span class="badge bg-warning text-dark">Manager</span>
                                                 {% elif user.role == 'director' %}
-                                                    <span class="badge bg-secondary {% if user.is_administrator %}ms-1{% endif %}">Director</span>
+                                                    <span class="badge bg-secondary">Director</span>
                                                 {% else %}
-                                                    <span class="badge bg-primary {% if user.is_administrator %}ms-1{% endif %}">Analyst</span>
+                                                    <span class="badge bg-primary">Analyst</span>
                                                 {% endif %}
                                             </div>
-                                            
-                                            <!-- Member Info -->
-                                            <div class="text-center mb-3">
-                                                <div class="member-avatar">
-                                                    {{ (user.display_name or user.username)[0].upper() }}
-                                                </div>
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <h5 class="mb-1">{{ user.display_name or user.username }}</h5>
-                                                    {% if not user.is_active %}
-                                                        <span class="badge bg-secondary">Inactive</span>
-                                                    {% endif %}
-                                                </div>
-                                                <p class="text-muted small mb-0">{{ user.email }}</p>
+                                        </td>
+                                        <td class="align-middle">
+                                            {% if user.team %}
+                                                <span class="badge bg-light text-dark border">{{ user.team.name }}</span>
+                                            {% else %}
+                                                <span class="text-muted">No team</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="d-flex gap-1">
+                                                <span class="badge bg-success">{{ completed_tasks|length }}</span>
+                                                <span class="badge bg-warning">{{ in_progress_tasks|length }}</span>
+                                                <span class="badge bg-secondary">{{ todo_tasks|length }}</span>
                                             </div>
-                                            
-                                            <!-- Stats -->
-                                            <div class="row mb-3">
-                                                <div class="col-4 stats-item">
-                                                    <div class="stats-value text-primary">{{ user_tasks|length }}</div>
-                                                    <small class="text-muted">Total</small>
-                                                </div>
-                                                <div class="col-4 stats-item">
-                                                    <div class="stats-value text-success">{{ completed_tasks|length }}</div>
-                                                    <small class="text-muted">Done</small>
-                                                </div>
-                                                <div class="col-4 stats-item">
-                                                    <div class="stats-value text-warning">{{ in_progress_tasks|length }}</div>
-                                                    <small class="text-muted">Active</small>
-                                                </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            {% if user.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-middle text-end pe-3">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary btn-xs" 
+                                                        onclick="showMemberProfile('{{ user.id }}')"
+                                                        title="View Profile">
+                                                    <i data-feather="user" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                {% if current_user and current_user.is_administrator %}
+                                                <button type="button" class="btn btn-outline-secondary btn-xs" 
+                                                        onclick="setRoleModalData('{{ user.id }}', '{{ user.username }}', '{{ user.role }}', {{ 'true' if user.is_administrator else 'false' }})"
+                                                        data-bs-toggle="modal" data-bs-target="#changeRoleModal"
+                                                        title="Edit Role">
+                                                    <i data-feather="edit-2" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning btn-xs" 
+                                                        onclick="toggleUserStatus('{{ user.id }}')"
+                                                        title="{{ 'Deactivate' if user.is_active else 'Activate' }}">
+                                                    <i data-feather="{{ 'pause' if user.is_active else 'play' }}" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-xs" 
+                                                        onclick="deleteUser('{{ user.id }}')"
+                                                        title="Delete User">
+                                                    <i data-feather="trash-2" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                                {% endif %}
                                             </div>
-                                            
-                                            <!-- Progress Bar -->
-                                            {% if user_tasks|length > 0 %}
-                                                {% set completion_rate = (completed_tasks|length / user_tasks|length * 100) %}
-                                                <div class="mb-3">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <small class="text-muted">Completion Rate</small>
-                                                        <small class="text-muted">{{ "%.0f"|format(completion_rate) }}%</small>
-                                                    </div>
-                                                    <div class="progress" style="height: 6px;">
-                                                        <div class="progress-bar bg-success" style="width: {{ completion_rate }}%"></div>
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                            
-                                            <!-- Recent Tasks -->
-                                            {% if user_tasks %}
-                                                <div class="mb-3">
-                                                    <h6 class="small text-muted mb-2">Recent Tasks</h6>
-                                                    <div class="member-tasks">
-                                                        {% for task in user_tasks[:3] %}
-                                                            <div class="task-item status-{{ task.status }}">
-                                                                <div class="d-flex justify-content-between align-items-center">
-                                                                    <span class="small fw-medium">{{ task.title[:30] }}{% if task.title|length > 30 %}...{% endif %}</span>
-                                                                    <span class="badge badge-sm bg-{{ 'success' if task.status == 'completed' else 'warning' if task.status == 'in_progress' else 'secondary' }}">
-                                                                        {{ task.status.replace('_', ' ').title() }}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                            
-                                            <!-- Actions -->
-                                            {% if current_user.is_administrator and user.id != current_user.id %}
-                                                <div class="d-grid gap-2">
-                                                    <button class="btn btn-outline-primary btn-sm" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#roleModal"
-                                                            onclick="setRoleModalData('{{ user.id }}', '{{ user.display_name or user.username }}', '{{ user.role }}', {{ 'true' if user.is_administrator else 'false' }})">
-                                                        <i data-feather="settings" class="me-1" style="width: 14px; height: 14px;"></i>
-                                                        Manage Role
-                                                    </button>
-                                                    
-                                                    <div class="btn-group" role="group">
-                                                        <form action="{{ url_for('toggle_user_status', user_id=user.id) }}" method="POST" class="d-inline" style="flex: 1;">
-                                                            <button type="submit" class="btn btn-outline-warning btn-sm w-100"
-                                                                    onclick="return confirm('{{ 'Activate' if not user.is_active else 'Deactivate' }} user {{ user.username }}?')">
-                                                                <i data-feather="{{ 'user-check' if not user.is_active else 'user-x' }}" class="me-1" style="width: 12px; height: 12px;"></i>
-                                                                {{ 'Activate' if not user.is_active else 'Deactivate' }}
-                                                            </button>
-                                                        </form>
-                                                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" class="d-inline" style="flex: 1;">
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100"
-                                                                    onclick="return confirm('Permanently delete user {{ user.username }}? This cannot be undone.')">
-                                                                <i data-feather="trash-2" class="me-1" style="width: 12px; height: 12px;"></i>
-                                                                Delete
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if not users %}
                         <div class="text-center py-5">
                             <i data-feather="user-plus" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
                             <h5 class="text-muted">No team members found</h5>

@@ -503,6 +503,47 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTeam();
 });
 
+// Team management functions for compact table buttons
+function toggleTeamStatus(teamId) {
+    if (confirm('Are you sure you want to change this team\'s status?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/team/${teamId}/toggle-status`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteTeam(teamId) {
+    if (confirm('Are you sure you want to delete this team? This action cannot be undone and will also delete all team tasks.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/team/${teamId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function toggleUserStatus(userId) {
+    if (confirm('Are you sure you want to change this user\'s status?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/user/${userId}/toggle-status`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/user/${userId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
 // Export functions for global use
 window.initializeTeam = initializeTeam;
 window.exportTeamData = exportTeamData;
@@ -510,3 +551,8 @@ window.setRoleModalData = setRoleModalData;
 window.showMemberProfile = showMemberProfile;
 window.toggleMemberSelection = toggleMemberSelection;
 window.bulkUpdateRole = bulkUpdateRole;
+window.setEditTeamData = setEditTeamData;
+window.toggleTeamStatus = toggleTeamStatus;
+window.deleteTeam = deleteTeam;
+window.toggleUserStatus = toggleUserStatus;
+window.deleteUser = deleteUser;
