@@ -305,6 +305,14 @@ function initializeSearch() {
             }, 300);
         });
     }
+    
+    // Initialize "My Tasks" filter for analysts
+    const myTasksFilter = document.getElementById('myTasksFilter');
+    if (myTasksFilter) {
+        myTasksFilter.addEventListener('change', function() {
+            filterMyTasks(this.value);
+        });
+    }
 }
 
 function filterTasks(query) {
@@ -319,6 +327,28 @@ function filterTasks(query) {
             card.style.display = '';
         } else {
             card.style.display = 'none';
+        }
+    });
+    
+    updateColumnCounts();
+}
+
+function filterMyTasks(filterValue) {
+    const taskCards = document.querySelectorAll('.task-card');
+    const currentUserId = window.currentUserId; // This will be set from the template
+    
+    taskCards.forEach(card => {
+        if (filterValue === 'my-tasks') {
+            // Show only tasks assigned to current user
+            const assigneeId = card.dataset.assigneeId;
+            if (assigneeId && assigneeId === currentUserId) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        } else {
+            // Show all tasks
+            card.style.display = '';
         }
     });
     

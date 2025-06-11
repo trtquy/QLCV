@@ -100,8 +100,11 @@
                     <!-- Debug info (remove after testing) -->
                     <small class="text-muted d-block">User: {{ current_user.username }}, Role: {{ current_user.role }}, ID: {{ current_user.id }}</small>
                     <small class="text-muted d-block">Task: {{ task.id }}, Status: {{ task.status }}, Assignee: {{ task.assignee_id }}</small>
+                    <small class="text-muted d-block">Is Analyst: {{ current_user.role == 'analyst' }}, Has Assignee: {{ task.assignee_id is not none }}, IDs Match: {{ task.assignee_id == current_user.id }}</small>
                     
-                    {% if current_user.role == 'analyst' and task.assignee_id and task.assignee_id|int == current_user.id|int %}
+                    {% set is_assigned_analyst = current_user.role == 'analyst' and task.assignee_id and (task.assignee_id == current_user.id) %}
+                    <small class="text-muted d-block">Show Button: {{ is_assigned_analyst and task.status == 'in_progress' }}</small>
+                    {% if is_assigned_analyst %}
                         {% if task.status == 'in_progress' %}
                         <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
                             <button type="submit" class="btn btn-sm btn-info" title="Send for Review">
