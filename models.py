@@ -12,6 +12,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='analyst')  # 'analyst', 'manager', 'director'
     is_administrator = db.Column(db.Boolean, nullable=False, default=False)  # Administrator privilege
+    is_active = db.Column(db.Boolean, nullable=False, default=True)  # Active status
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     
@@ -54,6 +55,7 @@ class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
     description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)  # Active status
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relationships

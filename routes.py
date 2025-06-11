@@ -442,6 +442,141 @@ def edit_team(team_id):
     
     return redirect(url_for('team'))
 
+@app.route('/delete_user/<user_id>', methods=['POST'])
+def delete_user(user_id):
+    """Delete a user (administrator only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('team'))
+    
+    # Prevent self-deletion
+    if str(current_user.id) == user_id:
+        flash('Cannot delete your own account', 'error')
+        return redirect(url_for('team'))
+    
+    user = data_manager.get_user(user_id)
+    if not user:
+        flash('User not found', 'error')
+        return redirect(url_for('team'))
+    
+    try:
+        # Reassign tasks created by this user to current admin
+        from models import Task
+        created_tasks = Task.query.filter_by(created_by=int(user_id)).all()
+        for task in created_tasks:
+            task.created_by = current_user.id
+        
+        # Unassign tasks assigned to this user
+        assigned_tasks = Task.query.filter_by(assignee_id=int(user_id)).all()
+        for task in assigned_tasks:
+            task.assignee_id = None
+        
+        # Delete time logs
+        from models import TimeLog
+        TimeLog.query.filter_by(user_id=int(user_id)).delete()
+        
+        # Delete the user
+        db.session.delete(user)
+        db.session.commit()
+        
+        flash(f'User {user.username} deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting user. Please try again.', 'error')
+    
+    return redirect(url_for('team'))
+
+@app.route('/toggle_user_status/<user_id>', methods=['POST'])
+def toggle_user_status(user_id):
+    """Toggle user active status (administrator only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('team'))
+    
+    # Prevent self-deactivation
+    if str(current_user.id) == user_id:
+        flash('Cannot deactivate your own account', 'error')
+        return redirect(url_for('team'))
+    
+    user = data_manager.get_user(user_id)
+    if not user:
+        flash('User not found', 'error')
+        return redirect(url_for('team'))
+    
+    try:
+        user.is_active = not user.is_active
+        db.session.commit()
+        
+        status = "activated" if user.is_active else "deactivated"
+        flash(f'User {user.username} {status} successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating user status. Please try again.', 'error')
+    
+    return redirect(url_for('team'))
+
+@app.route('/delete_team/<team_id>', methods=['POST'])
+def delete_team(team_id):
+    """Delete a team (administrator only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('team'))
+    
+    team = data_manager.get_team(team_id)
+    if not team:
+        flash('Team not found', 'error')
+        return redirect(url_for('team'))
+    
+    # Check if team has members
+    team_members = data_manager.get_users_by_team(team_id)
+    if team_members:
+        flash(f'Cannot delete team with {len(team_members)} members. Move members first.', 'error')
+        return redirect(url_for('team'))
+    
+    try:
+        # Delete team tasks
+        from models import Task
+        Task.query.filter_by(team_id=int(team_id)).delete()
+        
+        # Delete the team
+        db.session.delete(team)
+        db.session.commit()
+        
+        flash(f'Team {team.name} deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting team. Please try again.', 'error')
+    
+    return redirect(url_for('team'))
+
+@app.route('/toggle_team_status/<team_id>', methods=['POST'])
+def toggle_team_status(team_id):
+    """Toggle team active status (administrator only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or not current_user.is_administrator:
+        flash('Access denied. Administrator privileges required.', 'error')
+        return redirect(url_for('team'))
+    
+    team = data_manager.get_team(team_id)
+    if not team:
+        flash('Team not found', 'error')
+        return redirect(url_for('team'))
+    
+    try:
+        team.is_active = not team.is_active
+        db.session.commit()
+        
+        status = "activated" if team.is_active else "deactivated"
+        flash(f'Team {team.name} {status} successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating team status. Please try again.', 'error')
+    
+    return redirect(url_for('team'))
+
 # Time tracking routes
 @app.route('/time/start/<task_id>', methods=['POST'])
 def start_time_tracking(task_id):
