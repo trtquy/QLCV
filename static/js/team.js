@@ -317,13 +317,27 @@ function initializeMemberFiltering() {
 }
 
 function filterMembers() {
-    const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
-    const roleFilter = document.getElementById('roleFilter').value;
+    const searchInput = document.getElementById('memberSearch');
+    const roleSelect = document.getElementById('roleFilter');
+    
+    if (!searchInput || !roleSelect) {
+        return; // Exit if elements don't exist
+    }
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    const roleFilter = roleSelect.value;
     const memberCards = document.querySelectorAll('.team-member-card');
     
     memberCards.forEach(card => {
-        const memberName = card.querySelector('h5').textContent.toLowerCase();
-        const memberRole = card.querySelector('.role-badge .badge').textContent.toLowerCase();
+        const nameElement = card.querySelector('h5');
+        const roleElement = card.querySelector('.role-badge .badge');
+        
+        if (!nameElement || !roleElement) {
+            return; // Skip if required elements don't exist
+        }
+        
+        const memberName = nameElement.textContent.toLowerCase();
+        const memberRole = roleElement.textContent.toLowerCase();
         
         const matchesSearch = !searchTerm || memberName.includes(searchTerm);
         const matchesRole = !roleFilter || memberRole.includes(roleFilter);
@@ -340,33 +354,51 @@ function filterMembers() {
 }
 
 function sortMembers() {
-    const sortBy = document.getElementById('sortBy').value;
+    const sortBySelect = document.getElementById('sortBy');
+    if (!sortBySelect) return;
+    
+    const sortBy = sortBySelect.value;
     const container = document.querySelector('.row.g-4');
-    const memberColumns = Array.from(container.querySelectorAll('.col-lg-6'));
+    if (!container) return;
+    
+    const memberColumns = Array.from(container.querySelectorAll('.col-lg-4, .col-md-6, .col-lg-6'));
+    if (memberColumns.length === 0) return;
     
     memberColumns.sort((a, b) => {
         const cardA = a.querySelector('.team-member-card');
         const cardB = b.querySelector('.team-member-card');
         
+        if (!cardA || !cardB) return 0;
+        
         switch (sortBy) {
             case 'name':
-                const nameA = cardA.querySelector('h5').textContent;
-                const nameB = cardB.querySelector('h5').textContent;
+                const nameElementA = cardA.querySelector('h5');
+                const nameElementB = cardB.querySelector('h5');
+                if (!nameElementA || !nameElementB) return 0;
+                const nameA = nameElementA.textContent;
+                const nameB = nameElementB.textContent;
                 return nameA.localeCompare(nameB);
             
             case 'role':
-                const roleA = cardA.querySelector('.role-badge .badge').textContent;
-                const roleB = cardB.querySelector('.role-badge .badge').textContent;
+                const roleElementA = cardA.querySelector('.role-badge .badge');
+                const roleElementB = cardB.querySelector('.role-badge .badge');
+                if (!roleElementA || !roleElementB) return 0;
+                const roleA = roleElementA.textContent;
+                const roleB = roleElementB.textContent;
                 return roleA.localeCompare(roleB);
             
             case 'tasks':
-                const tasksA = parseInt(cardA.querySelector('.stats-value').textContent) || 0;
-                const tasksB = parseInt(cardB.querySelector('.stats-value').textContent) || 0;
+                const tasksElementA = cardA.querySelector('.stats-value');
+                const tasksElementB = cardB.querySelector('.stats-value');
+                const tasksA = tasksElementA ? parseInt(tasksElementA.textContent) || 0 : 0;
+                const tasksB = tasksElementB ? parseInt(tasksElementB.textContent) || 0 : 0;
                 return tasksB - tasksA; // Descending
             
             case 'completion':
-                const progressA = parseFloat(cardA.querySelector('.progress-bar').style.width) || 0;
-                const progressB = parseFloat(cardB.querySelector('.progress-bar').style.width) || 0;
+                const progressElementA = cardA.querySelector('.progress-bar');
+                const progressElementB = cardB.querySelector('.progress-bar');
+                const progressA = progressElementA ? parseFloat(progressElementA.style.width) || 0 : 0;
+                const progressB = progressElementB ? parseFloat(progressElementB.style.width) || 0 : 0;
                 return progressB - progressA; // Descending
             
             default:
@@ -376,7 +408,9 @@ function sortMembers() {
     
     // Re-append sorted elements
     memberColumns.forEach(column => {
-        container.appendChild(column);
+        if (column && container) {
+            container.appendChild(column);
+        }
     });
 }
 
