@@ -375,6 +375,59 @@ def add_team_member():
     
     return redirect(url_for('team'))
 
+@app.route('/create_team', methods=['POST'])
+def create_team():
+    """Create a new team (admin only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Only admins can create teams', 'error')
+        return redirect(url_for('team'))
+    
+    team_name = request.form.get('team_name')
+    team_description = request.form.get('team_description', '')
+    
+    if team_name:
+        try:
+            team = Team(name=team_name, description=team_description)
+            db.session.add(team)
+            db.session.commit()
+            flash(f'Team "{team_name}" created successfully', 'success')
+        except Exception as e:
+            flash('Team name already exists', 'error')
+    else:
+        flash('Team name is required', 'error')
+    
+    return redirect(url_for('team'))
+
+@app.route('/edit_team/<team_id>', methods=['POST'])
+def edit_team(team_id):
+    """Edit team details (admin only)"""
+    current_user = data_manager.get_current_user()
+    if not current_user or current_user.role != 'admin':
+        flash('Only admins can edit teams', 'error')
+        return redirect(url_for('team'))
+    
+    team = data_manager.get_team(team_id)
+    if not team:
+        flash('Team not found', 'error')
+        return redirect(url_for('team'))
+    
+    new_name = request.form.get('team_name')
+    new_description = request.form.get('team_description', '')
+    
+    if new_name:
+        try:
+            team.name = new_name
+            team.description = new_description
+            db.session.commit()
+            flash(f'Team updated successfully', 'success')
+        except Exception as e:
+            flash('Team name already exists', 'error')
+    else:
+        flash('Team name is required', 'error')
+    
+    return redirect(url_for('team'))
+
 # Time tracking routes
 @app.route('/time/start/<task_id>', methods=['POST'])
 def start_time_tracking(task_id):

@@ -340,19 +340,35 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                     <div class="mb-3">
                         <label class="form-label">Select Role</label>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="role" value="member" id="roleMember">
-                            <label class="form-check-label" for="roleMember">
-                                <strong>Team Member</strong>
-                                <br><small class="text-muted">Can create and manage own tasks</small>
+                            <input class="form-check-input" type="radio" name="role" value="analyst" id="roleAnalyst">
+                            <label class="form-check-label" for="roleAnalyst">
+                                <strong>Analyst</strong>
+                                <br><small class="text-muted">Can work on assigned tasks</small>
                             </label>
                         </div>
                         <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="role" value="manager" id="roleManager">
                             <label class="form-check-label" for="roleManager">
                                 <strong>Manager</strong>
-                                <br><small class="text-muted">Can manage all tasks and team member roles</small>
+                                <br><small class="text-muted">Can create tasks and manage team members</small>
                             </label>
                         </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="role" value="director" id="roleDirector">
+                            <label class="form-check-label" for="roleDirector">
+                                <strong>Director</strong>
+                                <br><small class="text-muted">Executive oversight, not assigned to teams</small>
+                            </label>
+                        </div>
+                        {% if current_user.role == 'admin' %}
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="role" value="admin" id="roleAdmin">
+                            <label class="form-check-label" for="roleAdmin">
+                                <strong>Admin</strong>
+                                <br><small class="text-muted">Full system access and management</small>
+                            </label>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -435,8 +451,12 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                             <div class="mb-3">
                                 <label class="form-label">Role</label>
                                 <select class="form-select" name="role" required>
-                                    <option value="member">Member</option>
+                                    <option value="analyst">Analyst</option>
                                     <option value="manager">Manager</option>
+                                    <option value="director">Director</option>
+                                    {% if current_user.role == 'admin' %}
+                                    <option value="admin">Admin</option>
+                                    {% endif %}
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-success btn-sm">
@@ -446,6 +466,62 @@ window.currentUserRole = '{{ current_user.role if current_user else "guest" }}';
                         </form>
                     </div>
                 </div>
+                
+                <!-- Admin Team Management -->
+                {% if current_user.role == 'admin' %}
+                <hr class="my-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Create New Team</h6>
+                        <form action="{{ url_for('create_team') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Team Name</label>
+                                <input type="text" class="form-control" name="team_name" required 
+                                       placeholder="Enter team name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="team_description" rows="2" 
+                                          placeholder="Team description"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i data-feather="plus" class="me-1"></i>
+                                Create Team
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Edit Existing Team</h6>
+                        <form action="" method="POST" id="editTeamForm">
+                            <div class="mb-3">
+                                <label class="form-label">Select Team</label>
+                                <select class="form-select" name="team_select" id="teamSelect" onchange="loadTeamData()">
+                                    <option value="">Choose team to edit...</option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}" data-name="{{ team.name }}" data-description="{{ team.description }}">
+                                            {{ team.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Team Name</label>
+                                <input type="text" class="form-control" name="team_name" id="editTeamName" 
+                                       placeholder="Enter team name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="team_description" id="editTeamDescription" rows="2" 
+                                          placeholder="Team description"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm" disabled id="editTeamBtn">
+                                <i data-feather="edit" class="me-1"></i>
+                                Update Team
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
                 
                 <!-- Team Overview -->
                 <hr class="my-4">
@@ -489,11 +565,19 @@ function setRoleModalData(userId, username, currentRole) {
     document.getElementById('modalUsername').textContent = username;
     document.getElementById('roleForm').action = "{{ url_for('update_user_role', user_id='USER_ID') }}".replace('USER_ID', userId);
     
+    // Clear all selections first
+    document.querySelectorAll('input[name="role"]').forEach(radio => radio.checked = false);
+    
     // Set current role
     if (currentRole === 'manager') {
         document.getElementById('roleManager').checked = true;
+    } else if (currentRole === 'director') {
+        document.getElementById('roleDirector').checked = true;
+    } else if (currentRole === 'admin') {
+        const adminRadio = document.getElementById('roleAdmin');
+        if (adminRadio) adminRadio.checked = true;
     } else {
-        document.getElementById('roleMember').checked = true;
+        document.getElementById('roleAnalyst').checked = true;
     }
 }
 </script>

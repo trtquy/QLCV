@@ -147,8 +147,8 @@ function addManagerQuickActions() {
     const headerActions = document.querySelector('.row.mb-4 .col');
     if (headerActions) {
         const actionsContainer = document.createElement('div');
-        // Only show team management actions for managers
-        if (window.currentUserRole === 'manager') {
+        // Only show team management actions for managers and admins
+        if (window.currentUserRole === 'manager' || window.currentUserRole === 'admin') {
             actionsContainer.className = 'mt-2';
             actionsContainer.innerHTML = `
                 <div class="btn-group" role="group">
