@@ -89,15 +89,56 @@
         </div>
     </div>
     
+    <!-- Analytics Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="bar-chart-2" class="me-2"></i>
+                        Daily Time Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyTimeChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i data-feather="pie-chart" class="me-2"></i>
+                        Time by Team
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="teamTimeChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- User Performance -->
     <div class="row">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i data-feather="users" class="me-2"></i>
                         User Performance
                     </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="sortBy" id="sortHours" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="sortHours">Hours</label>
+                        
+                        <input type="radio" class="btn-check" name="sortBy" id="sortEfficiency" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="sortEfficiency">Efficiency</label>
+                        
+                        <input type="radio" class="btn-check" name="sortBy" id="sortTasks" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="sortTasks">Tasks</label>
+                    </div>
+                </div>
                 </div>
                 <div class="card-body">
                     {% if report_data.user_stats %}

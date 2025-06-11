@@ -57,10 +57,10 @@
                     {% for user in users %}
                         {% if user.id == task.assignee_id and user.username and not assignee_found %}
                             {% set assignee_found = true %}
-                            <div class="avatar me-2" title="{{ user.username }}">
-                                {{ user.username|string|first|upper }}
+                            <div class="avatar me-2" title="{{ user.display_name or user.username }}">
+                                {{ (user.display_name or user.username)|string|first|upper }}
                             </div>
-                            <small class="text-muted">{{ user.username }}</small>
+                            <small class="text-muted">{{ user.display_name or user.username }}</small>
                         {% endif %}
                     {% endfor %}
                     {% if not assignee_found %}
@@ -75,8 +75,10 @@
                 {% if current_user and task.assignee_id == current_user.id %}
                 <button class="btn btn-sm btn-outline-primary me-2 time-tracking-btn" 
                         data-task-id="{{ task.id }}" 
+                        id="time-btn-{{ task.id }}"
                         onclick="event.stopPropagation(); if(typeof toggleTimeTracking === 'function') toggleTimeTracking('{{ task.id }}')">
-                    <i data-feather="play" style="width: 12px; height: 12px;"></i>
+                    <i data-feather="play" style="width: 12px; height: 12px;" id="time-icon-{{ task.id }}"></i>
+                    <span class="time-duration" id="time-duration-{{ task.id }}" style="display: none; font-size: 10px; margin-left: 4px;"></span>
                 </button>
                 {% endif %}
                 <small class="text-muted">

@@ -415,6 +415,7 @@ function startTimeTracking(taskId) {
         if (data.success) {
             showNotification(data.message, 'success');
             checkActiveTimeLog();
+            startTimer(taskId);
         } else {
             showNotification(data.error, 'error');
         }
@@ -434,6 +435,12 @@ function stopTimeTracking(timeLogId, callback = null) {
         if (data.success) {
             showNotification(data.message, 'success');
             activeTimeLog = null;
+            // Stop all timers
+            if (window.timeTrackingIntervals) {
+                Object.keys(window.timeTrackingIntervals).forEach(taskId => {
+                    stopTimer(taskId);
+                });
+            }
             updateTimeTrackingUI();
             if (callback) callback();
         } else {
@@ -494,6 +501,68 @@ function updateTaskEstimate(taskId, estimatedHours) {
         console.error('Error updating task estimate:', error);
         showNotification('Failed to update estimate', 'error');
     });
+}
+
+function startTimer(taskId) {
+    // Start visual timer
+    const btn = document.getElementById(`time-btn-${taskId}`);
+    const icon = document.getElementById(`time-icon-${taskId}`);
+    const duration = document.getElementById(`time-duration-${taskId}`);
+    
+    if (btn && icon && duration) {
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        icon.setAttribute('data-feather', 'stop-circle');
+        duration.style.display = 'inline';
+        
+        // Refresh feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Start timer interval
+        window.timeTrackingIntervals = window.timeTrackingIntervals || {};
+        const startTime = new Date();
+        
+        window.timeTrackingIntervals[taskId] = setInterval(() => {
+            const elapsed = Math.floor((new Date() - startTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            if (hours > 0) {
+                duration.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                duration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    }
+}
+
+function stopTimer(taskId) {
+    // Stop visual timer
+    const btn = document.getElementById(`time-btn-${taskId}`);
+    const icon = document.getElementById(`time-icon-${taskId}`);
+    const duration = document.getElementById(`time-duration-${taskId}`);
+    
+    if (btn && icon && duration) {
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-primary');
+        icon.setAttribute('data-feather', 'play');
+        duration.style.display = 'none';
+        duration.textContent = '';
+        
+        // Refresh feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Clear timer interval
+        if (window.timeTrackingIntervals && window.timeTrackingIntervals[taskId]) {
+            clearInterval(window.timeTrackingIntervals[taskId]);
+            delete window.timeTrackingIntervals[taskId];
+        }
+    }
 }
 
 // Export functions for global use
