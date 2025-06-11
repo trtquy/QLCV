@@ -75,7 +75,14 @@ def create_sample_data():
         # Create users and assign to teams
         created_users = []
         for i, user_data in enumerate(users_data):
-            user = User(**user_data)
+            user = User(
+                username=user_data['username'],
+                email=user_data['email'],
+                role=user_data['role']
+            )
+            # Set password to '123' for all users
+            user.set_password('123')
+            
             # Admin and Directors don't need team assignments
             if user_data['role'] in ['admin', 'director']:
                 user.team_id = None
