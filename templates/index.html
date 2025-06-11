@@ -787,6 +787,9 @@ window.tasksData = [
 
 <script>
 // Welcome animation for successful login
+// Set current user ID for JavaScript filtering
+window.currentUserId = '{{ current_user.id if current_user else "" }}';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Check if we're coming from a successful login
     const urlParams = new URLSearchParams(window.location.search);

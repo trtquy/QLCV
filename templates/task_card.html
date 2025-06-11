@@ -1,6 +1,7 @@
 <div class="card task-card mb-3 priority-{{ task.priority }}" 
      draggable="true" 
      data-task-id="{{ task.id }}"
+     data-assignee-id="{{ task.assignee_id or '' }}"
      onclick="openEditModal('{{ task.id }}')"
      style="cursor: pointer;">
     <div class="card-body p-3">
