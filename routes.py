@@ -12,14 +12,25 @@ def index():
     if not current_user:
         return redirect(url_for('login'))
     
-    tasks = data_manager.get_all_tasks()
     users = data_manager.get_all_users()
     teams = data_manager.get_all_teams()
     
-    # Filter by team if specified
-    team_filter = request.args.get('team')
-    if team_filter:
-        tasks = [t for t in tasks if str(t.team_id) == team_filter]
+    # Team-based filtering: Users only see their team's tasks (except administrators)
+    if current_user.is_administrator:
+        # Administrators can see all tasks
+        tasks = data_manager.get_all_tasks()
+        # Filter by team if specified in URL
+        team_filter = request.args.get('team')
+        if team_filter:
+            tasks = [t for t in tasks if str(t.team_id) == team_filter]
+    else:
+        # Regular users only see tasks from their team
+        if current_user.team_id:
+            tasks = data_manager.get_tasks_by_team(str(current_user.team_id))
+            team_filter = str(current_user.team_id)  # Set current team as filter
+        else:
+            tasks = []
+            team_filter = None
     
     # Organize tasks by status
     todo_tasks = [t for t in tasks if t.status == 'todo']
@@ -368,8 +379,17 @@ def dashboard():
     if not current_user:
         return redirect(url_for('login'))
     
-    tasks = data_manager.get_all_tasks()
     users = data_manager.get_all_users()
+    
+    # Team-based filtering: Users only see their team's tasks (except administrators)
+    if current_user.is_administrator:
+        tasks = data_manager.get_all_tasks()
+    else:
+        # Regular users only see tasks from their team
+        if current_user.team_id:
+            tasks = data_manager.get_tasks_by_team(str(current_user.team_id))
+        else:
+            tasks = []
     
     # Calculate metrics
     total_tasks = len(tasks)
