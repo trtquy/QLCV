@@ -32,6 +32,10 @@ class User(db.Model):
 class Team(db.Model):
     __tablename__ = 'teams'
     
+    def __init__(self, name=None, description=None):
+        self.name = name
+        self.description = description
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
     description = db.Column(db.Text)

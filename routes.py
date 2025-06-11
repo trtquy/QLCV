@@ -343,9 +343,19 @@ def add_team_member():
     username = request.form.get('username')
     email = request.form.get('email')
     team_id = request.form.get('team_id')
-    role = request.form.get('role', 'member')
+    role = request.form.get('role', 'analyst')
     
-    if username and email and team_id:
+    # Validate required fields based on role
+    if not username or not email:
+        flash('Username and email are required', 'error')
+        return redirect(url_for('team'))
+    
+    # Directors and Admins don't require team assignment
+    if role in ['analyst', 'manager'] and not team_id:
+        flash('Team assignment is required for Analysts and Managers', 'error')
+        return redirect(url_for('team'))
+    
+    if username and email:
         # Check if user already exists by username
         existing_user = data_manager.get_user_by_username(username)
         if existing_user:
@@ -363,10 +373,14 @@ def add_team_member():
             # Create new user
             user = data_manager.create_user(username, email, role)
             if user:
-                # Assign to team
-                data_manager.update_user(str(user.id), team_id=int(team_id))
-                team = data_manager.get_team(team_id)
-                flash(f'User {username} added to {team.name if team else "team"} successfully', 'success')
+                # Assign to team only if role requires it and team_id is provided
+                if team_id and role in ['analyst', 'manager']:
+                    data_manager.update_user(str(user.id), team_id=int(team_id))
+                    team = data_manager.get_team(team_id)
+                    team_name = team.name if team else "team"
+                    flash(f'User {username} added to {team_name} successfully', 'success')
+                else:
+                    flash(f'User {username} created successfully', 'success')
             else:
                 flash('Failed to create user', 'error')
         except Exception as e:
