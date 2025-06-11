@@ -162,6 +162,7 @@ def update_task(task_id):
     title = request.form.get('title')
     description = request.form.get('description', '')
     assignee_id = request.form.get('assignee_id') or None
+    supervisor_id = request.form.get('supervisor_id') or None
     priority = request.form.get('priority', 'medium')
     complexity = request.form.get('complexity', 'medium')
     status = request.form.get('task_status', 'todo')
@@ -208,6 +209,7 @@ def update_task(task_id):
             title=title,
             description=description,
             assignee_id=assignee_id,
+            supervisor_id=supervisor_id,
             priority=priority,
             complexity=complexity,
             status=status,
@@ -244,6 +246,85 @@ def delete_task(task_id):
         flash('Task deleted successfully!', 'success')
     else:
         flash('Task not found', 'error')
+    
+    return redirect(url_for('index'))
+
+@app.route('/task/<task_id>/send_for_review', methods=['POST'])
+def send_task_for_review(task_id):
+    """Send task for review (analyst action)"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(task_id)
+    if not task:
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check if user can perform this action
+    if not data_manager.can_user_edit_task(str(current_user.id), task):
+        flash('You do not have permission to modify this task', 'error')
+        return redirect(url_for('index'))
+    
+    # Only allow if task is in progress and user is analyst assigned to task
+    if task.status == 'in_progress' and current_user.role == 'analyst' and task.assignee_id == current_user.id:
+        data_manager.update_task(task_id, status='in_review')
+        flash('Task sent for review successfully!', 'success')
+    else:
+        flash('Task cannot be sent for review at this time', 'error')
+    
+    return redirect(url_for('index'))
+
+@app.route('/task/<task_id>/recall', methods=['POST'])
+def recall_task(task_id):
+    """Recall task from review (analyst action)"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(task_id)
+    if not task:
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check if user can perform this action
+    if not data_manager.can_user_edit_task(str(current_user.id), task):
+        flash('You do not have permission to modify this task', 'error')
+        return redirect(url_for('index'))
+    
+    # Only allow if task is in review and user is analyst assigned to task
+    if task.status == 'in_review' and current_user.role == 'analyst' and task.assignee_id == current_user.id:
+        data_manager.update_task(task_id, status='in_progress')
+        flash('Task recalled from review successfully!', 'success')
+    else:
+        flash('Task cannot be recalled at this time', 'error')
+    
+    return redirect(url_for('index'))
+
+@app.route('/task/<task_id>/approve', methods=['POST'])
+def approve_task(task_id):
+    """Approve task (manager action)"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(task_id)
+    if not task:
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check if user can perform this action
+    if not data_manager.can_user_edit_task(str(current_user.id), task):
+        flash('You do not have permission to modify this task', 'error')
+        return redirect(url_for('index'))
+    
+    # Only allow if task is in review and user is manager
+    if task.status == 'in_review' and current_user.role in ['manager', 'director']:
+        from datetime import datetime
+        data_manager.update_task(task_id, status='completed', completed_at=datetime.utcnow())
+        flash('Task approved and completed!', 'success')
+    else:
+        flash('Task cannot be approved at this time', 'error')
     
     return redirect(url_for('index'))
 

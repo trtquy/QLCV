@@ -95,6 +95,33 @@
                 {% endif %}
             </div>
             <div class="d-flex align-items-center">
+                <!-- Role-based action buttons -->
+                {% if current_user %}
+                    {% if current_user.role == 'analyst' and task.assignee_id == current_user.id %}
+                        {% if task.status == 'in_progress' %}
+                        <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-info" title="Send for Review">
+                                <i data-feather="send" style="width: 12px; height: 12px;"></i>
+                            </button>
+                        </form>
+                        {% elif task.status == 'in_review' %}
+                        <form method="POST" action="{{ url_for('recall_task', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-warning" title="Recall from Review">
+                                <i data-feather="arrow-left" style="width: 12px; height: 12px;"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% elif current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id %}
+                        {% if task.status == 'in_review' %}
+                        <form method="POST" action="{{ url_for('approve_task', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-sm btn-success" title="Approve & Complete">
+                                <i data-feather="check" style="width: 12px; height: 12px;"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+                
                 <!-- Time tracking button -->
                 {% if current_user and task.assignee_id == current_user.id %}
                 <button class="btn btn-sm btn-outline-primary me-2 time-tracking-btn" 

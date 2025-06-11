@@ -148,7 +148,7 @@ window.tasksData = [
                             {% endfor %}
                         {% endif %}
                         <small class="text-muted">
-                            Showing {{ (todo_tasks + in_progress_tasks + completed_tasks)|length }} tasks
+                            Showing {{ (todo_tasks + in_progress_tasks + in_review_tasks + completed_tasks)|length }} tasks
                         </small>
                     </div>
                 </div>
@@ -537,6 +537,7 @@ window.tasksData = [
                                 <select class="form-select clean-input" id="edit_status" name="task_status">
                                     <option value="todo">To Do</option>
                                     <option value="in_progress">In Progress</option>
+                                    <option value="in_review">In Review</option>
                                     <option value="completed">Completed</option>
                                 </select>
                             </div>
@@ -550,6 +551,24 @@ window.tasksData = [
                                     <option value="">Select team member...</option>
                                     {% for user in users %}
                                         <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Supervisor -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="edit_supervisor_id" class="form-label fw-medium mb-2">
+                                    <i data-feather="user-check" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Supervisor
+                                </label>
+                                <select class="form-select clean-input" id="edit_supervisor_id" name="supervisor_id">
+                                    <option value="">Select supervisor...</option>
+                                    {% for user in users %}
+                                        {% if user.role == 'manager' %}
+                                            <option value="{{ user.id }}">{{ user.display_name or user.username }}</option>
+                                        {% endif %}
                                     {% endfor %}
                                 </select>
                             </div>
