@@ -648,7 +648,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Team filtering is handled by kanban.js
+// Team filtering function
+function filterByTeam() {
+    const teamSelect = document.getElementById('teamFilter');
+    if (teamSelect && teamSelect.value) {
+        // Redirect to filtered view
+        window.location.href = '/?team=' + teamSelect.value;
+    } else {
+        // Show all teams
+        window.location.href = '/';
+    }
+}
 
 // Task creation templates
 const templates = {

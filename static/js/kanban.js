@@ -572,17 +572,6 @@ function stopTimer(taskId) {
     }
 }
 
-function filterByTeam() {
-    const teamSelect = document.getElementById('teamFilter');
-    if (teamSelect && teamSelect.value) {
-        // Redirect to filtered view
-        window.location.href = '/?team=' + teamSelect.value;
-    } else {
-        // Show all teams
-        window.location.href = '/';
-    }
-}
-
 // Export functions for global use
 window.loadTaskForEdit = loadTaskForEdit;
 window.updateTaskStatus = updateTaskStatus;
@@ -590,4 +579,3 @@ window.showNotification = showNotification;
 window.refreshIcons = refreshIcons;
 window.toggleTimeTracking = toggleTimeTracking;
 window.updateTaskEstimate = updateTaskEstimate;
-window.filterByTeam = filterByTeam;
