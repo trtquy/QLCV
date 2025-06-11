@@ -19,6 +19,7 @@ class User(db.Model):
     # Relationships
     created_tasks = db.relationship('Task', foreign_keys='Task.created_by', backref='creator', lazy='dynamic')
     assigned_tasks = db.relationship('Task', foreign_keys='Task.assignee_id', backref='assignee', lazy='dynamic')
+    supervised_tasks = db.relationship('Task', foreign_keys='Task.supervisor_id', backref='supervisor', lazy='dynamic')
     
     def set_password(self, password):
         """Set password hash"""
@@ -81,7 +82,7 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    status = db.Column(db.String(20), nullable=False, default='todo')  # 'todo', 'in_progress', 'completed'
+    status = db.Column(db.String(20), nullable=False, default='todo')  # 'todo', 'in_progress', 'in_review', 'completed'
     priority = db.Column(db.String(20), nullable=False, default='medium')  # 'low', 'medium', 'high', 'urgent'
     complexity = db.Column(db.String(20), nullable=False, default='medium')  # 'very_simple', 'simple', 'medium', 'complex', 'very_complex'
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -97,6 +98,7 @@ class Task(db.Model):
     # Foreign Keys
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    supervisor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     
     # Indexes for better performance

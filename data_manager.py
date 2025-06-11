@@ -70,17 +70,22 @@ class DataManager:
     
     # Task management
     def create_task(self, title: str, description: str, created_by: str, 
-                   assignee_id: Optional[str] = None, priority: str = 'medium', 
-                   complexity: str = 'medium', started_at=None, due_date=None) -> Task:
+                   assignee_id: Optional[str] = None, supervisor_id: Optional[str] = None,
+                   priority: str = 'medium', complexity: str = 'medium', 
+                   started_at=None, due_date=None) -> Task:
         """Create a new task"""
+        # Determine initial status based on due date
+        initial_status = 'in_progress' if due_date else 'todo'
+        
         task = Task(
             title=title,
             description=description,
             created_by=int(created_by),
             assignee_id=int(assignee_id) if assignee_id else None,
+            supervisor_id=int(supervisor_id) if supervisor_id else None,
             priority=priority,
             complexity=complexity,
-            status='todo',
+            status=initial_status,
             started_at=started_at,
             due_date=due_date
         )
@@ -134,6 +139,56 @@ class DataManager:
                 Task.description.contains(query)
             )
         ).all()
+    
+    def get_team_managers(self, team_id: str) -> List[User]:
+        """Get all managers from a specific team"""
+        return User.query.filter_by(team_id=int(team_id), role='manager', is_active=True).all()
+    
+    def can_user_edit_task(self, user_id: str, task: Task) -> bool:
+        """Check if user can edit a task (assignee or team manager)"""
+        user = self.get_user(user_id)
+        if not user or not task:
+            return False
+        
+        # User is the assignee
+        if task.assignee_id == int(user_id):
+            return True
+        
+        # User is a manager of the task's team
+        if user.role == 'manager' and task.team_id == user.team_id:
+            return True
+        
+        return False
+    
+    def get_available_actions_for_task(self, user_id: str, task: Task) -> List[str]:
+        """Get available actions for a user on a specific task"""
+        user = self.get_user(user_id)
+        if not user or not task:
+            return []
+        
+        actions = []
+        
+        # Only assignee and team manager can modify tasks
+        if not self.can_user_edit_task(user_id, task):
+            return actions
+        
+        # If user is analyst and assigned to task
+        if user.role == 'analyst' and task.assignee_id == int(user_id):
+            if task.status == 'in_progress':
+                actions.append('send_for_review')
+            elif task.status == 'in_review':
+                actions.append('recall')
+        
+        # Managers can do more actions
+        elif user.role in ['manager', 'director']:
+            if task.status == 'todo':
+                actions.extend(['start', 'complete'])
+            elif task.status == 'in_progress':
+                actions.extend(['complete', 'send_for_review'])
+            elif task.status == 'in_review':
+                actions.extend(['approve', 'recall'])
+        
+        return actions
     
     # Session management
     def set_current_user(self, user_id: str):
