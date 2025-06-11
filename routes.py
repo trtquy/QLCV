@@ -24,11 +24,13 @@ def index():
     # Organize tasks by status
     todo_tasks = [t for t in tasks if t.status == 'todo']
     in_progress_tasks = [t for t in tasks if t.status == 'in_progress']
+    in_review_tasks = [t for t in tasks if t.status == 'in_review']
     completed_tasks = [t for t in tasks if t.status == 'completed']
     
     return render_template('index.html', 
                          todo_tasks=todo_tasks,
                          in_progress_tasks=in_progress_tasks,
+                         in_review_tasks=in_review_tasks,
                          completed_tasks=completed_tasks,
                          users=users,
                          teams=teams,
@@ -84,6 +86,7 @@ def create_task():
     title = request.form.get('title')
     description = request.form.get('description', '')
     assignee_id = request.form.get('assignee_id') or None
+    supervisor_id = request.form.get('supervisor_id') or None
     priority = request.form.get('priority', 'medium')
     complexity = request.form.get('complexity', 'medium')
     estimated_hours = request.form.get('estimated_hours')
@@ -114,6 +117,7 @@ def create_task():
             description=description,
             created_by=current_user.id,
             assignee_id=assignee_id,
+            supervisor_id=supervisor_id,
             priority=priority,
             complexity=complexity,
             started_at=parsed_started_at,

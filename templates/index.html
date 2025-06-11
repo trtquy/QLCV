@@ -159,7 +159,7 @@ window.tasksData = [
     <!-- Kanban Board -->
     <div class="row g-4">
         <!-- Todo Column -->
-        <div class="col-lg-4">
+        <div class="col-lg-3">
             <div class="kanban-column">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-secondary">
@@ -197,7 +197,7 @@ window.tasksData = [
         </div>
 
         <!-- In Progress Column -->
-        <div class="col-lg-4">
+        <div class="col-lg-3">
             <div class="kanban-column">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-warning">
@@ -234,8 +234,48 @@ window.tasksData = [
             </div>
         </div>
 
+        <!-- In Review Column -->
+        <div class="col-lg-3">
+            <div class="kanban-column">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-info">
+                        <i data-feather="eye" class="me-2"></i>
+                        In Review
+                    </h5>
+                    <span class="badge bg-info">{{ in_review_tasks|length }}</span>
+                </div>
+                
+                <div class="task-container" data-status="in_review">
+                    {% for task in in_review_tasks %}
+                        <div class="card task-card mb-3 priority-{{ task.priority }}" 
+                             data-task-id="{{ task.id }}" 
+                             onclick="openTaskEditModal('{{ task.id }}')"
+                             style="cursor: pointer;">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
+                                    <span class="badge bg-info ms-2">{{ task.priority|upper }}</span>
+                                </div>
+                                
+                                <p class="card-text text-muted small mb-2">
+                                    {{ task.description|truncate(80) if task.description else "No description" }}
+                                </p>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Task #{{ task.id }}</small>
+                                    {% if task.supervisor %}
+                                        <small class="text-muted">Supervisor: {{ task.supervisor.display_name or task.supervisor.username }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
         <!-- Completed Column -->
-        <div class="col-lg-4">
+        <div class="col-lg-3">
             <div class="kanban-column">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 text-success">
@@ -347,6 +387,27 @@ window.tasksData = [
                                         {% endfor %}
                                     {% endif %}
                                 </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Supervisor -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="supervisor_id" class="form-label fw-medium mb-2">
+                                    <i data-feather="user-check" class="me-1" style="width: 16px; height: 16px;"></i>
+                                    Supervisor
+                                </label>
+                                <select class="form-select clean-input" id="supervisor_id" name="supervisor_id">
+                                    <option value="">Select supervisor...</option>
+                                    {% if current_user and current_user.team %}
+                                        {% for user in users %}
+                                            {% if user.team_id == current_user.team_id and user.role == 'manager' %}
+                                                <option value="{{ user.id }}">{{ user.display_name or user.username }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                                <div class="form-text">Optional: Choose a team manager to supervise this task</div>
                             </div>
                             
                             <!-- Team automatically set to manager's team -->
