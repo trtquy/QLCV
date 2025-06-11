@@ -1,9 +1,9 @@
 /* TaskFlow - Custom Styles */
 
 :root {
-    /* Atlassian Color Palette */
-    --primary: 210 100% 40%; /* #0052CC */
-    --success: 154 60% 48%; /* #36B37E */
+    /* Updated Color Palette */
+    --primary: 182 100% 21%; /* #006B68 */
+    --success: 46 100% 59%; /* #FFC62F */
     --background: 210 11% 98%; /* #F4F5F7 */
     --text: 220 43% 23%; /* #172B4D */
     --urgent: 9 100% 58%; /* #FF5630 */

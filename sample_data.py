@@ -14,55 +14,43 @@ def create_sample_data():
         db.session.query(User).delete()
         db.session.commit()
         
-        # Create sample users with new role structure
+        # Load real user data from Excel file
+        import pandas as pd
+        df = pd.read_excel('attached_assets/Book2_1749633149254.xlsx')
+        
+        # Create admin user first
         users_data = [
             {
                 'username': 'admin',
-                'email': 'admin@globalbank.com',
+                'email': 'admin@bidv.com.vn',
                 'role': 'admin'
-            },
-            {
-                'username': 'sarah_chen',
-                'email': 'sarah.chen@globalbank.com',
-                'role': 'manager'
-            },
-            {
-                'username': 'mike_rodriguez',
-                'email': 'mike.rodriguez@globalbank.com',
-                'role': 'analyst'
-            },
-            {
-                'username': 'emily_watson',
-                'email': 'emily.watson@globalbank.com',
-                'role': 'analyst'
-            },
-            {
-                'username': 'david_kim',
-                'email': 'david.kim@globalbank.com',
-                'role': 'director'
-            },
-            {
-                'username': 'jennifer_lopez',
-                'email': 'jennifer.lopez@globalbank.com',
-                'role': 'analyst'
             }
         ]
         
-        # Create teams first
-        teams_data = [
-            {
-                'name': 'Risk Assessment Team',
-                'description': 'Responsible for credit risk, market risk, and operational risk assessment'
-            },
-            {
-                'name': 'Compliance & Regulatory Team',
-                'description': 'Handles regulatory compliance and policy implementation'
-            },
-            {
-                'name': 'Financial Analytics Team',
-                'description': 'Develops financial models and analytics solutions'
-            }
-        ]
+        # Add real users from Excel
+        for _, row in df.iterrows():
+            users_data.append({
+                'username': str(row['Username']),
+                'email': str(row['Email']), 
+                'role': str(row['Class']).lower(),
+                'team_name': str(row['Team.1'])  # Using Team.1 column which has the actual team names
+            })
+        
+        # Create teams based on real data from Excel
+        unique_teams = df['Team.1'].unique()
+        teams_data = []
+        team_descriptions = {
+            'Chính sách tín dụng': 'Credit policy development and implementation',
+            'Quản lý danh mục': 'Portfolio management and analysis',
+            'Giám sát tín dụng': 'Credit monitoring and supervision',
+            'Quản lý rủi ro tích hợp': 'Integrated risk management'
+        }
+        
+        for team_name in unique_teams:
+            teams_data.append({
+                'name': team_name,
+                'description': team_descriptions.get(team_name, 'Banking operations team')
+            })
         
         created_teams = []
         for team_data in teams_data:
