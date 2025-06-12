@@ -160,14 +160,36 @@ def update_task(task_id):
     if not current_user:
         return redirect(url_for('login'))
     
+    # Get the task first to check permissions
+    task = data_manager.get_task(task_id)
+    if not task:
+        if 'status' in request.form:
+            return jsonify({'success': False, 'error': 'Task not found'})
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check edit permissions - same as priority permissions
+    can_edit = (
+        current_user.is_administrator or  # Administrators can edit all tasks
+        task.assignee_id == current_user.id or  # Assignees can edit their tasks
+        task.created_by == current_user.id or  # Task creators can edit their tasks
+        (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id)  # Team managers can edit team tasks
+    )
+    
+    if not can_edit:
+        if 'status' in request.form:
+            return jsonify({'success': False, 'error': 'Permission denied'})
+        flash('You do not have permission to edit this task', 'error')
+        return redirect(url_for('index'))
+    
     # Handle status update (for drag and drop)
     if 'status' in request.form:
         new_status = request.form.get('status')
-        task = data_manager.update_task(task_id, status=new_status)
-        if task:
+        updated_task = data_manager.update_task(task_id, status=new_status)
+        if updated_task:
             return jsonify({'success': True, 'task_id': task_id, 'new_status': new_status})
         else:
-            return jsonify({'success': False, 'error': 'Task not found'})
+            return jsonify({'success': False, 'error': 'Failed to update task'})
     
     # Handle full task update
     title = request.form.get('title')

@@ -1102,14 +1102,22 @@ function rejectTask(taskId) {
                                     </form>
                                     {% endif %}
                                     
-                                    <!-- Approve button for managers/directors/administrators -->
-                                    {% if current_user and ((current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) or current_user.is_administrator) %}
-                                    <form method="POST" action="{{ url_for('approve_task', task_id=task.id) }}" class="d-inline" onclick="event.stopPropagation();">
-                                        <button type="submit" class="btn btn-sm btn-success" title="Approve & Complete">
-                                            <i data-feather="check" style="width: 12px; height: 12px;"></i>
-                                            Approve
-                                        </button>
-                                    </form>
+                                    <!-- Approve button for supervisors/administrators -->
+                                    {% if current_user and (current_user.is_administrator or task.supervisor_id == current_user.id) %}
+                                    <button type="button" class="btn btn-sm btn-success" title="Approve & Complete" 
+                                            onclick="event.stopPropagation(); approveTask('{{ task.id }}');">
+                                        <i data-feather="check" style="width: 12px; height: 12px;"></i>
+                                        Approve
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Reject button for supervisors/administrators -->
+                                    {% if current_user and (current_user.is_administrator or task.supervisor_id == current_user.id) %}
+                                    <button type="button" class="btn btn-sm btn-danger ms-1" title="Reject & Send Back" 
+                                            onclick="event.stopPropagation(); rejectTask('{{ task.id }}');">
+                                        <i data-feather="x" style="width: 12px; height: 12px;"></i>
+                                        Reject
+                                    </button>
                                     {% endif %}
                                 </div>
                             </div>
