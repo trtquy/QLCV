@@ -385,13 +385,134 @@ window.tasksData = [
         assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
         supervisor_id: "{{ task.supervisor_id if task.supervisor_id else '' }}",
         team_id: "{{ task.team_id if task.team_id else '' }}",
-        estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}",
+        estimated_hours: {{ task.estimated_hours if task.estimated_hours else 'null' }},
+        total_logged: {{ task.get_total_time_logged() or 0 }},
         started_at: "{{ task.started_at.isoformat() if task.started_at else '' }}",
         due_date: "{{ task.due_date.isoformat() if task.due_date else '' }}",
         completed_at: "{{ task.completed_at.isoformat() if task.completed_at else '' }}"
     }{% if not loop.last %},{% endif %}
     {% endfor %}
 ];
+
+// Initialize time tracking when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTimeTrackingUI();
+    checkActiveTimeLog();
+});
+
+function initializeTimeTrackingUI() {
+    window.tasksData.forEach(function(task) {
+        addTimeTrackingToCard(task);
+    });
+}
+
+function addTimeTrackingToCard(task) {
+    var taskCard = document.querySelector('[data-task-id="' + task.id + '"]');
+    if (!taskCard) return;
+    
+    var cardBody = taskCard.querySelector('.card-body');
+    var existingTimeSection = cardBody.querySelector('.time-tracking-section');
+    
+    if (existingTimeSection) return;
+    
+    // Check if user can track time for this task
+    var currentUserId = "{{ current_user.id if current_user else '' }}";
+    var isAdmin = {{ 'true' if current_user and current_user.is_administrator else 'false' }};
+    var canTrackTime = isAdmin || (task.assignee_id === currentUserId);
+    
+    // Create time tracking section
+    var timeSection = document.createElement('div');
+    timeSection.className = 'time-tracking-section mt-2 mb-2';
+    
+    var timeInfo = document.createElement('div');
+    timeInfo.className = 'd-flex justify-content-between align-items-center mb-1';
+    
+    var timeDisplay = document.createElement('small');
+    timeDisplay.className = 'text-muted';
+    
+    var timeText = task.total_logged.toFixed(1) + 'h logged';
+    if (task.estimated_hours) {
+        timeText = task.total_logged.toFixed(1) + 'h / ' + task.estimated_hours.toFixed(1) + 'h';
+    }
+    
+    timeDisplay.innerHTML = '<i class="fas fa-clock me-1"></i>' + timeText;
+    timeInfo.appendChild(timeDisplay);
+    
+    if (canTrackTime) {
+        var timeControls = document.createElement('div');
+        timeControls.className = 'time-controls';
+        
+        var trackBtn = document.createElement('button');
+        trackBtn.className = 'btn btn-sm btn-outline-primary time-track-btn';
+        trackBtn.setAttribute('data-task-id', task.id);
+        trackBtn.innerHTML = '<i class="fas fa-play"></i>';
+        trackBtn.title = 'Start tracking time';
+        trackBtn.onclick = function(e) {
+            e.stopPropagation();
+            toggleTimeTracking(task.id);
+        };
+        
+        timeControls.appendChild(trackBtn);
+        timeInfo.appendChild(timeControls);
+    }
+    
+    timeSection.appendChild(timeInfo);
+    
+    // Add progress bar if estimated hours exist
+    if (task.estimated_hours && task.total_logged > 0) {
+        var progressPercent = (task.total_logged / task.estimated_hours) * 100;
+        var progressDiv = document.createElement('div');
+        progressDiv.className = 'progress';
+        progressDiv.style.height = '3px';
+        
+        var progressBar = document.createElement('div');
+        if (progressPercent > 100) {
+            progressBar.className = 'progress-bar bg-danger';
+        } else if (progressPercent > 80) {
+            progressBar.className = 'progress-bar bg-warning';
+        } else {
+            progressBar.className = 'progress-bar bg-success';
+        }
+        progressBar.style.width = Math.min(progressPercent, 100) + '%';
+        progressBar.title = progressPercent.toFixed(1) + '% complete';
+        
+        progressDiv.appendChild(progressBar);
+        timeSection.appendChild(progressDiv);
+    }
+    
+    // Insert before the last div
+    var lastDiv = cardBody.querySelector('.d-flex:last-child');
+    cardBody.insertBefore(timeSection, lastDiv);
+}
+
+function checkActiveTimeLog() {
+    fetch('/get_active_time_log')
+        .then(function(response) {
+            if (response.ok) {
+                return response.json();
+            }
+            return null;
+        })
+        .then(function(data) {
+            if (data && data.task_id) {
+                var button = document.querySelector('[data-task-id="' + data.task_id + '"].time-track-btn');
+                var taskCard = button ? button.closest('.task-card') : null;
+                
+                if (button && taskCard) {
+                    button.classList.add('active');
+                    button.innerHTML = '<i class="fas fa-stop"></i>';
+                    button.title = 'Stop tracking time';
+                    taskCard.classList.add('time-tracking-active');
+                    button.setAttribute('data-time-log-id', data.id);
+                    
+                    startTimerDisplay(data.task_id, button);
+                }
+            }
+        })
+        .catch(function(error) {
+            console.log('No active time log found');
+        });
+}
 </script>
 <style>
     .kanban-column {
