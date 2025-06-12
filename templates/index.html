@@ -103,7 +103,9 @@ function cyclePriority(badgeElement) {
         // Update task card border color
         var taskCard = badgeElement.closest('.task-card');
         if (taskCard) {
-            taskCard.className = taskCard.className.replace(/priority-\w+/, 'priority-' + newPriority);
+            // Remove old priority classes and add new one
+            taskCard.classList.remove('priority-urgent', 'priority-high', 'priority-medium', 'priority-low');
+            taskCard.classList.add('priority-' + newPriority);
         }
         
         // Update local task data
@@ -191,10 +193,10 @@ window.tasksData = [
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
-    .priority-urgent { border-left-color: #FF5630; }
-    .priority-high { border-left-color: #FF8B00; }
-    .priority-medium { border-left-color: #36B37E; }
-    .priority-low { border-left-color: #0065FF; }
+    .task-card.priority-urgent { border-left-color: #FF5630; }
+    .task-card.priority-high { border-left-color: #FF8B00; }
+    .task-card.priority-medium { border-left-color: #36B37E; }
+    .task-card.priority-low { border-left-color: #0065FF; }
     
     /* Autocomplete dropdown styling */
     .dropdown-menu {
@@ -235,13 +237,14 @@ window.tasksData = [
         color: #fff;
     }
     
-    /* Priority badge styling */
+    /* Priority badge styling - more specific selectors to prevent leaking */
     .priority-badge {
         cursor: pointer;
         transition: all 0.2s ease;
         position: relative;
         font-weight: 600;
         border: 2px solid transparent;
+        display: inline-block;
     }
     
     .priority-badge:hover {
@@ -249,31 +252,31 @@ window.tasksData = [
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     
-    .priority-urgent {
+    .priority-badge.priority-urgent {
         background-color: #FF5630 !important;
         color: white !important;
-        border-color: #de350b;
+        border-color: #de350b !important;
     }
     
-    .priority-high {
+    .priority-badge.priority-high {
         background-color: #FF8B00 !important;
         color: white !important;
-        border-color: #ff6300;
+        border-color: #ff6300 !important;
     }
     
-    .priority-medium {
+    .priority-badge.priority-medium {
         background-color: #36B37E !important;
         color: white !important;
-        border-color: #00875a;
+        border-color: #00875a !important;
     }
     
-    .priority-low {
+    .priority-badge.priority-low {
         background-color: #0065FF !important;
         color: white !important;
-        border-color: #0052cc;
+        border-color: #0052cc !important;
     }
     
-    .priority-loading {
+    .priority-badge.priority-loading {
         background-color: #6c757d !important;
         color: white !important;
     }
