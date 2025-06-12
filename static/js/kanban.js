@@ -14,6 +14,9 @@ function initializeKanban() {
     // Add time tracking functionality
     initializeTimeTracking();
     
+    // Initialize autocomplete functionality
+    initializeAutocomplete();
+    
     // Initialize feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();

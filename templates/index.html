@@ -239,8 +239,8 @@ window.tasksData = [
                                     <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
                                 
-                                <!-- Send for Review Button for Analysts -->
-                                {% if current_user and current_user.role == 'analyst' and task.assignee_id == current_user.id %}
+                                <!-- Send for Review Button -->
+                                {% if current_user and ((current_user.role == 'analyst' and task.assignee_id == current_user.id) or current_user.is_administrator) %}
                                 <div class="mt-2">
                                     <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline" onclick="event.stopPropagation();">
                                         <button type="submit" class="btn btn-sm btn-info" title="Send for Review">
@@ -293,8 +293,8 @@ window.tasksData = [
                                 
                                 <!-- Action buttons for In Review tasks -->
                                 <div class="mt-2">
-                                    <!-- Recall button for analysts -->
-                                    {% if current_user and current_user.role == 'analyst' and task.assignee_id == current_user.id %}
+                                    <!-- Recall button for analysts and administrators -->
+                                    {% if current_user and ((current_user.role == 'analyst' and task.assignee_id == current_user.id) or current_user.is_administrator) %}
                                     <form method="POST" action="{{ url_for('recall_task', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
                                         <button type="submit" class="btn btn-sm btn-warning" title="Recall from Review">
                                             <i data-feather="arrow-left" style="width: 12px; height: 12px;"></i>
@@ -303,8 +303,8 @@ window.tasksData = [
                                     </form>
                                     {% endif %}
                                     
-                                    <!-- Approve button for managers/directors -->
-                                    {% if current_user and current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id %}
+                                    <!-- Approve button for managers/directors/administrators -->
+                                    {% if current_user and ((current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) or current_user.is_administrator) %}
                                     <form method="POST" action="{{ url_for('approve_task', task_id=task.id) }}" class="d-inline" onclick="event.stopPropagation();">
                                         <button type="submit" class="btn btn-sm btn-success" title="Approve & Complete">
                                             <i data-feather="check" style="width: 12px; height: 12px;"></i>
@@ -422,37 +422,29 @@ window.tasksData = [
                         <!-- Assignment -->
                         <div class="col-md-6">
                             <div class="mb-4">
-                                <label for="assignee_id" class="form-label fw-medium mb-2">Assign To</label>
-                                <select class="form-select clean-input" id="assignee_id" name="assignee_id">
-                                    <option value="">Select team member...</option>
-                                    {% if current_user and current_user.team %}
-                                        {% for user in users %}
-                                            {% if user.team_id == current_user.team_id %}
-                                                <option value="{{ user.id }}">{{ user.display_name or user.username }} ({{ user.role|title }})</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endif %}
-                                </select>
+                                <label for="assignee_input" class="form-label fw-medium mb-2">Assign To</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control clean-input" id="assignee_input" 
+                                           placeholder="Type name to search team members..." autocomplete="off">
+                                    <input type="hidden" id="assignee_id" name="assignee_id">
+                                    <div class="dropdown-menu" id="assignee_dropdown" style="display: none; width: 100%; max-height: 200px; overflow-y: auto;"></div>
+                                </div>
                             </div>
                         </div>
                         
                         <!-- Supervisor -->
                         <div class="col-md-6">
                             <div class="mb-4">
-                                <label for="supervisor_id" class="form-label fw-medium mb-2">
+                                <label for="supervisor_input" class="form-label fw-medium mb-2">
                                     <i data-feather="user-check" class="me-1" style="width: 16px; height: 16px;"></i>
                                     Supervisor
                                 </label>
-                                <select class="form-select clean-input" id="supervisor_id" name="supervisor_id">
-                                    <option value="">Select supervisor...</option>
-                                    {% if current_user and current_user.team %}
-                                        {% for user in users %}
-                                            {% if user.team_id == current_user.team_id and user.role == 'manager' %}
-                                                <option value="{{ user.id }}">{{ user.display_name or user.username }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endif %}
-                                </select>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control clean-input" id="supervisor_input" 
+                                           placeholder="Type name to search team managers..." autocomplete="off">
+                                    <input type="hidden" id="supervisor_id" name="supervisor_id">
+                                    <div class="dropdown-menu" id="supervisor_dropdown" style="display: none; width: 100%; max-height: 200px; overflow-y: auto;"></div>
+                                </div>
                                 <div class="form-text">Optional: Choose a team manager to supervise this task</div>
                             </div>
                             
@@ -576,47 +568,34 @@ window.tasksData = [
                             </div>
                         </div>
                         
-                        <!-- Status -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_status" class="form-label fw-medium mb-2">Status</label>
-                                <select class="form-select clean-input" id="edit_status" name="task_status">
-                                    <option value="todo">To Do</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="in_review">In Review</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                        </div>
+
                         
                         <!-- Assignment -->
                         <div class="col-md-6">
                             <div class="mb-4">
-                                <label for="edit_assignee_id" class="form-label fw-medium mb-2">Assign To</label>
-                                <select class="form-select clean-input" id="edit_assignee_id" name="assignee_id">
-                                    <option value="">Select team member...</option>
-                                    {% for user in users %}
-                                        <option value="{{ user.id }}">{{ user.username }}</option>
-                                    {% endfor %}
-                                </select>
+                                <label for="edit_assignee_input" class="form-label fw-medium mb-2">Assign To</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control clean-input" id="edit_assignee_input" 
+                                           placeholder="Type name to search team members..." autocomplete="off">
+                                    <input type="hidden" id="edit_assignee_id" name="assignee_id">
+                                    <div class="dropdown-menu" id="edit_assignee_dropdown" style="display: none; width: 100%; max-height: 200px; overflow-y: auto;"></div>
+                                </div>
                             </div>
                         </div>
                         
                         <!-- Supervisor -->
                         <div class="col-md-6">
                             <div class="mb-4">
-                                <label for="edit_supervisor_id" class="form-label fw-medium mb-2">
+                                <label for="edit_supervisor_input" class="form-label fw-medium mb-2">
                                     <i data-feather="user-check" class="me-1" style="width: 16px; height: 16px;"></i>
                                     Supervisor
                                 </label>
-                                <select class="form-select clean-input" id="edit_supervisor_id" name="supervisor_id">
-                                    <option value="">Select supervisor...</option>
-                                    {% for user in users %}
-                                        {% if user.role == 'manager' %}
-                                            <option value="{{ user.id }}">{{ user.display_name or user.username }}</option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control clean-input" id="edit_supervisor_input" 
+                                           placeholder="Type name to search team managers..." autocomplete="off">
+                                    <input type="hidden" id="edit_supervisor_id" name="supervisor_id">
+                                    <div class="dropdown-menu" id="edit_supervisor_dropdown" style="display: none; width: 100%; max-height: 200px; overflow-y: auto;"></div>
+                                </div>
                             </div>
                         </div>
                         
