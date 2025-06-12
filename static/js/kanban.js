@@ -307,6 +307,9 @@ function loadTaskForEdit(taskId) {
     }
 }
 
+// Export immediately after definition
+window.loadTaskForEdit = loadTaskForEdit;
+
 function deleteTask(taskId) {
     // Create form and submit
     const form = document.createElement('form');
