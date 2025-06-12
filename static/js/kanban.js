@@ -252,12 +252,16 @@ function loadTaskForEdit(taskId) {
     
     // Safely populate each field
     for (const [elementId, value] of Object.entries(formElements)) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.value = value;
-            console.log(`Set ${elementId} = ${value}`);
-        } else {
-            console.warn(`Element ${elementId} not found in DOM`);
+        try {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.value = value;
+                console.log(`Set ${elementId} = ${value}`);
+            } else {
+                console.warn(`Element ${elementId} not found in DOM`);
+            }
+        } catch (error) {
+            console.error(`Error setting ${elementId}:`, error);
         }
     }
     
