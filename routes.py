@@ -951,37 +951,60 @@ def api_team_users():
 @app.route('/update_task_priority/<task_id>', methods=['POST'])
 def update_task_priority(task_id):
     """Update task priority via AJAX"""
-    current_user = data_manager.get_current_user()
-    if not current_user:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    new_priority = request.form.get('priority')
-    if not new_priority or new_priority not in ['low', 'medium', 'high', 'urgent']:
-        return jsonify({'error': 'Invalid priority'}), 400
-    
-    # Get the task
-    task = data_manager.get_task(task_id)
-    if not task:
-        return jsonify({'error': 'Task not found'}), 404
-    
-    # Check permissions - users can only update priority for tasks they can edit
-    if not data_manager.can_user_edit_task(current_user.id, task):
-        return jsonify({'error': 'Permission denied'}), 403
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     
     try:
+        current_user = data_manager.get_current_user()
+        logging.debug(f"Current user: {current_user}")
+        
+        if not current_user:
+            logging.error("No current user found")
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        new_priority = request.form.get('priority')
+        logging.debug(f"New priority: {new_priority}")
+        
+        if not new_priority or new_priority not in ['low', 'medium', 'high', 'urgent']:
+            logging.error(f"Invalid priority: {new_priority}")
+            return jsonify({'error': 'Invalid priority'}), 400
+        
+        # Get the task
+        task = data_manager.get_task(task_id)
+        logging.debug(f"Task found: {task}")
+        
+        if not task:
+            logging.error(f"Task not found: {task_id}")
+            return jsonify({'error': 'Task not found'}), 404
+        
+        # Check permissions - users can only update priority for tasks they can edit
+        can_edit = data_manager.can_user_edit_task(current_user.id, task)
+        logging.debug(f"User {current_user.id} can edit task: {can_edit}")
+        
+        if not can_edit:
+            logging.error(f"Permission denied for user {current_user.id} on task {task_id}")
+            return jsonify({'error': 'Permission denied'}), 403
+        
         # Update task priority
+        logging.debug(f"Updating task {task_id} priority to {new_priority}")
         updated_task = data_manager.update_task(task_id, priority=new_priority)
+        
         if updated_task:
+            logging.debug(f"Task updated successfully: {updated_task.priority}")
             return jsonify({
                 'success': True,
                 'priority': new_priority,
                 'message': f'Priority updated to {new_priority.upper()}'
             })
         else:
+            logging.error("Failed to update task in database")
             return jsonify({'error': 'Failed to update task'}), 500
+            
     except Exception as e:
         logging.error(f"Error updating task priority: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @app.context_processor
 def inject_current_user():
