@@ -948,6 +948,41 @@ def api_team_users():
     
     return jsonify(users_data)
 
+@app.route('/update_task_priority/<task_id>', methods=['POST'])
+def update_task_priority(task_id):
+    """Update task priority via AJAX"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    new_priority = request.form.get('priority')
+    if not new_priority or new_priority not in ['low', 'medium', 'high', 'urgent']:
+        return jsonify({'error': 'Invalid priority'}), 400
+    
+    # Get the task
+    task = data_manager.get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Check permissions - users can only update priority for tasks they can edit
+    if not data_manager.can_user_edit_task(current_user.id, task):
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    try:
+        # Update task priority
+        updated_task = data_manager.update_task(task_id, priority=new_priority)
+        if updated_task:
+            return jsonify({
+                'success': True,
+                'priority': new_priority,
+                'message': f'Priority updated to {new_priority.upper()}'
+            })
+        else:
+            return jsonify({'error': 'Failed to update task'}), 500
+    except Exception as e:
+        logging.error(f"Error updating task priority: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.context_processor
 def inject_current_user():
     """Make current user available in all templates"""
