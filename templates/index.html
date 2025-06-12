@@ -30,6 +30,42 @@
     </div>
 {% endmacro %}
 
+{# Macro for time tracking section #}
+{% macro time_tracking_section(task, current_user) %}
+    {% set total_logged = task.get_total_time_logged() %}
+    {% set can_track_time = current_user and (task.assignee_id == current_user.id or current_user.is_administrator) %}
+    
+    <div class="time-tracking-section mt-2 mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-muted">
+                <i class="fas fa-clock me-1"></i>
+                {% if task.estimated_hours %}
+                    {{ "%.1f"|format(total_logged or 0) }}h / {{ "%.1f"|format(task.estimated_hours) }}h
+                {% else %}
+                    {{ "%.1f"|format(total_logged or 0) }}h logged
+                {% endif %}
+            </small>
+            {% if can_track_time %}
+            <div class="time-controls">
+                <button class="btn btn-sm btn-outline-primary time-track-btn" 
+                        data-task-id="{{ task.id }}"
+                        onclick="event.stopPropagation(); toggleTimeTracking('{{ task.id }}')">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% if task.estimated_hours and total_logged %}
+            {% set progress_percent = ((total_logged / task.estimated_hours) * 100)|round(1) %}
+            <div class="progress" style="height: 3px;">
+                <div class="progress-bar {% if progress_percent > 100 %}bg-danger{% elif progress_percent > 80 %}bg-warning{% else %}bg-success{% endif %}" 
+                     style="width: {{ [progress_percent, 100]|min }}%"
+                     title="{{ progress_percent }}% complete"></div>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
 {% block extra_head %}
 <script>
 // Simple wrapper function
@@ -184,6 +220,156 @@ function showPriorityNotification(message, type) {
             }
         }, 300);
     }, 2000);
+}
+
+// Enhanced time tracking functionality
+function toggleTimeTracking(taskId) {
+    var button = document.querySelector('[data-task-id="' + taskId + '"].time-track-btn');
+    var taskCard = button.closest('.task-card');
+    
+    if (button.classList.contains('active')) {
+        stopTimeTracking(taskId, button, taskCard);
+    } else {
+        startTimeTracking(taskId, button, taskCard);
+    }
+}
+
+function startTimeTracking(taskId, button, taskCard) {
+    // First stop any other active tracking
+    var activeButtons = document.querySelectorAll('.time-track-btn.active');
+    activeButtons.forEach(function(activeBtn) {
+        var activeTaskCard = activeBtn.closest('.task-card');
+        var activeTaskId = activeBtn.getAttribute('data-task-id');
+        stopTimeTracking(activeTaskId, activeBtn, activeTaskCard, true);
+    });
+    
+    // Start tracking for this task
+    fetch('/start_time_tracking/' + taskId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(function(response) {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Failed to start time tracking');
+    })
+    .then(function(data) {
+        button.classList.add('active');
+        button.innerHTML = '<i class="fas fa-stop"></i>';
+        button.title = 'Stop tracking time';
+        taskCard.classList.add('time-tracking-active');
+        
+        // Store the time log ID for stopping later
+        button.setAttribute('data-time-log-id', data.time_log_id);
+        
+        showPriorityNotification('Time tracking started', 'success');
+        
+        // Start the timer display
+        startTimerDisplay(taskId, button);
+    })
+    .catch(function(error) {
+        showPriorityNotification('Failed to start time tracking', 'error');
+    });
+}
+
+function stopTimeTracking(taskId, button, taskCard, silent) {
+    var timeLogId = button.getAttribute('data-time-log-id');
+    
+    if (!timeLogId) {
+        console.warn('No time log ID found for task', taskId);
+        return;
+    }
+    
+    fetch('/stop_time_tracking/' + timeLogId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(function(response) {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Failed to stop time tracking');
+    })
+    .then(function(data) {
+        button.classList.remove('active');
+        button.innerHTML = '<i class="fas fa-play"></i>';
+        button.title = 'Start tracking time';
+        taskCard.classList.remove('time-tracking-active');
+        button.removeAttribute('data-time-log-id');
+        
+        // Update the time display
+        updateTimeDisplay(taskId, data.total_time);
+        
+        if (!silent) {
+            showPriorityNotification('Time tracking stopped: ' + data.duration + ' hours logged', 'success');
+        }
+        
+        // Stop the timer display
+        stopTimerDisplay(taskId);
+    })
+    .catch(function(error) {
+        if (!silent) {
+            showPriorityNotification('Failed to stop time tracking', 'error');
+        }
+    });
+}
+
+function startTimerDisplay(taskId, button) {
+    var startTime = new Date();
+    
+    var timer = setInterval(function() {
+        var now = new Date();
+        var elapsed = (now - startTime) / 1000 / 60 / 60; // hours
+        button.title = 'Stop tracking time (running: ' + elapsed.toFixed(1) + 'h)';
+    }, 60000); // Update every minute
+    
+    // Store timer ID for cleanup
+    button.setAttribute('data-timer-id', timer);
+}
+
+function stopTimerDisplay(taskId) {
+    var button = document.querySelector('[data-task-id="' + taskId + '"].time-track-btn');
+    var timerId = button.getAttribute('data-timer-id');
+    
+    if (timerId) {
+        clearInterval(parseInt(timerId));
+        button.removeAttribute('data-timer-id');
+    }
+}
+
+function updateTimeDisplay(taskId, totalTime) {
+    var taskCard = document.querySelector('[data-task-id="' + taskId + '"]').closest('.task-card');
+    var timeDisplay = taskCard.querySelector('.time-tracking-section .text-muted');
+    
+    if (timeDisplay && totalTime !== undefined) {
+        var timeText = timeDisplay.textContent;
+        // Update the logged time part
+        var newTimeText = timeText.replace(/[\d.]+h/, totalTime.toFixed(1) + 'h');
+        timeDisplay.textContent = newTimeText;
+        
+        // Update progress bar if it exists
+        var progressBar = taskCard.querySelector('.progress-bar');
+        if (progressBar) {
+            var estimated = parseFloat(timeText.match(/\/\s*([\d.]+)h/)[1]);
+            var progressPercent = (totalTime / estimated) * 100;
+            progressBar.style.width = Math.min(progressPercent, 100) + '%';
+            progressBar.title = progressPercent.toFixed(1) + '% complete';
+            
+            // Update progress bar color
+            if (progressPercent > 100) {
+                progressBar.className = 'progress-bar bg-danger';
+            } else if (progressPercent > 80) {
+                progressBar.className = 'progress-bar bg-warning';
+            } else {
+                progressBar.className = 'progress-bar bg-success';
+            }
+        }
+    }
 }
 
 // Initialize task data early
@@ -391,6 +577,50 @@ window.tasksData = [
         font-size: 10px;
         white-space: nowrap;
         z-index: 1000;
+    }
+    
+    /* Time tracking styling */
+    .time-tracking-section {
+        border-top: 1px solid #f0f0f0;
+        padding-top: 8px;
+    }
+    
+    .time-track-btn {
+        padding: 2px 6px;
+        font-size: 10px;
+        line-height: 1;
+        border-radius: 3px;
+    }
+    
+    .time-track-btn.active {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    .time-track-btn.active i::before {
+        content: "\f04d"; /* FontAwesome stop icon */
+    }
+    
+    .progress {
+        margin-top: 4px;
+    }
+    
+    .time-controls {
+        display: flex;
+        gap: 4px;
+    }
+    
+    /* Active time tracking indicator */
+    .task-card.time-tracking-active {
+        border-left: 4px solid #dc3545;
+        box-shadow: 0 0 0 1px rgba(220, 53, 69, 0.2);
+    }
+    
+    .time-tracking-active .time-track-btn {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
     }
 </style>
 {% endblock %}
