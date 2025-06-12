@@ -977,13 +977,34 @@ def update_task_priority(task_id):
             logging.error(f"Task not found: {task_id}")
             return jsonify({'error': 'Task not found'}), 404
         
-        # Check permissions - users can only update priority for tasks they can edit
-        can_edit = data_manager.can_user_edit_task(current_user.id, task)
-        logging.debug(f"User {current_user.id} can edit task: {can_edit}")
+        # Check permissions - broader permissions for priority updates
+        can_update_priority = False
         
-        if not can_edit:
+        # Allow if user is administrator
+        if current_user.is_administrator:
+            can_update_priority = True
+            logging.debug("User is administrator - priority update allowed")
+        
+        # Allow if user is the assignee
+        elif task.assignee_id == current_user.id:
+            can_update_priority = True
+            logging.debug("User is task assignee - priority update allowed")
+        
+        # Allow if user is a manager/director in the same team
+        elif current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id:
+            can_update_priority = True
+            logging.debug("User is team manager/director - priority update allowed")
+        
+        # Allow if user created the task
+        elif task.created_by == current_user.id:
+            can_update_priority = True
+            logging.debug("User is task creator - priority update allowed")
+        
+        logging.debug(f"User {current_user.id} can update priority: {can_update_priority}")
+        
+        if not can_update_priority:
             logging.error(f"Permission denied for user {current_user.id} on task {task_id}")
-            return jsonify({'error': 'Permission denied'}), 403
+            return jsonify({'error': 'Permission denied - only assignees, team managers, or administrators can change priority'}), 403
         
         # Update task priority
         logging.debug(f"Updating task {task_id} priority to {new_priority}")
