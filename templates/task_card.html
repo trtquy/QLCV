@@ -98,12 +98,19 @@
             <div class="d-flex align-items-center">
                 <!-- Role-based action buttons -->
                 {% if current_user %}
-                    <!-- TEST: Force show button for debugging -->
-                    {% if current_user.username == 'trangltt8' and task.assignee_id == 2 and task.status == 'in_progress' %}
+                    <!-- DEBUG: Show button conditions -->
+                    <div style="background: yellow; font-size: 10px; padding: 2px; margin: 2px;">
+                        User: {{ current_user.username if current_user else 'None' }} | 
+                        Task: {{ task.id }} | 
+                        Assignee: {{ task.assignee_id }} | 
+                        Status: {{ task.status }}
+                    </div>
+                    
+                    <!-- TEST: Force show button for ALL in-progress tasks -->
+                    {% if task.status == 'in_progress' %}
                         <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
-                            <button type="submit" class="btn btn-sm btn-info" title="Send for Review">
-                                <i data-feather="send" style="width: 12px; height: 12px;"></i>
-                                Review
+                            <button type="submit" class="btn btn-sm btn-info" title="Send for Review" style="background: red; color: white;">
+                                REVIEW TEST
                             </button>
                         </form>
                     {% endif %}
