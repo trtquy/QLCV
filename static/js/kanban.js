@@ -222,49 +222,63 @@ function loadTaskForEdit(taskId) {
         return;
     }
     
-    // Populate basic form fields
-    document.getElementById('edit_title').value = task.title || '';
-    document.getElementById('edit_description').value = task.description || '';
-    document.getElementById('edit_priority').value = task.priority || 'medium';
-    document.getElementById('edit_complexity').value = task.complexity || 'medium';
-    document.getElementById('edit_team_id').value = task.team_id || '';
-    document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
+    // Populate basic form fields - check if elements exist first
+    const titleEl = document.getElementById('edit_title');
+    const descEl = document.getElementById('edit_description');
+    const priorityEl = document.getElementById('edit_priority');
+    const complexityEl = document.getElementById('edit_complexity');
+    const teamEl = document.getElementById('edit_team_id');
+    const estimatedEl = document.getElementById('edit_estimated_hours');
+    const assigneeIdEl = document.getElementById('edit_assignee_id');
+    const supervisorIdEl = document.getElementById('edit_supervisor_id');
     
-    // Populate autocomplete fields
-    document.getElementById('edit_assignee_id').value = task.assignee_id || '';
-    document.getElementById('edit_supervisor_id').value = task.supervisor_id || '';
+    if (titleEl) titleEl.value = task.title || '';
+    if (descEl) descEl.value = task.description || '';
+    if (priorityEl) priorityEl.value = task.priority || 'medium';
+    if (complexityEl) complexityEl.value = task.complexity || 'medium';
+    if (teamEl) teamEl.value = task.team_id || '';
+    if (estimatedEl) estimatedEl.value = task.estimated_hours || '';
+    if (assigneeIdEl) assigneeIdEl.value = task.assignee_id || '';
+    if (supervisorIdEl) supervisorIdEl.value = task.supervisor_id || '';
     
     // Clear and populate assignee autocomplete
     const assigneeInput = document.getElementById('edit_assignee_input');
-    if (assigneeInput && task.assignee_id) {
-        // Find assignee name from users data (will be populated when available)
-        fetchTeamUsers().then(users => {
-            const assignee = users.find(u => u.id == task.assignee_id);
+    if (assigneeInput) {
+        if (task.assignee_id && window.teamUsers) {
+            const assignee = window.teamUsers.find(u => u.id == task.assignee_id);
             if (assignee) {
                 assigneeInput.value = assignee.display_name || assignee.username;
+            } else {
+                assigneeInput.value = '';
             }
-        });
-    } else if (assigneeInput) {
-        assigneeInput.value = '';
+        } else {
+            assigneeInput.value = '';
+        }
     }
     
     // Clear and populate supervisor autocomplete
     const supervisorInput = document.getElementById('edit_supervisor_input');
-    if (supervisorInput && task.supervisor_id) {
-        fetchTeamUsers().then(users => {
-            const supervisor = users.find(u => u.id == task.supervisor_id);
+    if (supervisorInput) {
+        if (task.supervisor_id && window.teamUsers) {
+            const supervisor = window.teamUsers.find(u => u.id == task.supervisor_id);
             if (supervisor) {
                 supervisorInput.value = supervisor.display_name || supervisor.username;
+            } else {
+                supervisorInput.value = '';
             }
-        });
-    } else if (supervisorInput) {
-        supervisorInput.value = '';
+        } else {
+            supervisorInput.value = '';
+        }
     }
     
-    // Populate date fields
-    document.getElementById('edit_started_at').value = task.started_at ? task.started_at.split('T')[0] : '';
-    document.getElementById('edit_due_date').value = task.due_date ? task.due_date.split('T')[0] : '';
-    document.getElementById('edit_completed_at').value = task.completed_at ? task.completed_at.split('T')[0] : '';
+    // Populate date fields - check if elements exist first
+    const startedAtEl = document.getElementById('edit_started_at');
+    const dueDateEl = document.getElementById('edit_due_date');
+    const completedAtEl = document.getElementById('edit_completed_at');
+    
+    if (startedAtEl) startedAtEl.value = task.started_at ? task.started_at.split('T')[0] : '';
+    if (dueDateEl) dueDateEl.value = task.due_date ? task.due_date.split('T')[0] : '';
+    if (completedAtEl) completedAtEl.value = task.completed_at ? task.completed_at.split('T')[0] : '';
     
     // Set form action
     document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
@@ -642,6 +656,7 @@ function stopTimer(taskId) {
 function initializeAutocomplete() {
     // Get team users data from backend
     fetchTeamUsers().then(users => {
+        console.log('Team users loaded:', users);
         // Initialize autocomplete for create task modal
         setupAutocomplete('assignee_input', 'assignee_id', 'assignee_dropdown', users, 'all');
         setupAutocomplete('supervisor_input', 'supervisor_id', 'supervisor_dropdown', users, 'manager');
@@ -649,6 +664,11 @@ function initializeAutocomplete() {
         // Initialize autocomplete for edit task modal
         setupAutocomplete('edit_assignee_input', 'edit_assignee_id', 'edit_assignee_dropdown', users, 'all');
         setupAutocomplete('edit_supervisor_input', 'edit_supervisor_id', 'edit_supervisor_dropdown', users, 'manager');
+        
+        // Store users data globally for the edit function
+        window.teamUsers = users;
+    }).catch(error => {
+        console.error('Failed to initialize autocomplete:', error);
     });
 }
 
