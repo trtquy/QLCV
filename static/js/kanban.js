@@ -5,6 +5,19 @@ let draggedTask = null;
 function initializeKanban() {
     console.log('Initializing Kanban board...');
     
+    // Wait for DOM to be fully loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initializeKanbanComponents, 100);
+        });
+    } else {
+        setTimeout(initializeKanbanComponents, 100);
+    }
+}
+
+function initializeKanbanComponents() {
+    console.log('Initializing Kanban components...');
+    
     // Add drag and drop event listeners
     initializeDragAndDrop();
     
@@ -210,11 +223,9 @@ function initializeTaskEditing() {
 
 function loadTaskForEdit(taskId) {
     console.log('loadTaskForEdit called with ID:', taskId);
-    console.log('Available task data:', window.tasksData);
     
     // Find task data
     const task = window.tasksData?.find(t => t.id == taskId);
-    console.log('Found task:', task);
     
     if (!task) {
         console.error('Task not found:', taskId);
@@ -222,72 +233,74 @@ function loadTaskForEdit(taskId) {
         return;
     }
     
-    // Populate basic form fields - check if elements exist first
-    const titleEl = document.getElementById('edit_title');
-    const descEl = document.getElementById('edit_description');
-    const priorityEl = document.getElementById('edit_priority');
-    const complexityEl = document.getElementById('edit_complexity');
-    const teamEl = document.getElementById('edit_team_id');
-    const estimatedEl = document.getElementById('edit_estimated_hours');
-    const assigneeIdEl = document.getElementById('edit_assignee_id');
-    const supervisorIdEl = document.getElementById('edit_supervisor_id');
+    console.log('Found task:', task);
     
-    if (titleEl) titleEl.value = task.title || '';
-    if (descEl) descEl.value = task.description || '';
-    if (priorityEl) priorityEl.value = task.priority || 'medium';
-    if (complexityEl) complexityEl.value = task.complexity || 'medium';
-    if (teamEl) teamEl.value = task.team_id || '';
-    if (estimatedEl) estimatedEl.value = task.estimated_hours || '';
-    if (assigneeIdEl) assigneeIdEl.value = task.assignee_id || '';
-    if (supervisorIdEl) supervisorIdEl.value = task.supervisor_id || '';
+    // List of all form elements we need to populate
+    const formElements = {
+        'edit_title': task.title || '',
+        'edit_description': task.description || '',
+        'edit_priority': task.priority || 'medium',
+        'edit_complexity': task.complexity || 'medium',
+        'edit_team_id': task.team_id || '',
+        'edit_estimated_hours': task.estimated_hours || '',
+        'edit_assignee_id': task.assignee_id || '',
+        'edit_supervisor_id': task.supervisor_id || '',
+        'edit_started_at': task.started_at ? task.started_at.split('T')[0] : '',
+        'edit_due_date': task.due_date ? task.due_date.split('T')[0] : '',
+        'edit_completed_at': task.completed_at ? task.completed_at.split('T')[0] : ''
+    };
     
-    // Clear and populate assignee autocomplete
+    // Safely populate each field
+    for (const [elementId, value] of Object.entries(formElements)) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.value = value;
+            console.log(`Set ${elementId} = ${value}`);
+        } else {
+            console.warn(`Element ${elementId} not found in DOM`);
+        }
+    }
+    
+    // Handle autocomplete fields
     const assigneeInput = document.getElementById('edit_assignee_input');
     if (assigneeInput) {
         if (task.assignee_id && window.teamUsers) {
             const assignee = window.teamUsers.find(u => u.id == task.assignee_id);
-            if (assignee) {
-                assigneeInput.value = assignee.display_name || assignee.username;
-            } else {
-                assigneeInput.value = '';
-            }
+            assigneeInput.value = assignee ? (assignee.display_name || assignee.username) : '';
         } else {
             assigneeInput.value = '';
         }
     }
     
-    // Clear and populate supervisor autocomplete
     const supervisorInput = document.getElementById('edit_supervisor_input');
     if (supervisorInput) {
         if (task.supervisor_id && window.teamUsers) {
             const supervisor = window.teamUsers.find(u => u.id == task.supervisor_id);
-            if (supervisor) {
-                supervisorInput.value = supervisor.display_name || supervisor.username;
-            } else {
-                supervisorInput.value = '';
-            }
+            supervisorInput.value = supervisor ? (supervisor.display_name || supervisor.username) : '';
         } else {
             supervisorInput.value = '';
         }
     }
     
-    // Populate date fields - check if elements exist first
-    const startedAtEl = document.getElementById('edit_started_at');
-    const dueDateEl = document.getElementById('edit_due_date');
-    const completedAtEl = document.getElementById('edit_completed_at');
-    
-    if (startedAtEl) startedAtEl.value = task.started_at ? task.started_at.split('T')[0] : '';
-    if (dueDateEl) dueDateEl.value = task.due_date ? task.due_date.split('T')[0] : '';
-    if (completedAtEl) completedAtEl.value = task.completed_at ? task.completed_at.split('T')[0] : '';
-    
     // Set form action
-    document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
-    
-    console.log('Showing modal...');
+    const form = document.getElementById('editTaskForm');
+    if (form) {
+        form.action = `/update_task/${taskId}`;
+    }
     
     // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
-    modal.show();
+    try {
+        const modalElement = document.getElementById('editTaskModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Modal shown successfully');
+        } else {
+            console.error('Edit modal element not found');
+        }
+    } catch (error) {
+        console.error('Error showing modal:', error);
+    }
 }
 
 function deleteTask(taskId) {
