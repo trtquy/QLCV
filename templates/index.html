@@ -626,15 +626,19 @@ function approveTask(taskId) {
         }
     })
     .then(function(response) {
-        if (response.ok) {
-            showPriorityNotification('Task approved and completed', 'success');
-            // Reload page to show updated status
-            setTimeout(() => window.location.reload(), 1000);
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            showPriorityNotification(data.message, 'success');
+            // Move task card dynamically from In Review to Completed
+            moveTaskCardToColumn(taskId, 'completed');
         } else {
-            throw new Error('Failed to approve task');
+            showPriorityNotification(data.error || 'Failed to approve task', 'error');
         }
     })
     .catch(function(error) {
+        console.error('Error approving task:', error);
         showPriorityNotification('Failed to approve task', 'error');
     });
 }
@@ -651,17 +655,64 @@ function rejectTask(taskId) {
         body: 'reason=' + encodeURIComponent(reason || 'No reason provided')
     })
     .then(function(response) {
-        if (response.ok) {
-            showPriorityNotification('Task rejected and sent back to in progress', 'success');
-            // Reload page to show updated status
-            setTimeout(() => window.location.reload(), 1000);
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            showPriorityNotification(data.message, 'success');
+            // Move task card dynamically from In Review to In Progress
+            moveTaskCardToColumn(taskId, 'in_progress');
         } else {
-            throw new Error('Failed to reject task');
+            showPriorityNotification(data.error || 'Failed to reject task', 'error');
         }
     })
     .catch(function(error) {
+        console.error('Error rejecting task:', error);
         showPriorityNotification('Failed to reject task', 'error');
     });
+}
+
+// Helper function to move task cards between columns
+function moveTaskCardToColumn(taskId, newStatus) {
+    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (!taskCard) return;
+    
+    // Remove from current column
+    taskCard.remove();
+    
+    // Add to target column
+    let targetColumn;
+    switch(newStatus) {
+        case 'todo':
+            targetColumn = document.querySelector('#todo-column .task-container');
+            break;
+        case 'in_progress':
+            targetColumn = document.querySelector('#in-progress-column .task-container');
+            break;
+        case 'in_review':
+            targetColumn = document.querySelector('#in-review-column .task-container');
+            break;
+        case 'completed':
+            targetColumn = document.querySelector('#completed-column .task-container');
+            break;
+    }
+    
+    if (targetColumn) {
+        // Update task card status class
+        taskCard.classList.remove('status-todo', 'status-in_progress', 'status-in_review', 'status-completed');
+        taskCard.classList.add(`status-${newStatus}`);
+        
+        // Remove approval/rejection buttons if moving away from in_review
+        if (newStatus !== 'in_review') {
+            const approveBtn = taskCard.querySelector('button[onclick*="approveTask"]');
+            const rejectBtn = taskCard.querySelector('button[onclick*="rejectTask"]');
+            if (approveBtn) approveBtn.remove();
+            if (rejectBtn) rejectBtn.remove();
+        }
+        
+        targetColumn.appendChild(taskCard);
+        updateColumnCounts();
+    }
 }
 </script>
 <style>
@@ -979,7 +1030,7 @@ function rejectTask(taskId) {
                     <span class="badge bg-secondary">{{ todo_tasks|length }}</span>
                 </div>
                 
-                <div class="task-container">
+                <div class="task-container" id="todo-column">
                     {% for task in todo_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
@@ -1017,7 +1068,7 @@ function rejectTask(taskId) {
                     <span class="badge bg-warning">{{ in_progress_tasks|length }}</span>
                 </div>
                 
-                <div class="task-container">
+                <div class="task-container" id="in-progress-column">
                     {% for task in in_progress_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
@@ -1138,7 +1189,7 @@ function rejectTask(taskId) {
                     <span class="badge bg-success">{{ completed_tasks|length }}</span>
                 </div>
                 
-                <div class="task-container">
+                <div class="task-container" id="completed-column">
                     {% for task in completed_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
