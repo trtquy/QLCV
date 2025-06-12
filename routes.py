@@ -312,32 +312,69 @@ def recall_task(task_id):
     
     return redirect(url_for('index'))
 
-@app.route('/task/<task_id>/approve', methods=['POST'])
+@app.route('/approve_task/<task_id>', methods=['POST'])
 def approve_task(task_id):
-    """Approve task (manager action)"""
+    """Approve task (supervisor action)"""
     current_user = data_manager.get_current_user()
     if not current_user:
-        return redirect(url_for('login'))
+        return jsonify({'error': 'Not authenticated'}), 401
     
     task = data_manager.get_task(task_id)
     if not task:
-        flash('Task not found', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'error': 'Task not found'}), 404
     
-    # Check if user can perform this action
-    if not data_manager.can_user_edit_task(str(current_user.id), task):
-        flash('You do not have permission to modify this task', 'error')
-        return redirect(url_for('index'))
+    # Only the assigned supervisor can approve tasks
+    if not (current_user.is_administrator or task.supervisor_id == current_user.id):
+        return jsonify({'error': 'Only the assigned supervisor can approve tasks'}), 403
     
-    # Only allow if task is in review and user is manager
-    if task.status == 'in_review' and current_user.role in ['manager', 'director']:
-        from datetime import datetime
-        data_manager.update_task(task_id, status='completed', completed_at=datetime.utcnow())
-        flash('Task approved and completed!', 'success')
-    else:
-        flash('Task cannot be approved at this time', 'error')
+    # Task must be in review status
+    if task.status != 'in_review':
+        return jsonify({'error': 'Task must be in review status to approve'}), 400
     
-    return redirect(url_for('index'))
+    try:
+        # Update task status to completed and set completion time
+        updated_task = data_manager.complete_task_with_time(task_id)
+        if updated_task:
+            return jsonify({'success': True, 'message': f'Task "{task.title}" approved and completed'})
+        else:
+            return jsonify({'error': 'Failed to approve task'}), 500
+    except Exception as e:
+        logging.error(f"Error approving task {task_id}: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/reject_task/<task_id>', methods=['POST'])
+def reject_task(task_id):
+    """Reject task and send back to in progress (supervisor action)"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    task = data_manager.get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Only the assigned supervisor can reject tasks
+    if not (current_user.is_administrator or task.supervisor_id == current_user.id):
+        return jsonify({'error': 'Only the assigned supervisor can reject tasks'}), 403
+    
+    # Task must be in review status
+    if task.status != 'in_review':
+        return jsonify({'error': 'Task must be in review status to reject'}), 400
+    
+    try:
+        reason = request.form.get('reason', 'No reason provided')
+        
+        # Update task status back to in_progress
+        updated_task = data_manager.update_task(task_id, status='in_progress')
+        if updated_task:
+            # Log rejection reason
+            logging.info(f"Task {task_id} rejected by {current_user.username}. Reason: {reason}")
+            return jsonify({'success': True, 'message': f'Task "{task.title}" rejected and sent back to in progress'})
+        else:
+            return jsonify({'error': 'Failed to reject task'}), 500
+    except Exception as e:
+        logging.error(f"Error rejecting task {task_id}: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/search')
 def search():

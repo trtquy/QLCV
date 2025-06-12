@@ -66,6 +66,26 @@
     </div>
 {% endmacro %}
 
+{# Macro for approval/rejection buttons for tasks in review #}
+{% macro approval_section(task, current_user) %}
+    {% if task.status == 'in_review' and current_user and task.supervisor_id == current_user.id %}
+    <div class="approval-section mt-2 mb-2 pt-2" style="border-top: 1px solid #e9ecef;">
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-success" 
+                    onclick="event.stopPropagation(); approveTask('{{ task.id }}')"
+                    title="Approve and complete task">
+                <i class="fas fa-check me-1"></i>Approve
+            </button>
+            <button class="btn btn-sm btn-warning" 
+                    onclick="event.stopPropagation(); rejectTask('{{ task.id }}')"
+                    title="Reject and send back to in progress">
+                <i class="fas fa-times me-1"></i>Reject
+            </button>
+        </div>
+    </div>
+    {% endif %}
+{% endmacro %}
+
 {% block extra_head %}
 <script>
 // Simple wrapper function
@@ -512,6 +532,136 @@ function checkActiveTimeLog() {
         .catch(function(error) {
             console.log('No active time log found');
         });
+}
+
+// Initialize autocomplete functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAutocomplete();
+});
+
+function initializeAutocomplete() {
+    // Fetch team users for autocomplete
+    fetch('/api/team-users')
+        .then(response => response.json())
+        .then(users => {
+            setupAutocomplete('edit_assignee_input', 'edit_assignee_id', 'edit_assignee_dropdown', users, ['analyst', 'manager', 'director']);
+            setupAutocomplete('edit_supervisor_input', 'edit_supervisor_id', 'edit_supervisor_dropdown', users, ['manager', 'director']);
+        })
+        .catch(error => {
+            console.error('Failed to load team users:', error);
+        });
+}
+
+function setupAutocomplete(inputId, hiddenId, dropdownId, users, roleFilter) {
+    var input = document.getElementById(inputId);
+    var hiddenInput = document.getElementById(hiddenId);
+    var dropdown = document.getElementById(dropdownId);
+    
+    if (!input || !hiddenInput || !dropdown) return;
+    
+    // Filter users by role if specified
+    var filteredUsers = roleFilter ? users.filter(user => roleFilter.includes(user.role)) : users;
+    
+    input.addEventListener('input', function() {
+        var query = this.value.toLowerCase().trim();
+        
+        if (query.length < 1) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        var matchingUsers = filteredUsers.filter(user => {
+            var displayName = user.display_name || user.username;
+            return displayName.toLowerCase().includes(query) || 
+                   user.username.toLowerCase().includes(query);
+        });
+        
+        if (matchingUsers.length > 0) {
+            dropdown.innerHTML = '';
+            matchingUsers.forEach(user => {
+                var item = document.createElement('div');
+                item.className = 'dropdown-item';
+                var displayName = user.display_name || user.username;
+                item.innerHTML = displayName + ' (' + user.username + ') - ' + user.role;
+                item.onclick = function() {
+                    input.value = displayName + ' (' + user.username + ')';
+                    hiddenInput.value = user.id;
+                    dropdown.style.display = 'none';
+                };
+                dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+        } else {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Clear hidden input when text is manually cleared
+    input.addEventListener('blur', function() {
+        setTimeout(() => {
+            if (this.value === '') {
+                hiddenInput.value = '';
+            }
+        }, 200);
+    });
+}
+
+// Approval and rejection functions
+function approveTask(taskId) {
+    if (!confirm('Are you sure you want to approve this task? It will be marked as completed.')) {
+        return;
+    }
+    
+    fetch('/approve_task/' + taskId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(function(response) {
+        if (response.ok) {
+            showPriorityNotification('Task approved and completed', 'success');
+            // Reload page to show updated status
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            throw new Error('Failed to approve task');
+        }
+    })
+    .catch(function(error) {
+        showPriorityNotification('Failed to approve task', 'error');
+    });
+}
+
+function rejectTask(taskId) {
+    var reason = prompt('Please provide a reason for rejection (optional):');
+    if (reason === null) return; // User cancelled
+    
+    fetch('/reject_task/' + taskId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'reason=' + encodeURIComponent(reason || 'No reason provided')
+    })
+    .then(function(response) {
+        if (response.ok) {
+            showPriorityNotification('Task rejected and sent back to in progress', 'success');
+            // Reload page to show updated status
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            throw new Error('Failed to reject task');
+        }
+    })
+    .catch(function(error) {
+        showPriorityNotification('Failed to reject task', 'error');
+    });
 }
 </script>
 <style>
