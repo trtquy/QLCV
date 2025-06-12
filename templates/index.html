@@ -1118,7 +1118,7 @@ function moveTaskCardToColumn(taskId, newStatus) {
                     <span class="badge bg-info">{{ in_review_tasks|length }}</span>
                 </div>
                 
-                <div class="task-container" data-status="in_review">
+                <div class="task-container" id="in-review-column">
                     {% for task in in_review_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
@@ -1143,32 +1143,72 @@ function moveTaskCardToColumn(taskId, newStatus) {
                                 
                                 <!-- Action buttons for In Review tasks -->
                                 <div class="mt-2">
-                                    <!-- Recall button for analysts and administrators -->
-                                    {% if current_user and ((current_user.role == 'analyst' and task.assignee_id == current_user.id) or current_user.is_administrator) %}
-                                    <form method="POST" action="{{ url_for('recall_task', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
-                                        <button type="submit" class="btn btn-sm btn-warning" title="Recall from Review">
-                                            <i data-feather="arrow-left" style="width: 12px; height: 12px;"></i>
-                                            Recall
+                                    <!-- Regular role-based actions (visible to all users based on their actual role) -->
+                                    {% if current_user %}
+                                        <!-- Recall button for analysts -->
+                                        {% if current_user.role == 'analyst' and task.assignee_id == current_user.id %}
+                                        <form method="POST" action="{{ url_for('recall_task', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
+                                            <button type="submit" class="btn btn-sm btn-warning" title="Recall from Review">
+                                                <i data-feather="arrow-left" style="width: 12px; height: 12px;"></i>
+                                                Recall
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        <!-- Approve/Reject buttons for supervisors -->
+                                        {% if task.supervisor_id == current_user.id %}
+                                        <button type="button" class="btn btn-sm btn-success me-1" title="Approve & Complete" 
+                                                onclick="event.stopPropagation(); approveTask('{{ task.id }}');">
+                                            <i data-feather="check" style="width: 12px; height: 12px;"></i>
+                                            Approve
                                         </button>
-                                    </form>
-                                    {% endif %}
-                                    
-                                    <!-- Approve button for supervisors/administrators -->
-                                    {% if current_user and (current_user.is_administrator or task.supervisor_id == current_user.id) %}
-                                    <button type="button" class="btn btn-sm btn-success" title="Approve & Complete" 
-                                            onclick="event.stopPropagation(); approveTask('{{ task.id }}');">
-                                        <i data-feather="check" style="width: 12px; height: 12px;"></i>
-                                        Approve
-                                    </button>
-                                    {% endif %}
-                                    
-                                    <!-- Reject button for supervisors/administrators -->
-                                    {% if current_user and (current_user.is_administrator or task.supervisor_id == current_user.id) %}
-                                    <button type="button" class="btn btn-sm btn-danger ms-1" title="Reject & Send Back" 
-                                            onclick="event.stopPropagation(); rejectTask('{{ task.id }}');">
-                                        <i data-feather="x" style="width: 12px; height: 12px;"></i>
-                                        Reject
-                                    </button>
+                                        <button type="button" class="btn btn-sm btn-danger me-1" title="Reject & Send Back" 
+                                                onclick="event.stopPropagation(); rejectTask('{{ task.id }}');">
+                                            <i data-feather="x" style="width: 12px; height: 12px;"></i>
+                                            Reject
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <!-- Administrator menu (collapsed by default) -->
+                                        {% if current_user.is_administrator %}
+                                        <div class="dropdown d-inline">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                    onclick="event.stopPropagation();" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false" title="Admin Actions">
+                                                <i data-feather="settings" style="width: 12px; height: 12px;"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" onclick="event.stopPropagation();">
+                                                <!-- Admin recall action (if not already shown) -->
+                                                {% if not (current_user.role == 'analyst' and task.assignee_id == current_user.id) %}
+                                                <li>
+                                                    <form method="POST" action="{{ url_for('recall_task', task_id=task.id) }}" class="dropdown-item-form">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i data-feather="arrow-left" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                            Admin Recall
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                {% endif %}
+                                                <!-- Admin approve action (if not already shown) -->
+                                                {% if task.supervisor_id != current_user.id %}
+                                                <li>
+                                                    <button type="button" class="dropdown-item" 
+                                                            onclick="approveTask('{{ task.id }}');">
+                                                        <i data-feather="check" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                        Admin Approve
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item" 
+                                                            onclick="rejectTask('{{ task.id }}');">
+                                                        <i data-feather="x" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                        Admin Reject
+                                                    </button>
+                                                </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                             </div>
