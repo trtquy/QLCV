@@ -714,6 +714,67 @@ function moveTaskCardToColumn(taskId, newStatus) {
         updateColumnCounts();
     }
 }
+
+// Admin action functions
+function adminChangeTaskStatus(taskId, newStatus) {
+    if (!confirm(`Are you sure you want to move this task to ${newStatus.replace('_', ' ')}?`)) {
+        return;
+    }
+    
+    fetch('/update_task/' + taskId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'status=' + encodeURIComponent(newStatus)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            showPriorityNotification(`Task moved to ${newStatus.replace('_', ' ')}`, 'success');
+            // Move task card dynamically
+            moveTaskCardToColumn(taskId, newStatus);
+        } else {
+            showPriorityNotification(data.error || 'Failed to update task status', 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error updating task status:', error);
+        showPriorityNotification('Failed to update task status', 'error');
+    });
+}
+
+function adminDeleteTask(taskId) {
+    if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+        return;
+    }
+    
+    fetch('/delete_task/' + taskId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(function(response) {
+        if (response.ok) {
+            showPriorityNotification('Task deleted successfully', 'success');
+            // Remove task card from DOM
+            const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (taskCard) {
+                taskCard.remove();
+                updateColumnCounts();
+            }
+        } else {
+            throw new Error('Failed to delete task');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error deleting task:', error);
+        showPriorityNotification('Failed to delete task', 'error');
+    });
+}
 </script>
 <style>
     .kanban-column {
@@ -1050,6 +1111,46 @@ function moveTaskCardToColumn(taskId, newStatus) {
                                     <small class="text-muted">Task #{{ task.id }}</small>
                                     <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
+                                
+                                <!-- Admin actions for TODO tasks -->
+                                {% if current_user and current_user.is_administrator %}
+                                <div class="mt-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                onclick="event.stopPropagation();" 
+                                                data-bs-toggle="dropdown" aria-expanded="false" title="Admin Actions">
+                                            <i data-feather="settings" style="width: 12px; height: 12px;"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" onclick="event.stopPropagation();">
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'in_progress');">
+                                                    <i data-feather="play" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Move to In Progress
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'in_review');">
+                                                    <i data-feather="eye" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Move to Review
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'completed');">
+                                                    <i data-feather="check-circle" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Mark Complete
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="adminDeleteTask('{{ task.id }}');">
+                                                    <i data-feather="trash-2" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Delete Task
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -1089,17 +1190,61 @@ function moveTaskCardToColumn(taskId, newStatus) {
                                     <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
                                 
-                                <!-- Send for Review Button -->
-                                {% if current_user and ((current_user.role == 'analyst' and task.assignee_id == current_user.id) or current_user.is_administrator) %}
+                                <!-- Action buttons for In Progress tasks -->
                                 <div class="mt-2">
-                                    <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline" onclick="event.stopPropagation();">
+                                    <!-- Send for Review Button (role-based) -->
+                                    {% if current_user and current_user.role == 'analyst' and task.assignee_id == current_user.id %}
+                                    <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
                                         <button type="submit" class="btn btn-sm btn-info" title="Send for Review">
                                             <i data-feather="send" style="width: 12px; height: 12px;"></i>
                                             Send for Review
                                         </button>
                                     </form>
+                                    {% endif %}
+                                    
+                                    <!-- Admin actions dropdown -->
+                                    {% if current_user and current_user.is_administrator %}
+                                    <div class="dropdown d-inline">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                onclick="event.stopPropagation();" 
+                                                data-bs-toggle="dropdown" aria-expanded="false" title="Admin Actions">
+                                            <i data-feather="settings" style="width: 12px; height: 12px;"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" onclick="event.stopPropagation();">
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'todo');">
+                                                    <i data-feather="square" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Move to TODO
+                                                </button>
+                                            </li>
+                                            <!-- Admin send for review (if not already shown) -->
+                                            {% if not (current_user.role == 'analyst' and task.assignee_id == current_user.id) %}
+                                            <li>
+                                                <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="dropdown-item-form">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i data-feather="send" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                        Admin Send for Review
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            {% endif %}
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'completed');">
+                                                    <i data-feather="check-circle" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Mark Complete
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="adminDeleteTask('{{ task.id }}');">
+                                                    <i data-feather="trash-2" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Delete Task
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -1249,6 +1394,46 @@ function moveTaskCardToColumn(taskId, newStatus) {
                                     <small class="text-muted">Task #{{ task.id }}</small>
                                     <small class="text-muted">{{ task.priority|title }}</small>
                                 </div>
+                                
+                                <!-- Admin actions for Completed tasks -->
+                                {% if current_user and current_user.is_administrator %}
+                                <div class="mt-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                onclick="event.stopPropagation();" 
+                                                data-bs-toggle="dropdown" aria-expanded="false" title="Admin Actions">
+                                            <i data-feather="settings" style="width: 12px; height: 12px;"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" onclick="event.stopPropagation();">
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'todo');">
+                                                    <i data-feather="square" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Move to TODO
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'in_progress');">
+                                                    <i data-feather="play" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Move to In Progress
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'in_review');">
+                                                    <i data-feather="eye" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Move to Review
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger" onclick="adminDeleteTask('{{ task.id }}');">
+                                                    <i data-feather="trash-2" style="width: 12px; height: 12px;" class="me-1"></i>
+                                                    Delete Task
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
