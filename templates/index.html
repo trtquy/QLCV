@@ -2,6 +2,34 @@
 
 {% block title %}Banking Task Board - TaskFlow{% endblock %}
 
+{# Macro for priority badge with permission checking #}
+{% macro priority_badge(task, current_user) %}
+    {% set can_edit_priority = current_user and (
+        current_user.is_administrator or 
+        task.assignee_id == current_user.id or 
+        task.created_by == current_user.id or 
+        (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id)
+    ) %}
+    <div class="priority-selector ms-2" onclick="event.stopPropagation();">
+        <span class="badge priority-badge priority-{{ task.priority }} {% if not can_edit_priority %}priority-disabled{% endif %}" 
+              data-task-id="{{ task.id }}" 
+              data-current-priority="{{ task.priority }}"
+              {% if can_edit_priority %}
+              onclick="cyclePriority(this)"
+              title="Click to change priority ({{ task.priority|upper }} → {% if task.priority == 'low' %}MEDIUM{% elif task.priority == 'medium' %}HIGH{% elif task.priority == 'high' %}URGENT{% else %}LOW{% endif %})"
+              {% else %}
+              title="Priority: {{ task.priority|upper }} (read-only - only assignees, creators, team managers, or administrators can change)"
+              {% endif %}>
+            {{ task.priority|upper }}
+            {% if can_edit_priority %}
+            <i class="fas fa-chevron-down ms-1" style="font-size: 10px;"></i>
+            {% else %}
+            <i class="fas fa-lock ms-1" style="font-size: 9px; opacity: 0.7;"></i>
+            {% endif %}
+        </span>
+    </div>
+{% endmacro %}
+
 {% block extra_head %}
 <script>
 // Simple wrapper function
@@ -281,6 +309,38 @@ window.tasksData = [
         color: white !important;
     }
     
+    /* Disabled priority badge styling */
+    .priority-badge.priority-disabled {
+        opacity: 0.6 !important;
+        cursor: default !important;
+        background-color: #6c757d !important;
+        color: #fff !important;
+        border-color: #495057 !important;
+    }
+    
+    .priority-badge.priority-disabled:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Visual cues for editable vs non-editable */
+    .priority-badge:not(.priority-disabled) {
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+    }
+    
+    .priority-badge:not(.priority-disabled):hover::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+        border-radius: inherit;
+        z-index: -1;
+    }
+    
     /* Priority notification styling */
     .priority-notification {
         position: fixed;
@@ -422,16 +482,7 @@ window.tasksData = [
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
-                                    <div class="priority-selector ms-2" onclick="event.stopPropagation();">
-                                        <span class="badge priority-badge priority-{{ task.priority }}" 
-                                              data-task-id="{{ task.id }}" 
-                                              data-current-priority="{{ task.priority }}"
-                                              onclick="cyclePriority(this)"
-                                              title="Click to change priority">
-                                            {{ task.priority|upper }}
-                                            <i class="fas fa-chevron-down ms-1" style="font-size: 10px;"></i>
-                                        </span>
-                                    </div>
+                                    {{ priority_badge(task, current_user) }}
                                 </div>
                                 
                                 <p class="card-text text-muted small mb-2">
@@ -469,16 +520,7 @@ window.tasksData = [
                             <div class="card-body p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
-                                    <div class="priority-selector ms-2" onclick="event.stopPropagation();">
-                                        <span class="badge priority-badge priority-{{ task.priority }}" 
-                                              data-task-id="{{ task.id }}" 
-                                              data-current-priority="{{ task.priority }}"
-                                              onclick="cyclePriority(this)"
-                                              title="Click to change priority">
-                                            {{ task.priority|upper }}
-                                            <i class="fas fa-chevron-down ms-1" style="font-size: 10px;"></i>
-                                        </span>
-                                    </div>
+                                    {{ priority_badge(task, current_user) }}
                                 </div>
                                 
                                 <p class="card-text text-muted small mb-2">
