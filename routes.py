@@ -922,6 +922,32 @@ def edit_team_inline(team_id):
         db.session.rollback()
         return jsonify({'error': 'Update failed'}), 500
 
+@app.route('/api/team-users')
+def api_team_users():
+    """API endpoint to get team users for autocomplete"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify([]), 401
+    
+    # Get users from the same team (or all users for administrators)
+    if current_user.is_administrator:
+        users = data_manager.get_all_users()
+    else:
+        users = data_manager.get_users_by_team(str(current_user.team_id)) if current_user.team_id else []
+    
+    # Format users for autocomplete
+    users_data = []
+    for user in users:
+        if user.is_active:  # Only include active users
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'display_name': user.display_name,
+                'role': user.role
+            })
+    
+    return jsonify(users_data)
+
 @app.context_processor
 def inject_current_user():
     """Make current user available in all templates"""

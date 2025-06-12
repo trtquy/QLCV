@@ -222,15 +222,44 @@ function loadTaskForEdit(taskId) {
         return;
     }
     
-    // Populate form fields
+    // Populate basic form fields
     document.getElementById('edit_title').value = task.title || '';
     document.getElementById('edit_description').value = task.description || '';
-    document.getElementById('edit_assignee_id').value = task.assignee_id || '';
     document.getElementById('edit_priority').value = task.priority || 'medium';
     document.getElementById('edit_complexity').value = task.complexity || 'medium';
-    document.getElementById('edit_status').value = task.status || 'todo';
     document.getElementById('edit_team_id').value = task.team_id || '';
     document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
+    
+    // Populate autocomplete fields
+    document.getElementById('edit_assignee_id').value = task.assignee_id || '';
+    document.getElementById('edit_supervisor_id').value = task.supervisor_id || '';
+    
+    // Clear and populate assignee autocomplete
+    const assigneeInput = document.getElementById('edit_assignee_input');
+    if (assigneeInput && task.assignee_id) {
+        // Find assignee name from users data (will be populated when available)
+        fetchTeamUsers().then(users => {
+            const assignee = users.find(u => u.id == task.assignee_id);
+            if (assignee) {
+                assigneeInput.value = assignee.display_name || assignee.username;
+            }
+        });
+    } else if (assigneeInput) {
+        assigneeInput.value = '';
+    }
+    
+    // Clear and populate supervisor autocomplete
+    const supervisorInput = document.getElementById('edit_supervisor_input');
+    if (supervisorInput && task.supervisor_id) {
+        fetchTeamUsers().then(users => {
+            const supervisor = users.find(u => u.id == task.supervisor_id);
+            if (supervisor) {
+                supervisorInput.value = supervisor.display_name || supervisor.username;
+            }
+        });
+    } else if (supervisorInput) {
+        supervisorInput.value = '';
+    }
     
     // Populate date fields
     document.getElementById('edit_started_at').value = task.started_at ? task.started_at.split('T')[0] : '';
@@ -608,6 +637,130 @@ function stopTimer(taskId) {
             delete window.timeTrackingIntervals[taskId];
         }
     }
+}
+
+function initializeAutocomplete() {
+    // Get team users data from backend
+    fetchTeamUsers().then(users => {
+        // Initialize autocomplete for create task modal
+        setupAutocomplete('assignee_input', 'assignee_id', 'assignee_dropdown', users, 'all');
+        setupAutocomplete('supervisor_input', 'supervisor_id', 'supervisor_dropdown', users, 'manager');
+        
+        // Initialize autocomplete for edit task modal
+        setupAutocomplete('edit_assignee_input', 'edit_assignee_id', 'edit_assignee_dropdown', users, 'all');
+        setupAutocomplete('edit_supervisor_input', 'edit_supervisor_id', 'edit_supervisor_dropdown', users, 'manager');
+    });
+}
+
+async function fetchTeamUsers() {
+    try {
+        const response = await fetch('/api/team-users');
+        if (!response.ok) {
+            throw new Error('Failed to fetch team users');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching team users:', error);
+        return [];
+    }
+}
+
+function setupAutocomplete(inputId, hiddenId, dropdownId, users, roleFilter) {
+    const input = document.getElementById(inputId);
+    const hiddenInput = document.getElementById(hiddenId);
+    const dropdown = document.getElementById(dropdownId);
+    
+    if (!input || !hiddenInput || !dropdown) return;
+    
+    // Filter users based on role
+    let filteredUsers = users;
+    if (roleFilter === 'manager') {
+        filteredUsers = users.filter(user => user.role === 'manager');
+    }
+    
+    input.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        
+        if (query.length === 0) {
+            dropdown.style.display = 'none';
+            hiddenInput.value = '';
+            return;
+        }
+        
+        // Filter users based on query
+        const matches = filteredUsers.filter(user => {
+            const displayName = user.display_name || '';
+            const username = user.username || '';
+            return displayName.toLowerCase().includes(query) || 
+                   username.toLowerCase().includes(query);
+        });
+        
+        if (matches.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        // Build dropdown HTML
+        dropdown.innerHTML = matches.map(user => `
+            <button type="button" class="dropdown-item" data-user-id="${user.id}" data-user-name="${user.display_name || user.username}">
+                ${user.display_name || user.username} (${user.username})
+            </button>
+        `).join('');
+        
+        // Add click handlers
+        dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                
+                input.value = userName;
+                hiddenInput.value = userId;
+                dropdown.style.display = 'none';
+            });
+        });
+        
+        dropdown.style.display = 'block';
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Handle keyboard navigation
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('.dropdown-item');
+        let activeItem = dropdown.querySelector('.dropdown-item.active');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!activeItem) {
+                items[0]?.classList.add('active');
+            } else {
+                activeItem.classList.remove('active');
+                const nextItem = activeItem.nextElementSibling || items[0];
+                nextItem.classList.add('active');
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!activeItem) {
+                items[items.length - 1]?.classList.add('active');
+            } else {
+                activeItem.classList.remove('active');
+                const prevItem = activeItem.previousElementSibling || items[items.length - 1];
+                prevItem.classList.add('active');
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeItem) {
+                activeItem.click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
 }
 
 // Export functions for global use

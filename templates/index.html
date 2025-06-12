@@ -53,7 +53,7 @@ function openTaskEditModal(taskId) {
 
 // Initialize task data early
 window.tasksData = [
-    {% for task in todo_tasks + in_progress_tasks + completed_tasks %}
+    {% for task in todo_tasks + in_progress_tasks + in_review_tasks + completed_tasks %}
     {
         id: "{{ task.id }}",
         title: "{{ task.title|e }}",
@@ -62,6 +62,7 @@ window.tasksData = [
         priority: "{{ task.priority }}",
         complexity: "{{ task.complexity if task.complexity else 'medium' }}",
         assignee_id: "{{ task.assignee_id if task.assignee_id else '' }}",
+        supervisor_id: "{{ task.supervisor_id if task.supervisor_id else '' }}",
         team_id: "{{ task.team_id if task.team_id else '' }}",
         estimated_hours: "{{ task.estimated_hours if task.estimated_hours else '' }}",
         started_at: "{{ task.started_at.isoformat() if task.started_at else '' }}",
@@ -94,6 +95,45 @@ window.tasksData = [
     .priority-high { border-left-color: #FF8B00; }
     .priority-medium { border-left-color: #36B37E; }
     .priority-low { border-left-color: #0065FF; }
+    
+    /* Autocomplete dropdown styling */
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background-color: #fff;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .dropdown-item {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        clear: both;
+        font-weight: 400;
+        color: #212529;
+        text-align: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+        background-color: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+    
+    .dropdown-item:hover,
+    .dropdown-item.active {
+        color: #fff;
+        background-color: #006B68;
+    }
+    
+    .dropdown-item:focus {
+        outline: none;
+        background-color: #006B68;
+        color: #fff;
+    }
 </style>
 {% endblock %}
 
