@@ -1221,7 +1221,7 @@ function filterMyTasks(filterValue) {
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-text"><i data-feather="filter"></i></span>
-                        <select class="form-select" id="teamFilter">
+                        <select class="form-select" id="teamFilter" onchange="filterByTeam()">
                             <option value="">All Banking Teams</option>
                             {% for team in teams %}
                                 <option value="{{ team.id }}" {% if selected_team == team.id|string %}selected{% endif %}>
@@ -1280,6 +1280,7 @@ function filterMyTasks(filterValue) {
                              data-task-id="{{ task.id }}" 
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
+                             data-team-id="{{ task.team_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1360,6 +1361,7 @@ function filterMyTasks(filterValue) {
                              data-task-id="{{ task.id }}" 
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
+                             data-team-id="{{ task.team_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1379,8 +1381,8 @@ function filterMyTasks(filterValue) {
                                 
                                 <!-- Action buttons for In Progress tasks -->
                                 <div class="mt-2">
-                                    <!-- Send for Review Button (role-based) -->
-                                    {% if current_user and current_user.role == 'analyst' and task.assignee_id == current_user.id %}
+                                    <!-- Send for Review Button (for assigned users) -->
+                                    {% if current_user and task.assignee_id == current_user.id %}
                                     <form method="POST" action="{{ url_for('send_task_for_review', task_id=task.id) }}" class="d-inline me-1" onclick="event.stopPropagation();">
                                         <button type="submit" class="btn btn-sm btn-info" title="Send for Review">
                                             <i data-feather="send" style="width: 12px; height: 12px;"></i>
@@ -1456,6 +1458,7 @@ function filterMyTasks(filterValue) {
                              data-task-id="{{ task.id }}" 
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
+                             data-team-id="{{ task.team_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">

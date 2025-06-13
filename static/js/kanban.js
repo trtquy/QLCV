@@ -335,6 +335,25 @@ function updateColumnCounts() {
     });
 }
 
+function updateColumnCounts() {
+    // Update badge counts for each column
+    const todoCount = document.querySelectorAll('#todo-column .task-card:not([style*="display: none"])').length;
+    const inProgressCount = document.querySelectorAll('#in-progress-column .task-card:not([style*="display: none"])').length;
+    const inReviewCount = document.querySelectorAll('#in-review-column .task-card:not([style*="display: none"])').length;
+    const completedCount = document.querySelectorAll('#completed-column .task-card:not([style*="display: none"])').length;
+    
+    // Update badges
+    const todoBadge = document.querySelector('.kanban-column:nth-child(1) .badge');
+    const inProgressBadge = document.querySelector('.kanban-column:nth-child(2) .badge');
+    const inReviewBadge = document.querySelector('.kanban-column:nth-child(3) .badge');
+    const completedBadge = document.querySelector('.kanban-column:nth-child(4) .badge');
+    
+    if (todoBadge) todoBadge.textContent = todoCount;
+    if (inProgressBadge) inProgressBadge.textContent = inProgressCount;
+    if (inReviewBadge) inReviewBadge.textContent = inReviewCount;
+    if (completedBadge) completedBadge.textContent = completedCount;
+}
+
 function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
@@ -347,6 +366,18 @@ function showNotification(message, type = 'info') {
     
     // Add to page
     document.body.appendChild(notification);
+    
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+        if (notification && notification.parentNode) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 150);
+        }
+    }, 4000);
     
     // Auto-remove after 3 seconds
     setTimeout(() => {
