@@ -232,6 +232,15 @@ def update_task(task_id):
             except ValueError:
                 pass
         
+        # Handle automatic workflow progression: To Do → In Progress when Due Date is added
+        auto_progress = request.form.get('auto_progress')
+        if auto_progress == 'true' and task.status == 'todo' and parsed_due_date:
+            status = 'in_progress'
+            # Auto-set started_at when moving to in_progress
+            if not parsed_started_at:
+                from datetime import datetime
+                parsed_started_at = datetime.utcnow()
+        
         # Auto-set completed date when status changes to completed
         if status == 'completed' and not parsed_completed_at:
             from datetime import datetime
@@ -907,17 +916,28 @@ def time_report():
     
     if start_date_str:
         try:
+            from datetime import datetime
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         except ValueError:
             flash('Invalid start date format', 'error')
     
     if end_date_str:
         try:
+            from datetime import datetime
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
         except ValueError:
             flash('Invalid end date format', 'error')
     
-    report_data = data_manager.get_time_report_data(team_id, start_date, end_date)
+    # Provide default dates if not specified
+    if start_date is None or end_date is None:
+        from datetime import datetime, timedelta
+        start_date = datetime.now() - timedelta(days=30)
+        end_date = datetime.now()
+    
+    # Handle team_id parameter - data_manager expects a string, use empty string if None
+    team_filter = team_id if team_id else ""
+    
+    report_data = data_manager.get_time_report_data(team_filter, start_date, end_date)
     teams = data_manager.get_all_teams()
     
     return render_template('time_report.html', 
