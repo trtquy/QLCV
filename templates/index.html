@@ -960,6 +960,25 @@ function filterMyTasks(filterValue) {
     
     updateColumnCounts();
 }
+
+// Team filter function
+function filterByTeam() {
+    const teamFilter = document.getElementById('teamFilter');
+    const selectedTeamId = teamFilter.value;
+    const taskCards = document.querySelectorAll('.task-card');
+    
+    taskCards.forEach(card => {
+        const taskTeamId = card.dataset.teamId;
+        
+        if (selectedTeamId === '' || taskTeamId === selectedTeamId) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    updateColumnCounts();
+}
 </script>
 <style>
     .kanban-column {
@@ -1572,6 +1591,7 @@ function filterMyTasks(filterValue) {
                              data-task-id="{{ task.id }}" 
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
+                             data-team-id="{{ task.team_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
