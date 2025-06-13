@@ -816,6 +816,79 @@ function validateTaskForm(form) {
     
     return true;
 }
+
+// Load task data for editing
+function loadTaskForEdit(taskId) {
+    // Get task data from the page
+    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (!taskCard) {
+        console.error('Task card not found');
+        return;
+    }
+    
+    // Extract task data from the task cards and form a basic structure
+    // We'll make an AJAX call to get the full task data
+    fetch(`/get_task_data/${taskId}`)
+        .then(response => response.json())
+        .then(task => {
+            populateEditForm(task);
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading task data:', error);
+            // Fallback to basic modal show
+            const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+            document.getElementById('editTaskForm').action = `/update_task/${taskId}`;
+            modal.show();
+        });
+}
+
+// Populate edit form with task data
+function populateEditForm(task) {
+    // Set form action
+    document.getElementById('editTaskForm').action = `/update_task/${task.id}`;
+    
+    // Populate basic fields
+    document.getElementById('edit_title').value = task.title || '';
+    document.getElementById('edit_description').value = task.description || '';
+    document.getElementById('edit_priority').value = task.priority || 'medium';
+    document.getElementById('edit_complexity').value = task.complexity || 'medium';
+    document.getElementById('edit_team_id').value = task.team_id || '';
+    document.getElementById('edit_estimated_hours').value = task.estimated_hours || '';
+    document.getElementById('edit_started_at').value = task.started_at ? task.started_at.split('T')[0] : '';
+    document.getElementById('edit_due_date').value = task.due_date ? task.due_date.split('T')[0] : '';
+    document.getElementById('edit_completed_at').value = task.completed_at ? task.completed_at.split('T')[0] : '';
+    
+    // Handle assignee autocomplete
+    const assigneeInput = document.getElementById('edit_assignee_input');
+    const assigneeHidden = document.getElementById('edit_assignee_id');
+    if (task.assignee && assigneeInput && assigneeHidden) {
+        assigneeInput.value = task.assignee.display_name || task.assignee.username;
+        assigneeHidden.value = task.assignee.id;
+    } else if (assigneeInput && assigneeHidden) {
+        assigneeInput.value = '';
+        assigneeHidden.value = '';
+    }
+    
+    // Handle supervisor autocomplete
+    const supervisorInput = document.getElementById('edit_supervisor_input');
+    const supervisorHidden = document.getElementById('edit_supervisor_id');
+    if (task.supervisor && supervisorInput && supervisorHidden) {
+        supervisorInput.value = task.supervisor.display_name || task.supervisor.username;
+        supervisorHidden.value = task.supervisor.id;
+    } else if (supervisorInput && supervisorHidden) {
+        supervisorInput.value = '';
+        supervisorHidden.value = '';
+    }
+    
+    // Set task status
+    const statusSelect = document.getElementById('edit_task_status');
+    if (statusSelect) {
+        statusSelect.value = task.status || 'todo';
+    }
+}
 </script>
 <style>
     .kanban-column {

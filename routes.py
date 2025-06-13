@@ -398,6 +398,41 @@ def reject_task(task_id):
         logging.error(f"Error rejecting task {task_id}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/get_task_data/<task_id>')
+def get_task_data(task_id):
+    """Get task data for editing"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    task = data_manager.get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Convert task to dictionary with related objects
+    task_dict = task.to_dict()
+    
+    # Add assignee and supervisor details
+    if task.assignee_id:
+        assignee = data_manager.get_user(str(task.assignee_id))
+        if assignee:
+            task_dict['assignee'] = {
+                'id': assignee.id,
+                'username': assignee.username,
+                'display_name': assignee.display_name
+            }
+    
+    if task.supervisor_id:
+        supervisor = data_manager.get_user(str(task.supervisor_id))
+        if supervisor:
+            task_dict['supervisor'] = {
+                'id': supervisor.id,
+                'username': supervisor.username,
+                'display_name': supervisor.display_name
+            }
+    
+    return jsonify(task_dict)
+
 @app.route('/search')
 def search():
     """Search tasks"""
