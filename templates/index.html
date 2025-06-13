@@ -784,17 +784,49 @@ function adminDeleteTask(taskId) {
     });
 }
 
-// Form validation for mandatory fields
+// Form validation for mandatory fields and workflow progression
 function validateTaskForm(form) {
-    const status = form.querySelector('select[name="task_status"]') ? 
-                   form.querySelector('select[name="task_status"]').value : 'todo';
+    const statusSelect = form.querySelector('select[name="task_status"]');
+    const currentStatus = statusSelect ? statusSelect.value : 'todo';
+    const dueDate = form.querySelector('input[name="due_date"]');
+    const assigneeId = form.querySelector('input[name="assignee_id"]');
+    const supervisorId = form.querySelector('input[name="supervisor_id"]');
+    
+    // Check if this is a To Do task with a Due Date being added
+    const isDueDateAdded = currentStatus === 'todo' && dueDate && dueDate.value;
+    
+    if (isDueDateAdded) {
+        // Validate required fields for progression to In Progress
+        if (!assigneeId || !assigneeId.value) {
+            alert('Assignee is required when adding a Due Date to move the task to In Progress.');
+            if (assigneeId) assigneeId.focus();
+            return false;
+        }
+        
+        if (!supervisorId || !supervisorId.value) {
+            alert('Supervisor is required when adding a Due Date to move the task to In Progress.');
+            if (supervisorId) supervisorId.focus();
+            return false;
+        }
+        
+        // Automatically set status to in_progress
+        if (statusSelect) {
+            statusSelect.value = 'in_progress';
+        }
+        
+        // Add hidden field to indicate automatic progression
+        let autoProgressField = form.querySelector('input[name="auto_progress"]');
+        if (!autoProgressField) {
+            autoProgressField = document.createElement('input');
+            autoProgressField.type = 'hidden';
+            autoProgressField.name = 'auto_progress';
+            autoProgressField.value = 'true';
+            form.appendChild(autoProgressField);
+        }
+    }
     
     // If task is not in TODO status, make fields mandatory
-    if (status !== 'todo') {
-        const dueDate = form.querySelector('input[name="due_date"]');
-        const assigneeId = form.querySelector('input[name="assignee_id"]');
-        const supervisorId = form.querySelector('input[name="supervisor_id"]');
-        
+    if (currentStatus !== 'todo') {
         if (!dueDate || !dueDate.value) {
             alert('Due Date is mandatory for tasks not in To Do status.');
             if (dueDate) dueDate.focus();
@@ -888,6 +920,45 @@ function populateEditForm(task) {
     if (statusSelect) {
         statusSelect.value = task.status || 'todo';
     }
+}
+
+// Initialize current user ID for My Tasks filter
+window.currentUserId = '{{ current_user.id if current_user else "" }}';
+
+// Initialize My Tasks filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const myTasksFilter = document.getElementById('myTasksFilter');
+    if (myTasksFilter) {
+        myTasksFilter.addEventListener('change', function() {
+            filterMyTasks(this.value);
+        });
+    }
+});
+
+// Enhanced My Tasks filter function
+function filterMyTasks(filterValue) {
+    const taskCards = document.querySelectorAll('.task-card');
+    const currentUserId = window.currentUserId;
+    
+    taskCards.forEach(card => {
+        if (filterValue === 'my-tasks') {
+            // Show tasks assigned to current user OR created by current user
+            const assigneeId = card.dataset.assigneeId;
+            const createdBy = card.dataset.createdBy;
+            
+            if ((assigneeId && assigneeId === currentUserId) || 
+                (createdBy && createdBy === currentUserId)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        } else {
+            // Show all tasks
+            card.style.display = '';
+        }
+    });
+    
+    updateColumnCounts();
 }
 </script>
 <style>
@@ -1161,7 +1232,6 @@ function populateEditForm(task) {
                     </div>
                 </div>
                 <div class="col-md-3">
-                    {% if current_user and current_user.role == 'analyst' %}
                     <div class="input-group">
                         <span class="input-group-text"><i data-feather="user"></i></span>
                         <select class="form-select" id="myTasksFilter">
@@ -1169,7 +1239,6 @@ function populateEditForm(task) {
                             <option value="my-tasks">My Tasks Only</option>
                         </select>
                     </div>
-                    {% endif %}
                 </div>
                 <div class="col-md-3">
                     <div class="d-flex align-items-center gap-3">
@@ -1209,6 +1278,8 @@ function populateEditForm(task) {
                     {% for task in todo_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
+                             data-assignee-id="{{ task.assignee_id or '' }}"
+                             data-created-by="{{ task.created_by }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1287,6 +1358,8 @@ function populateEditForm(task) {
                     {% for task in in_progress_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
+                             data-assignee-id="{{ task.assignee_id or '' }}"
+                             data-created-by="{{ task.created_by }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1381,6 +1454,8 @@ function populateEditForm(task) {
                     {% for task in in_review_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
+                             data-assignee-id="{{ task.assignee_id or '' }}"
+                             data-created-by="{{ task.created_by }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1492,6 +1567,8 @@ function populateEditForm(task) {
                     {% for task in completed_tasks %}
                         <div class="card task-card mb-3 priority-{{ task.priority }}" 
                              data-task-id="{{ task.id }}" 
+                             data-assignee-id="{{ task.assignee_id or '' }}"
+                             data-created-by="{{ task.created_by }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
