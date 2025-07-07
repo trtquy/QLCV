@@ -502,15 +502,21 @@ def dashboard():
     
     completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
     
-    # User performance
+    # User performance with detailed status counts
     user_stats = {}
     for user in users:
         user_tasks = [t for t in tasks if t.assignee_id == user.id]
+        user_todo = len([t for t in user_tasks if t.status == 'todo'])
+        user_in_progress = len([t for t in user_tasks if t.status == 'in_progress'])
+        user_in_review = len([t for t in user_tasks if t.status == 'in_review'])
         user_completed = len([t for t in user_tasks if t.status == 'completed'])
         user_total = len(user_tasks)
         user_stats[str(user.id)] = {
             'user': user.to_dict(),
             'total_tasks': user_total,
+            'todo_tasks': user_todo,
+            'in_progress_tasks': user_in_progress,
+            'in_review_tasks': user_in_review,
             'completed_tasks': user_completed,
             'completion_rate': (user_completed / user_total * 100) if user_total > 0 else 0
         }

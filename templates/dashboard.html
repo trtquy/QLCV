@@ -177,18 +177,40 @@
                                             </div>
                                             
                                             <div class="row text-center">
-                                                <div class="col-4">
-                                                    <div class="h5 mb-0 text-primary">{{ stats.total_tasks }}</div>
-                                                    <small class="text-muted">Total</small>
+                                                {% if stats.todo_tasks > 0 %}
+                                                <div class="col-3">
+                                                    <span class="badge bg-secondary fs-6">{{ stats.todo_tasks }}</span>
+                                                    <div><small class="text-muted">To Do</small></div>
                                                 </div>
-                                                <div class="col-4">
-                                                    <div class="h5 mb-0 text-success">{{ stats.completed_tasks }}</div>
-                                                    <small class="text-muted">Done</small>
+                                                {% endif %}
+                                                {% if stats.in_progress_tasks > 0 %}
+                                                <div class="col-3">
+                                                    <span class="badge bg-warning fs-6">{{ stats.in_progress_tasks }}</span>
+                                                    <div><small class="text-muted">In Progress</small></div>
                                                 </div>
-                                                <div class="col-4">
-                                                    <div class="h5 mb-0 text-info">{{ "%.0f"|format(stats.completion_rate) }}%</div>
-                                                    <small class="text-muted">Rate</small>
+                                                {% endif %}
+                                                {% if stats.in_review_tasks > 0 %}
+                                                <div class="col-3">
+                                                    <span class="badge bg-info fs-6">{{ stats.in_review_tasks }}</span>
+                                                    <div><small class="text-muted">In Review</small></div>
                                                 </div>
+                                                {% endif %}
+                                                {% if stats.completed_tasks > 0 %}
+                                                <div class="col-3">
+                                                    <span class="badge bg-success fs-6">{{ stats.completed_tasks }}</span>
+                                                    <div><small class="text-muted">Completed</small></div>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                <!-- Show total and completion rate if user has multiple statuses -->
+                                                {% if stats.total_tasks > 0 %}
+                                                <div class="col-12 mt-2 pt-2 border-top">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small class="text-muted">Total: {{ stats.total_tasks }}</small>
+                                                        <small class="text-muted">Rate: {{ "%.0f"|format(stats.completion_rate) }}%</small>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
                                             </div>
                                             
                                             <div class="mt-3">
