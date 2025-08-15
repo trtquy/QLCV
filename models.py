@@ -144,6 +144,45 @@ class Task(db.Model):
             'time_variance': self.get_time_variance()
         }
 
+class TaskAttachment(db.Model):
+    __tablename__ = 'task_attachments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)  # Size in bytes
+    file_type = db.Column(db.String(100), nullable=True)  # MIME type
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Relationships
+    task = db.relationship('Task', backref='attachments')
+    uploader = db.relationship('User', backref='uploaded_files')
+    
+    def __repr__(self):
+        return f'<TaskAttachment {self.original_filename}>'
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'task_id': str(self.task_id),
+            'filename': self.filename,
+            'original_filename': self.original_filename,
+            'file_size': self.file_size,
+            'file_type': self.file_type,
+            'uploaded_by': str(self.uploaded_by),
+            'uploaded_at': self.uploaded_at.isoformat() if self.uploaded_at else None
+        }
+    
+    def get_human_readable_size(self):
+        """Convert file size to human readable format"""
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if self.file_size < 1024.0:
+                return f"{self.file_size:.1f} {unit}"
+            self.file_size /= 1024.0
+        return f"{self.file_size:.1f} TB"
+
 
 class TimeLog(db.Model):
     __tablename__ = 'time_logs'

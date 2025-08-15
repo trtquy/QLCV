@@ -286,6 +286,12 @@ function loadTaskForEdit(taskId) {
         }
     }
     
+    // Set current task for file uploads
+    currentTaskId = taskId;
+    
+    // Load file attachments
+    loadAttachments(taskId);
+    
     // Set form action
     const form = document.getElementById('editTaskForm');
     if (form) {
@@ -834,6 +840,185 @@ function setupAutocomplete(inputId, hiddenId, dropdownId, users, roleFilter) {
     });
 }
 
+// File Attachment Management
+let currentTaskId = null;
+
+function initializeFileUpload() {
+    const fileInput = document.getElementById('fileUpload');
+    const uploadArea = document.querySelector('.upload-area');
+    
+    if (!fileInput || !uploadArea) return;
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            uploadFiles(files);
+        }
+    });
+    
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#0052CC';
+        this.style.backgroundColor = '#f8f9ff';
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#e1e5e9';
+        this.style.backgroundColor = 'transparent';
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#e1e5e9';
+        this.style.backgroundColor = 'transparent';
+        
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            uploadFiles(files);
+        }
+    });
+}
+
+function uploadFiles(files) {
+    if (!currentTaskId) {
+        showNotification('No task selected for file upload', 'error');
+        return;
+    }
+    
+    const progressContainer = document.getElementById('uploadProgress');
+    const progressBar = progressContainer.querySelector('.progress-bar');
+    
+    progressContainer.classList.remove('d-none');
+    
+    // Upload files one by one
+    let uploaded = 0;
+    const total = files.length;
+    
+    files.forEach((file, index) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch(`/upload_file/${currentTaskId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            uploaded++;
+            const progress = (uploaded / total) * 100;
+            progressBar.style.width = progress + '%';
+            
+            if (data.success) {
+                showNotification(data.message, 'success');
+                loadAttachments(currentTaskId);
+            } else {
+                showNotification(data.error || 'Upload failed', 'error');
+            }
+            
+            if (uploaded === total) {
+                setTimeout(() => {
+                    progressContainer.classList.add('d-none');
+                    progressBar.style.width = '0%';
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            uploaded++;
+            showNotification('Upload failed: ' + error.message, 'error');
+            
+            if (uploaded === total) {
+                setTimeout(() => {
+                    progressContainer.classList.add('d-none');
+                    progressBar.style.width = '0%';
+                }, 1000);
+            }
+        });
+    });
+}
+
+function loadAttachments(taskId) {
+    if (!taskId) return;
+    
+    fetch(`/api/task/${taskId}/attachments`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAttachments(data.attachments);
+            }
+        })
+        .catch(error => {
+            console.error('Failed to load attachments:', error);
+        });
+}
+
+function displayAttachments(attachments) {
+    const container = document.getElementById('attachmentsList');
+    if (!container) return;
+    
+    if (!attachments || attachments.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-2">No files attached</div>';
+        return;
+    }
+    
+    container.innerHTML = attachments.map(attachment => `
+        <div class="attachment-item d-flex align-items-center justify-content-between p-2 border rounded mb-2">
+            <div class="d-flex align-items-center">
+                <i data-feather="file" class="text-muted me-2" style="width: 16px; height: 16px;"></i>
+                <div>
+                    <div class="fw-medium">${attachment.original_filename}</div>
+                    <small class="text-muted">${formatFileSize(attachment.file_size)} • ${new Date(attachment.uploaded_at).toLocaleDateString()}</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="/download_file/${attachment.id}" class="btn btn-sm btn-outline-primary me-2" title="Download">
+                    <i data-feather="download" style="width: 12px; height: 12px;"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAttachment('${attachment.id}')" title="Delete">
+                    <i data-feather="trash-2" style="width: 12px; height: 12px;"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    // Refresh icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function deleteAttachment(attachmentId) {
+    if (!confirm('Are you sure you want to delete this file?')) {
+        return;
+    }
+    
+    fetch(`/delete_file/${attachmentId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            loadAttachments(currentTaskId);
+        } else {
+            showNotification(data.error || 'Delete failed', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Delete failed: ' + error.message, 'error');
+    });
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 // Export functions for global use
 window.loadTaskForEdit = loadTaskForEdit;
 window.updateTaskStatus = updateTaskStatus;
@@ -841,3 +1026,5 @@ window.showNotification = showNotification;
 window.refreshIcons = refreshIcons;
 window.toggleTimeTracking = toggleTimeTracking;
 window.updateTaskEstimate = updateTaskEstimate;
+window.deleteAttachment = deleteAttachment;
+window.initializeFileUpload = initializeFileUpload;

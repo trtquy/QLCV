@@ -1,9 +1,12 @@
-from flask import render_template, request, redirect, url_for, flash, session, jsonify
+from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from app import app, db
 from data_manager import data_manager
-from models import Team
+from models import Team, TaskAttachment
 from datetime import datetime, timedelta
 import logging
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 @app.route('/')
 def index():
@@ -1211,6 +1214,189 @@ def inject_current_user():
 # If no current user, redirect to login
 @app.before_request
 def require_login():
-    allowed_endpoints = ['login', 'static', 'time_report']
+    allowed_endpoints = ['login', 'static', 'time_report', 'download_file', 'upload_file', 'delete_file']
     if request.endpoint not in allowed_endpoints and not data_manager.get_current_user():
         return redirect(url_for('login'))
+
+# File upload configuration
+UPLOAD_FOLDER = 'uploads'
+MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
+ALLOWED_EXTENSIONS = {
+    'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 
+    'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', '7z', 'csv'
+}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_file_icon(file_type):
+    """Get appropriate icon for file type"""
+    if file_type:
+        if file_type.startswith('image/'):
+            return 'image'
+        elif file_type.startswith('text/') or file_type == 'application/pdf':
+            return 'file-text'
+        elif 'word' in file_type or 'document' in file_type:
+            return 'file'
+        elif 'excel' in file_type or 'spreadsheet' in file_type:
+            return 'file'
+        elif 'powerpoint' in file_type or 'presentation' in file_type:
+            return 'file'
+        elif 'zip' in file_type or 'compressed' in file_type:
+            return 'archive'
+    return 'file'
+
+@app.route('/upload_file/<task_id>', methods=['POST'])
+def upload_file(task_id):
+    """Upload file attachment to task"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Authentication required'}), 401
+    
+    # Check if task exists and user has permission
+    task = data_manager.get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Check if user can access this task (team-based access)
+    if not current_user.is_administrator and current_user.team_id != task.team_id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'File type not allowed'}), 400
+    
+    # Create uploads directory if it doesn't exist
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    
+    # Generate secure filename
+    original_filename = secure_filename(file.filename)
+    file_extension = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+    unique_filename = f"{uuid.uuid4().hex}.{file_extension}" if file_extension else uuid.uuid4().hex
+    
+    file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+    
+    try:
+        # Save file
+        file.save(file_path)
+        file_size = os.path.getsize(file_path)
+        
+        # Check file size
+        if file_size > MAX_FILE_SIZE:
+            os.remove(file_path)
+            return jsonify({'error': 'File too large (max 16MB)'}), 400
+        
+        # Create attachment record
+        attachment = TaskAttachment(
+            task_id=int(task_id),
+            filename=unique_filename,
+            original_filename=original_filename,
+            file_size=file_size,
+            file_type=file.content_type,
+            uploaded_by=current_user.id
+        )
+        
+        db.session.add(attachment)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'attachment': attachment.to_dict(),
+            'message': f'File "{original_filename}" uploaded successfully'
+        })
+        
+    except Exception as e:
+        # Clean up file if database insert fails
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
+
+@app.route('/download_file/<attachment_id>')
+def download_file(attachment_id):
+    """Download file attachment"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        flash('Authentication required', 'error')
+        return redirect(url_for('login'))
+    
+    attachment = TaskAttachment.query.get_or_404(attachment_id)
+    task = attachment.task
+    
+    # Check if user can access this task (team-based access)
+    if not current_user.is_administrator and current_user.team_id != task.team_id:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    file_path = os.path.join(UPLOAD_FOLDER, attachment.filename)
+    
+    if not os.path.exists(file_path):
+        flash('File not found', 'error')
+        return redirect(url_for('index'))
+    
+    return send_file(file_path, as_attachment=True, download_name=attachment.original_filename)
+
+@app.route('/delete_file/<attachment_id>', methods=['POST'])
+def delete_file(attachment_id):
+    """Delete file attachment"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Authentication required'}), 401
+    
+    attachment = TaskAttachment.query.get_or_404(attachment_id)
+    task = attachment.task
+    
+    # Check if user can delete this file (uploader or admin/manager)
+    can_delete = (
+        current_user.id == attachment.uploaded_by or
+        current_user.is_administrator or
+        current_user.role in ['manager', 'director']
+    )
+    
+    if not can_delete:
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    try:
+        # Remove file from filesystem
+        file_path = os.path.join(UPLOAD_FOLDER, attachment.filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        
+        # Remove database record
+        db.session.delete(attachment)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'File "{attachment.original_filename}" deleted successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Delete failed: {str(e)}'}), 500
+
+@app.route('/api/task/<task_id>/attachments')
+def get_task_attachments(task_id):
+    """Get task attachments"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Authentication required'}), 401
+    
+    task = data_manager.get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Check if user can access this task (team-based access)
+    if not current_user.is_administrator and current_user.team_id != task.team_id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    attachments = TaskAttachment.query.filter_by(task_id=task_id).all()
+    
+    return jsonify({
+        'success': True,
+        'attachments': [attachment.to_dict() for attachment in attachments]
+    })
