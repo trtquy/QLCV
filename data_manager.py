@@ -72,11 +72,23 @@ class DataManager:
     def create_task(self, title: str, description: str, created_by: str, 
                    assignee_id: Optional[str] = None, supervisor_id: Optional[str] = None,
                    priority: str = 'medium', complexity: str = 'medium', 
-                   started_at=None, due_date=None) -> Task:
+                   started_at=None, due_date=None, task_type: str = 'task',
+                   project_id: Optional[str] = None, parent_task_id: Optional[str] = None) -> Task:
         """Create a new task"""
         # Determine initial status based on due date
         initial_status = 'in_progress' if due_date else 'todo'
         
+        # Calculate hierarchy level based on task type
+        hierarchy_level = 0
+        if task_type == 'epic':
+            hierarchy_level = 0
+        elif task_type == 'story':
+            hierarchy_level = 1
+        elif task_type == 'task':
+            hierarchy_level = 2
+        elif task_type == 'subtask':
+            hierarchy_level = 3
+            
         task = Task(
             title=title,
             description=description,
@@ -87,7 +99,11 @@ class DataManager:
             complexity=complexity,
             status=initial_status,
             started_at=started_at,
-            due_date=due_date
+            due_date=due_date,
+            task_type=task_type,
+            hierarchy_level=hierarchy_level,
+            project_id=int(project_id) if project_id else None,
+            parent_task_id=int(parent_task_id) if parent_task_id else None
         )
         db.session.add(task)
         db.session.commit()

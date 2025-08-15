@@ -167,6 +167,11 @@ def create_task():
     started_at = request.form.get('started_at')
     due_date = request.form.get('due_date')
     
+    # New hierarchy fields
+    task_type = request.form.get('task_type', 'task')
+    project_id = request.form.get('project_id') or None
+    parent_task_id = request.form.get('parent_task_id') or None
+    
     if title:
         # Parse date fields
         parsed_started_at = None
@@ -195,7 +200,10 @@ def create_task():
             priority=priority,
             complexity=complexity,
             started_at=parsed_started_at,
-            due_date=parsed_due_date
+            due_date=parsed_due_date,
+            task_type=task_type,
+            project_id=project_id,
+            parent_task_id=parent_task_id
         )
         
         # Automatically set task team to manager's team (if manager has team)
