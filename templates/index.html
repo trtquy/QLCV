@@ -939,19 +939,31 @@ document.addEventListener('DOMContentLoaded', function() {
 function filterMyTasks(filterValue) {
     const taskCards = document.querySelectorAll('.task-card');
     const currentUserId = window.currentUserId;
+    const isAdmin = {{ 'true' if current_user and current_user.is_administrator else 'false' }};
     
     taskCards.forEach(card => {
         if (filterValue === 'my-tasks') {
-            // Show tasks assigned to current user OR created by current user
             const assigneeId = card.dataset.assigneeId;
             const createdBy = card.dataset.createdBy;
             
-            if ((assigneeId && assigneeId === currentUserId) || 
-                (createdBy && createdBy === currentUserId)) {
-                card.style.display = '';
+            let showTask = false;
+            
+            // For administrators: primarily show assigned tasks, only show created tasks if not assigned to anyone
+            if (isAdmin) {
+                if (assigneeId && assigneeId === currentUserId) {
+                    showTask = true; // Show tasks assigned to admin
+                } else if (!assigneeId && createdBy === currentUserId) {
+                    showTask = true; // Show unassigned tasks created by admin
+                }
             } else {
-                card.style.display = 'none';
+                // For regular users: show tasks assigned to them OR created by them
+                if ((assigneeId && assigneeId === currentUserId) || 
+                    (createdBy && createdBy === currentUserId)) {
+                    showTask = true;
+                }
             }
+            
+            card.style.display = showTask ? '' : 'none';
         } else {
             // Show all tasks
             card.style.display = '';
