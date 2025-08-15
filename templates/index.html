@@ -1840,6 +1840,19 @@ function filterByTeam() {
 
                     
                     <div class="row">
+                        <!-- Task Type Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="task_type" class="form-label fw-medium mb-2">Task Type</label>
+                                <select class="form-select clean-input" id="task_type" name="task_type" required>
+                                    <option value="task" selected>Task</option>
+                                    <option value="story">Story</option>
+                                    <option value="epic">Epic</option>
+                                    <option value="subtask">Subtask</option>
+                                </select>
+                            </div>
+                        </div>
+                        
                         <!-- Priority Selection -->
                         <div class="col-md-6">
                             <div class="mb-4">

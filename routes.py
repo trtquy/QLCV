@@ -17,6 +17,10 @@ def index():
     
     users = data_manager.get_all_users()
     teams = data_manager.get_all_teams()
+    projects = data_manager.get_all_projects()
+    
+    # Get potential parent tasks (epics and stories only)
+    parent_tasks = data_manager.get_parent_tasks()
     
     # Team-based filtering: Users only see their team's tasks (except administrators)
     if current_user.is_administrator:
@@ -48,6 +52,8 @@ def index():
                          completed_tasks=completed_tasks,
                          users=users,
                          teams=teams,
+                         projects=projects,
+                         parent_tasks=parent_tasks,
                          current_user=current_user,
                          selected_team=team_filter)
 

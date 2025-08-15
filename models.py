@@ -124,6 +124,66 @@ class Task(db.Model):
     def __repr__(self):
         return f'<Task {self.title}>'
     
+    # Hierarchy methods
+    def get_children(self):
+        """Get direct child tasks"""
+        return Task.query.filter_by(parent_task_id=self.id).all()
+    
+    def get_all_descendants_new(self):
+        """Get all descendant tasks recursively"""
+        descendants = []
+        for child in self.get_children():
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants_new())
+        return descendants
+    
+    def get_progress(self):
+        """Calculate progress based on completed child tasks"""
+        children = self.get_children()
+        if not children:
+            return 100.0 if self.status == 'completed' else 0.0
+        
+        completed_children = [c for c in children if c.status == 'completed']
+        return (len(completed_children) / len(children)) * 100.0
+    
+    def can_start_new(self):
+        """Check if task can start based on dependencies"""
+        try:
+            from models import TaskDependency
+            dependencies = TaskDependency.query.filter_by(successor_task_id=self.id).all()
+            if not dependencies:
+                return True
+            
+            for dep in dependencies:
+                predecessor = Task.query.get(dep.predecessor_task_id)
+                if predecessor and predecessor.status != 'completed':
+                    return False
+            return True
+        except:
+            return True
+    
+    def is_blocked(self):
+        """Check if task is blocked by dependencies"""
+        return not self.can_start_new()
+    
+    @property
+    def has_dependencies(self):
+        """Check if task has any dependencies"""
+        try:
+            from models import TaskDependency
+            return TaskDependency.query.filter_by(successor_task_id=self.id).count() > 0
+        except:
+            return False
+    
+    @property
+    def blocks_others(self):
+        """Check if task blocks other tasks"""
+        try:
+            from models import TaskDependency
+            return TaskDependency.query.filter_by(predecessor_task_id=self.id).count() > 0
+        except:
+            return False
+    
     def get_total_time_logged(self):
         """Calculate total time logged from time entries"""
         # Import here to avoid circular imports

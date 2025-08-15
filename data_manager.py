@@ -213,6 +213,14 @@ class DataManager:
         """Get all teams"""
         return Team.query.all()
     
+    def get_all_projects(self) -> List[Project]:
+        """Get all projects"""
+        return Project.query.all()
+    
+    def get_parent_tasks(self) -> List[Task]:
+        """Get tasks that can be parent tasks (epics and stories)"""
+        return Task.query.filter(Task.task_type.in_(['epic', 'story'])).all()
+    
     def get_team(self, team_id: str) -> Optional[Team]:
         """Get team by ID"""
         return Team.query.get(int(team_id))
