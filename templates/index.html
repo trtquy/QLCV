@@ -1365,6 +1365,7 @@ function filterByTeam() {
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
                              data-team-id="{{ task.team_id or '' }}"
+                             data-supervisor-id="{{ task.supervisor_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1441,6 +1442,7 @@ function filterByTeam() {
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
                              data-team-id="{{ task.team_id or '' }}"
+                             data-supervisor-id="{{ task.supervisor_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1533,6 +1535,7 @@ function filterByTeam() {
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
                              data-team-id="{{ task.team_id or '' }}"
+                             data-supervisor-id="{{ task.supervisor_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -1643,6 +1646,7 @@ function filterByTeam() {
                              data-assignee-id="{{ task.assignee_id or '' }}"
                              data-created-by="{{ task.created_by }}"
                              data-team-id="{{ task.team_id or '' }}"
+                             data-supervisor-id="{{ task.supervisor_id or '' }}"
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
@@ -2302,6 +2306,7 @@ function filterByTeam() {
 // Welcome animation for successful login
 // Set current user ID for JavaScript filtering
 window.currentUserId = '{{ current_user.id if current_user else "" }}';
+window.currentUserRole = '{{ current_user.role if current_user else "" }}';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Check if we're coming from a successful login

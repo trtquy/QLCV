@@ -424,16 +424,40 @@ function filterTasks(query) {
 function filterMyTasks(filterValue) {
     const taskCards = document.querySelectorAll('.task-card');
     const currentUserId = window.currentUserId; // This will be set from the template
+    const currentUserRole = window.currentUserRole; // Role information from template
     
     taskCards.forEach(card => {
         if (filterValue === 'my-tasks') {
-            // Show only tasks assigned to current user
             const assigneeId = card.dataset.assigneeId;
+            const createdBy = card.dataset.createdBy;
+            const supervisorId = card.dataset.supervisorId;
+            const taskStatus = card.closest('.task-container').id; // Get column ID to determine status
+            
+            let showTask = false;
+            
+            // Always show tasks assigned to current user
             if (assigneeId && assigneeId === currentUserId) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
+                showTask = true;
             }
+            
+            // For administrators: also show unassigned tasks they created
+            if (currentUserRole === 'administrator' && !assigneeId && createdBy === currentUserId) {
+                showTask = true;
+            }
+            
+            // For regular users: also show tasks they created
+            if (currentUserRole !== 'administrator' && createdBy === currentUserId) {
+                showTask = true;
+            }
+            
+            // For managers/directors: also show In Review tasks where they are supervisor
+            if ((currentUserRole === 'manager' || currentUserRole === 'director') && 
+                taskStatus === 'in-review-column' && 
+                supervisorId && supervisorId === currentUserId) {
+                showTask = true;
+            }
+            
+            card.style.display = showTask ? '' : 'none';
         } else {
             // Show all tasks
             card.style.display = '';
