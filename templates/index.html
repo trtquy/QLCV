@@ -264,7 +264,7 @@ function startTimeTracking(taskId, button, taskCard) {
     });
     
     // Start tracking for this task
-    fetch('/start_time_tracking/' + taskId, {
+    fetch('/time/start/' + taskId, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -303,7 +303,7 @@ function stopTimeTracking(taskId, button, taskCard, silent) {
         return;
     }
     
-    fetch('/stop_time_tracking/' + timeLogId, {
+    fetch('/time/stop/' + timeLogId, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -940,13 +940,24 @@ function filterMyTasks(filterValue) {
     const taskCards = document.querySelectorAll('.task-card');
     const currentUserId = window.currentUserId;
     const isAdmin = {{ 'true' if current_user and current_user.is_administrator else 'false' }};
+    const teamFilter = document.getElementById('teamFilter');
+    const selectedTeamId = teamFilter ? teamFilter.value : '';
     
     taskCards.forEach(card => {
-        if (filterValue === 'my-tasks') {
+        let showTask = true;
+        
+        // First apply team filter if active
+        if (selectedTeamId && selectedTeamId !== '') {
+            const taskTeamId = card.dataset.teamId;
+            showTask = taskTeamId === selectedTeamId;
+        }
+        
+        // Then apply my tasks filter if active and card passed team filter
+        if (showTask && filterValue === 'my-tasks') {
             const assigneeId = card.dataset.assigneeId;
             const createdBy = card.dataset.createdBy;
             
-            let showTask = false;
+            showTask = false; // Reset to false, will be set to true if it matches criteria
             
             // For administrators: primarily show assigned tasks, only show created tasks if not assigned to anyone
             if (isAdmin) {
@@ -962,12 +973,9 @@ function filterMyTasks(filterValue) {
                     showTask = true;
                 }
             }
-            
-            card.style.display = showTask ? '' : 'none';
-        } else {
-            // Show all tasks
-            card.style.display = '';
         }
+        
+        card.style.display = showTask ? '' : 'none';
     });
     
     // Call updateColumnCounts if available, otherwise define locally
@@ -998,8 +1006,18 @@ function updateTaskCounts() {
     if (completedBadge) completedBadge.textContent = completedCount;
 }
 
-// Team filter function
+// Team filter function - works with My Tasks filter
 function filterByTeam() {
+    const myTasksFilter = document.getElementById('myTasksFilter');
+    const myTasksValue = myTasksFilter ? myTasksFilter.value : 'all';
+    
+    // If My Tasks filter is active, re-run that filter (it will include team filtering)
+    if (myTasksValue === 'my-tasks') {
+        filterMyTasks('my-tasks');
+        return;
+    }
+    
+    // Otherwise just apply team filter
     const teamFilter = document.getElementById('teamFilter');
     const selectedTeamId = teamFilter.value;
     const taskCards = document.querySelectorAll('.task-card');
