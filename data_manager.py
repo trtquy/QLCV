@@ -620,4 +620,13 @@ class DataManager:
         }
 
 # Global instance
+    def get_all_projects(self):
+        """Get all projects for dropdown"""
+        from models import Project
+        return Project.query.all()
+    
+    def get_parent_tasks(self):
+        """Get tasks suitable as parent tasks (epics and stories)"""
+        return Task.query.filter(Task.task_type.in_(['epic', 'story'])).all()
+
 data_manager = DataManager()

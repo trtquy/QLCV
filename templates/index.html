@@ -25,7 +25,7 @@
             <i class="fas fa-chevron-down ms-1" style="font-size: 10px;"></i>
             {% else %}
             <i class="fas fa-lock ms-1" style="font-size: 9px; opacity: 0.7;"></i>
-            <!-- End badge section -->
+            {% endif %}
         </span>
     </div>
 {% endmacro %}
@@ -43,7 +43,7 @@
                     {{ "%.1f"|format(total_logged or 0) }}h / {{ "%.1f"|format(task.estimated_hours) }}h
                 {% else %}
                     {{ "%.1f"|format(total_logged or 0) }}h logged
-                <!-- End badge section -->
+                {% endif %}
             </small>
             {% if can_track_time %}
             <div class="time-controls">
@@ -53,7 +53,7 @@
                     <i class="fas fa-play"></i>
                 </button>
             </div>
-            <!-- End badge section -->
+            {% endif %}
         </div>
         {% if task.estimated_hours and total_logged %}
             {% set progress_percent = ((total_logged / task.estimated_hours) * 100)|round(1) %}
@@ -62,7 +62,7 @@
                      style="width: {{ [progress_percent, 100]|min }}%"
                      title="{{ progress_percent }}% complete"></div>
             </div>
-        <!-- End badge section -->
+        {% endif %}
     </div>
 {% endmacro %}
 
@@ -83,7 +83,7 @@
             </button>
         </div>
     </div>
-    <!-- End badge section -->
+    {% endif %}
 {% endmacro %}
 
 {% block extra_head %}
@@ -410,7 +410,7 @@ window.tasksData = [
         started_at: "{{ task.started_at.isoformat() if task.started_at else '' }}",
         due_date: "{{ task.due_date.isoformat() if task.due_date else '' }}",
         completed_at: "{{ task.completed_at.isoformat() if task.completed_at else '' }}"
-    }{% if not loop.last %},<!-- End badge section -->
+    }{% if not loop.last %},{% endif %}
     {% endfor %}
 ];
 
@@ -1329,7 +1329,7 @@ function filterByTeam() {
                     <i data-feather="info" class="me-2"></i>
                     Only managers can create tasks
                 </div>
-                <!-- End badge section -->
+                {% endif %}
             </div>
             
             <!-- Team Filter -->
@@ -1365,9 +1365,9 @@ function filterByTeam() {
                                         <i data-feather="users" class="me-1" style="width: 12px; height: 12px;"></i>
                                         {{ team.name }}
                                     </div>
-                                <!-- End badge section -->
+                                {% endif %}
                             {% endfor %}
-                        <!-- End badge section -->
+                        {% endif %}
                         <small class="text-muted">
                             Showing {{ (todo_tasks + in_progress_tasks + in_review_tasks + completed_tasks)|length }} tasks
                         </small>
@@ -1406,12 +1406,12 @@ function filterByTeam() {
                                     <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
                                     {% if task.parent_task_id %}
                                         <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                     {% if task.project_id %}
                                         <span class="badge badge-outline-info ms-1">Project</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
-                                <!-- End badge section -->
+                                
                                 
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -1426,15 +1426,15 @@ function filterByTeam() {
                                             <i data-feather="clock" class="icon-sm"></i>
                                             Blocked by dependencies
                                         </small>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                     {% if task.blocks_others %}
                                         <small class="text-info">
                                             <i data-feather="link" class="icon-sm"></i>
                                             Blocking other tasks
                                         </small>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
-                                <!-- End badge section -->
+                                {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">Task #{{ task.id }}</small>
@@ -1479,7 +1479,7 @@ function filterByTeam() {
                                         </ul>
                                     </div>
                                 </div>
-                                <!-- End badge section -->
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -1514,12 +1514,12 @@ function filterByTeam() {
                                     <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
                                     {% if task.parent_task_id %}
                                         <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                     {% if task.project_id %}
                                         <span class="badge badge-outline-info ms-1">Project</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
-                                <!-- End badge section -->
+                                {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -1541,7 +1541,7 @@ function filterByTeam() {
                                             Send for Review
                                         </button>
                                     </form>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                     
                                     <!-- Admin actions dropdown -->
                                     {% if current_user and current_user.is_administrator %}
@@ -1568,7 +1568,7 @@ function filterByTeam() {
                                                     </button>
                                                 </form>
                                             </li>
-                                            <!-- End badge section -->
+                                            {% endif %}
                                             <li>
                                                 <button type="button" class="dropdown-item" onclick="adminChangeTaskStatus('{{ task.id }}', 'completed');">
                                                     <i data-feather="check-circle" style="width: 12px; height: 12px;" class="me-1"></i>
@@ -1584,7 +1584,7 @@ function filterByTeam() {
                                             </li>
                                         </ul>
                                     </div>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -1620,12 +1620,12 @@ function filterByTeam() {
                                     <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
                                     {% if task.parent_task_id %}
                                         <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                     {% if task.project_id %}
                                         <span class="badge badge-outline-info ms-1">Project</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
-                                <!-- End badge section -->
+                                {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -1636,7 +1636,7 @@ function filterByTeam() {
                                     <small class="text-muted">Task #{{ task.id }}</small>
                                     {% if task.supervisor %}
                                         <small class="text-muted">Supervisor: {{ task.supervisor.display_name or task.supervisor.username }}</small>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
                                 
                                 <!-- Action buttons for In Review tasks -->
@@ -1651,7 +1651,7 @@ function filterByTeam() {
                                                 Recall
                                             </button>
                                         </form>
-                                        <!-- End badge section -->
+                                        {% endif %}
                                         
                                         <!-- Approve/Reject buttons for supervisors -->
                                         {% if task.supervisor_id == current_user.id %}
@@ -1665,7 +1665,7 @@ function filterByTeam() {
                                             <i data-feather="x" style="width: 12px; height: 12px;"></i>
                                             Reject
                                         </button>
-                                        <!-- End badge section -->
+                                        {% endif %}
                                         
                                         <!-- Administrator menu (collapsed by default) -->
                                         {% if current_user.is_administrator %}
@@ -1686,7 +1686,7 @@ function filterByTeam() {
                                                         </button>
                                                     </form>
                                                 </li>
-                                                <!-- End badge section -->
+                                                {% endif %}
                                                 <!-- Admin approve action (if not already shown) -->
                                                 {% if task.supervisor_id != current_user.id %}
                                                 <li>
@@ -1703,11 +1703,11 @@ function filterByTeam() {
                                                         Admin Reject
                                                     </button>
                                                 </li>
-                                                <!-- End badge section -->
+                                                {% endif %}
                                             </ul>
                                         </div>
-                                        <!-- End badge section -->
-                                    <!-- End badge section -->
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -1743,12 +1743,12 @@ function filterByTeam() {
                                     <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
                                     {% if task.parent_task_id %}
                                         <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                     {% if task.project_id %}
                                         <span class="badge badge-outline-info ms-1">Project</span>
-                                    <!-- End badge section -->
+                                    {% endif %}
                                 </div>
-                                <!-- End badge section -->
+                                {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
@@ -1798,7 +1798,7 @@ function filterByTeam() {
                                         </ul>
                                     </div>
                                 </div>
-                                <!-- End badge section -->
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -1947,7 +1947,7 @@ function filterByTeam() {
                                 </div>
                                 <div class="form-text">Tasks are automatically assigned to your team</div>
                             </div>
-                            <!-- End badge section -->
+                            {% endif %}
                             
                             <div class="mb-4">
                                 <label for="estimated_hours" class="form-label fw-medium mb-2">
