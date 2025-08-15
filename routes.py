@@ -17,10 +17,6 @@ def index():
     
     users = data_manager.get_all_users()
     teams = data_manager.get_all_teams()
-    projects = data_manager.get_all_projects()
-    
-    # Get potential parent tasks (epics and stories only)
-    parent_tasks = data_manager.get_parent_tasks()
     
     # Team-based filtering: Users only see their team's tasks (except administrators)
     if current_user.is_administrator:
@@ -52,8 +48,6 @@ def index():
                          completed_tasks=completed_tasks,
                          users=users,
                          teams=teams,
-                         projects=projects,
-                         parent_tasks=parent_tasks,
                          current_user=current_user,
                          selected_team=team_filter)
 
@@ -167,11 +161,6 @@ def create_task():
     started_at = request.form.get('started_at')
     due_date = request.form.get('due_date')
     
-    # New hierarchy fields
-    task_type = request.form.get('task_type', 'task')
-    project_id = request.form.get('project_id') or None
-    parent_task_id = request.form.get('parent_task_id') or None
-    
     if title:
         # Parse date fields
         parsed_started_at = None
@@ -200,10 +189,7 @@ def create_task():
             priority=priority,
             complexity=complexity,
             started_at=parsed_started_at,
-            due_date=parsed_due_date,
-            task_type=task_type,
-            project_id=project_id,
-            parent_task_id=parent_task_id
+            due_date=parsed_due_date
         )
         
         # Automatically set task team to manager's team (if manager has team)

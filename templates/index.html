@@ -1059,38 +1059,6 @@ function filterByTeam() {
         border-left: 4px solid #0052CC;
     }
     
-    /* Task Hierarchy and Type Badges */
-    .task-type-badge {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 0.25rem;
-        font-weight: 500;
-    }
-    
-    .badge-outline-primary {
-        color: #0d6efd;
-        border: 1px solid #0d6efd;
-        background-color: transparent;
-    }
-    
-    .badge-outline-secondary {
-        color: #6c757d;
-        border: 1px solid #6c757d;
-        background-color: transparent;
-    }
-    
-    .badge-outline-info {
-        color: #0dcaf0;
-        border: 1px solid #0dcaf0;
-        background-color: transparent;
-    }
-    
-    /* Dependency indicators */
-    .icon-sm {
-        width: 14px;
-        height: 14px;
-    }
-    
     .task-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -1400,41 +1368,10 @@ function filterByTeam() {
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
-                                <!-- Task Type and Hierarchy Badge -->
-                                <!-- Task Type and Hierarchy Badge - Show for ALL tasks -->
-                                <div class="mb-2">
-                                    <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
-                                    {% if task.parent_task_id %}
-                                        <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    {% endif %}
-                                    {% if task.project_id %}
-                                        <span class="badge badge-outline-info ms-1">Project</span>
-                                    {% endif %}
-                                </div>
-                                
-                                
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
                                     {{ priority_badge(task, current_user) }}
                                 </div>
-                                
-                                <!-- Dependency Indicators -->
-                                {% if task.has_dependencies or task.blocks_others %}
-                                <div class="mb-2">
-                                    {% if not task.can_start %}
-                                        <small class="text-warning">
-                                            <i data-feather="clock" class="icon-sm"></i>
-                                            Blocked by dependencies
-                                        </small>
-                                    {% endif %}
-                                    {% if task.blocks_others %}
-                                        <small class="text-info">
-                                            <i data-feather="link" class="icon-sm"></i>
-                                            Blocking other tasks
-                                        </small>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">Task #{{ task.id }}</small>
@@ -1508,19 +1445,6 @@ function filterByTeam() {
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
-                                <!-- Task Type and Hierarchy Badge -->
-                                <!-- Task Type and Hierarchy Badge - Show for ALL tasks -->
-                                <div class="mb-2">
-                                    <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
-                                    {% if task.parent_task_id %}
-                                        <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    {% endif %}
-                                    {% if task.project_id %}
-                                        <span class="badge badge-outline-info ms-1">Project</span>
-                                    {% endif %}
-                                </div>
-                                
-                                
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
                                     {{ priority_badge(task, current_user) }}
@@ -1614,18 +1538,6 @@ function filterByTeam() {
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
-                                <!-- Task Type and Hierarchy Badge -->
-                                <!-- Task Type and Hierarchy Badge - Show for ALL tasks -->
-                                <div class="mb-2">
-                                    <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
-                                    {% if task.parent_task_id %}
-                                        <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    {% endif %}
-                                    {% if task.project_id %}
-                                        <span class="badge badge-outline-info ms-1">Project</span>
-                                    {% endif %}
-                                </div>
-                                
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
                                     {{ priority_badge(task, current_user) }}
@@ -1736,18 +1648,6 @@ function filterByTeam() {
                              onclick="loadTaskForEdit('{{ task.id }}')"
                              style="cursor: pointer;">
                             <div class="card-body p-3">
-                                <!-- Task Type and Hierarchy Badge -->
-                                <!-- Task Type and Hierarchy Badge - Show for ALL tasks -->
-                                <div class="mb-2">
-                                    <span class="badge badge-outline-primary task-type-badge">{{ task.task_type|title }}</span>
-                                    {% if task.parent_task_id %}
-                                        <span class="badge badge-outline-secondary ms-1">Child Task</span>
-                                    {% endif %}
-                                    {% if task.project_id %}
-                                        <span class="badge badge-outline-info ms-1">Project</span>
-                                    {% endif %}
-                                </div>
-                                
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h6 class="card-title mb-0 flex-grow-1">{{ task.title }}</h6>
                                     {{ priority_badge(task, current_user) }}
@@ -1838,19 +1738,6 @@ function filterByTeam() {
 
                     
                     <div class="row">
-                        <!-- Task Type Selection -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="task_type" class="form-label fw-medium mb-2">Task Type</label>
-                                <select class="form-select clean-input" id="task_type" name="task_type" required>
-                                    <option value="task" selected>Task</option>
-                                    <option value="story">Story</option>
-                                    <option value="epic">Epic</option>
-                                    <option value="subtask">Subtask</option>
-                                </select>
-                            </div>
-                        </div>
-                        
                         <!-- Priority Selection -->
                         <div class="col-md-6">
                             <div class="mb-4">
@@ -1905,34 +1792,6 @@ function filterByTeam() {
                                     <div class="dropdown-menu" id="supervisor_dropdown" style="display: none; width: 100%; max-height: 200px; overflow-y: auto;"></div>
                                 </div>
                                 <div class="form-text">Optional: Choose a team manager to supervise this task</div>
-                            </div>
-                            
-                            <!-- Project Selection -->
-                            <div class="mb-4">
-                                <label for="project_id" class="form-label fw-medium mb-2">
-                                    <i data-feather="briefcase" class="me-1" style="width: 16px; height: 16px;"></i>
-                                    Project
-                                </label>
-                                <select class="form-select clean-input" id="project_id" name="project_id">
-                                    <option value="">No Project</option>
-                                    {% for project in projects %}
-                                        <option value="{{ project.id }}">{{ project.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <!-- Parent Task Selection -->
-                            <div class="mb-4">
-                                <label for="parent_task_id" class="form-label fw-medium mb-2">
-                                    <i data-feather="git-branch" class="me-1" style="width: 16px; height: 16px;"></i>
-                                    Parent Task
-                                </label>
-                                <select class="form-select clean-input" id="parent_task_id" name="parent_task_id">
-                                    <option value="">No Parent Task</option>
-                                    {% for parent in parent_tasks %}
-                                        <option value="{{ parent.id }}">{{ parent.task_type|title }}: {{ parent.title }}</option>
-                                    {% endfor %}
-                                </select>
                             </div>
                             
                             <!-- Team automatically set to manager's team -->

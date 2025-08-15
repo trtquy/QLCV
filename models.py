@@ -101,88 +101,16 @@ class Task(db.Model):
     supervisor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     
-    # Hierarchy and Project fields
-    parent_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
-    task_type = db.Column(db.String(20), nullable=False, default='task')  # 'epic', 'story', 'task', 'subtask'
-    hierarchy_level = db.Column(db.Integer, nullable=False, default=0)  # 0=epic, 1=story, 2=task, 3=subtask
-    
-    # Relationships for hierarchy
-    parent_task = db.relationship('Task', remote_side=[id], backref='child_tasks')
-    
     # Indexes for better performance
     __table_args__ = (
         db.Index('idx_task_status', 'status'),
         db.Index('idx_task_assignee', 'assignee_id'),
         db.Index('idx_task_created_by', 'created_by'),
         db.Index('idx_task_team', 'team_id'),
-        db.Index('idx_task_parent', 'parent_task_id'),
-        db.Index('idx_task_project', 'project_id'),
-        db.Index('idx_task_hierarchy', 'hierarchy_level'),
     )
     
     def __repr__(self):
         return f'<Task {self.title}>'
-    
-    # Hierarchy methods
-    def get_children(self):
-        """Get direct child tasks"""
-        return Task.query.filter_by(parent_task_id=self.id).all()
-    
-    def get_all_descendants_new(self):
-        """Get all descendant tasks recursively"""
-        descendants = []
-        for child in self.get_children():
-            descendants.append(child)
-            descendants.extend(child.get_all_descendants_new())
-        return descendants
-    
-    def get_progress(self):
-        """Calculate progress based on completed child tasks"""
-        children = self.get_children()
-        if not children:
-            return 100.0 if self.status == 'completed' else 0.0
-        
-        completed_children = [c for c in children if c.status == 'completed']
-        return (len(completed_children) / len(children)) * 100.0
-    
-    def can_start_new(self):
-        """Check if task can start based on dependencies"""
-        try:
-            from models import TaskDependency
-            dependencies = TaskDependency.query.filter_by(successor_task_id=self.id).all()
-            if not dependencies:
-                return True
-            
-            for dep in dependencies:
-                predecessor = Task.query.get(dep.predecessor_task_id)
-                if predecessor and predecessor.status != 'completed':
-                    return False
-            return True
-        except:
-            return True
-    
-    def is_blocked(self):
-        """Check if task is blocked by dependencies"""
-        return not self.can_start_new()
-    
-    @property
-    def has_dependencies(self):
-        """Check if task has any dependencies"""
-        try:
-            from models import TaskDependency
-            return TaskDependency.query.filter_by(successor_task_id=self.id).count() > 0
-        except:
-            return False
-    
-    @property
-    def blocks_others(self):
-        """Check if task blocks other tasks"""
-        try:
-            from models import TaskDependency
-            return TaskDependency.query.filter_by(predecessor_task_id=self.id).count() > 0
-        except:
-            return False
     
     def get_total_time_logged(self):
         """Calculate total time logged from time entries"""
@@ -196,50 +124,6 @@ class Task(db.Model):
         if self.estimated_hours and self.actual_hours:
             return self.actual_hours - self.estimated_hours
         return None
-    
-    def get_child_progress(self):
-        """Calculate progress based on child task completion"""
-        from app import db
-        children = db.session.query(Task).filter_by(parent_task_id=self.id).all()
-        if not children:
-            return None
-        
-        total_children = len(children)
-        completed_children = len([child for child in children if child.status == 'completed'])
-        
-        if total_children == 0:
-            return 0.0
-        return (completed_children / total_children) * 100
-    
-    def get_all_descendants(self):
-        """Get all descendant tasks recursively"""
-        from app import db
-        descendants = []
-        children = db.session.query(Task).filter_by(parent_task_id=self.id).all()
-        for child in children:
-            descendants.append(child)
-            descendants.extend(child.get_all_descendants())
-        return descendants
-    
-    def can_start(self):
-        """Check if task can start based on dependencies"""
-        from app import db
-        # Check if all predecessor tasks are completed
-        predecessors = db.session.query(TaskDependency).filter_by(successor_task_id=self.id).all()
-        for dependency in predecessors:
-            if dependency.predecessor.status != 'completed':
-                return False
-        return True
-    
-    def get_blocked_successors(self):
-        """Get tasks that are blocked by this task"""
-        from app import db
-        blocked = []
-        successors = db.session.query(TaskDependency).filter_by(predecessor_task_id=self.id).all()
-        for dependency in successors:
-            if dependency.successor.status == 'todo' and not dependency.successor.can_start():
-                blocked.append(dependency.successor)
-        return blocked
     
     def to_dict(self):
         return {
@@ -260,13 +144,7 @@ class Task(db.Model):
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'total_time_logged': self.get_total_time_logged(),
-            'time_variance': self.get_time_variance(),
-            'parent_task_id': str(self.parent_task_id) if self.parent_task_id else None,
-            'project_id': str(self.project_id) if self.project_id else None,
-            'task_type': self.task_type,
-            'hierarchy_level': self.hierarchy_level,
-            'child_progress': self.get_child_progress(),
-            'can_start': self.can_start()
+            'time_variance': self.get_time_variance()
         }
 
 class TaskAttachment(db.Model):
@@ -364,112 +242,4 @@ class TimeLog(db.Model):
             'duration_hours': self.duration_hours,
             'description': self.description,
             'created_at': self.created_at.isoformat() if self.created_at else None
-        }
-
-
-class Project(db.Model):
-    __tablename__ = 'projects'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    status = db.Column(db.String(20), nullable=False, default='active')  # 'active', 'on_hold', 'completed', 'cancelled'
-    priority = db.Column(db.String(20), nullable=False, default='medium')  # 'low', 'medium', 'high', 'critical'
-    
-    # Dates
-    start_date = db.Column(db.DateTime, nullable=True)
-    target_end_date = db.Column(db.DateTime, nullable=True)
-    actual_end_date = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Foreign Keys
-    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
-    
-    # Relationships
-    owner = db.relationship('User', backref='owned_projects')
-    tasks = db.relationship('Task', backref='project', lazy='dynamic')
-    
-    # Indexes
-    __table_args__ = (
-        db.Index('idx_project_status', 'status'),
-        db.Index('idx_project_owner', 'owner_id'),
-        db.Index('idx_project_team', 'team_id'),
-    )
-    
-    def __repr__(self):
-        return f'<Project {self.name}>'
-    
-    def get_progress_percentage(self):
-        """Calculate project progress based on completed tasks"""
-        total_tasks = self.tasks.count()
-        if total_tasks == 0:
-            return 0.0
-        completed_tasks = self.tasks.filter_by(status='completed').count()
-        return (completed_tasks / total_tasks) * 100
-    
-    def get_task_counts_by_status(self):
-        """Get task counts for each status"""
-        return {
-            'todo': self.tasks.filter_by(status='todo').count(),
-            'in_progress': self.tasks.filter_by(status='in_progress').count(),
-            'in_review': self.tasks.filter_by(status='in_review').count(),
-            'completed': self.tasks.filter_by(status='completed').count(),
-        }
-    
-    def to_dict(self):
-        return {
-            'id': str(self.id),
-            'name': self.name,
-            'description': self.description,
-            'status': self.status,
-            'priority': self.priority,
-            'start_date': self.start_date.isoformat() if self.start_date else None,
-            'target_end_date': self.target_end_date.isoformat() if self.target_end_date else None,
-            'actual_end_date': self.actual_end_date.isoformat() if self.actual_end_date else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'owner_id': str(self.owner_id),
-            'team_id': str(self.team_id) if self.team_id else None,
-            'progress_percentage': self.get_progress_percentage(),
-            'task_counts': self.get_task_counts_by_status()
-        }
-
-
-class TaskDependency(db.Model):
-    __tablename__ = 'task_dependencies'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    predecessor_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
-    successor_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
-    dependency_type = db.Column(db.String(20), nullable=False, default='finish_to_start')  # 'finish_to_start', 'start_to_start', 'finish_to_finish', 'start_to_finish'
-    lag_days = db.Column(db.Integer, nullable=False, default=0)  # Delay in days
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
-    # Relationships
-    predecessor = db.relationship('Task', foreign_keys=[predecessor_task_id], backref='successors')
-    successor = db.relationship('Task', foreign_keys=[successor_task_id], backref='predecessors')
-    creator = db.relationship('User', backref='created_dependencies')
-    
-    # Indexes and constraints
-    __table_args__ = (
-        db.Index('idx_dependency_predecessor', 'predecessor_task_id'),
-        db.Index('idx_dependency_successor', 'successor_task_id'),
-        db.UniqueConstraint('predecessor_task_id', 'successor_task_id', name='uq_task_dependency'),
-    )
-    
-    def __repr__(self):
-        return f'<TaskDependency {self.predecessor_task_id} -> {self.successor_task_id}>'
-    
-    def to_dict(self):
-        return {
-            'id': str(self.id),
-            'predecessor_task_id': str(self.predecessor_task_id),
-            'successor_task_id': str(self.successor_task_id),
-            'dependency_type': self.dependency_type,
-            'lag_days': self.lag_days,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'created_by': str(self.created_by)
         }

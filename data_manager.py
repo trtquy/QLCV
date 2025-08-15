@@ -1,5 +1,5 @@
-from typing import List, Optional, Dict
-from models import User, Task, Team, TimeLog, Project, TaskDependency
+from typing import List, Optional
+from models import User, Task, Team, TimeLog
 from app import db
 from flask import session
 import logging
@@ -72,23 +72,11 @@ class DataManager:
     def create_task(self, title: str, description: str, created_by: str, 
                    assignee_id: Optional[str] = None, supervisor_id: Optional[str] = None,
                    priority: str = 'medium', complexity: str = 'medium', 
-                   started_at=None, due_date=None, task_type: str = 'task',
-                   project_id: Optional[str] = None, parent_task_id: Optional[str] = None) -> Task:
+                   started_at=None, due_date=None) -> Task:
         """Create a new task"""
         # Determine initial status based on due date
         initial_status = 'in_progress' if due_date else 'todo'
         
-        # Calculate hierarchy level based on task type
-        hierarchy_level = 0
-        if task_type == 'epic':
-            hierarchy_level = 0
-        elif task_type == 'story':
-            hierarchy_level = 1
-        elif task_type == 'task':
-            hierarchy_level = 2
-        elif task_type == 'subtask':
-            hierarchy_level = 3
-            
         task = Task(
             title=title,
             description=description,
@@ -99,11 +87,7 @@ class DataManager:
             complexity=complexity,
             status=initial_status,
             started_at=started_at,
-            due_date=due_date,
-            task_type=task_type,
-            hierarchy_level=hierarchy_level,
-            project_id=int(project_id) if project_id else None,
-            parent_task_id=int(parent_task_id) if parent_task_id else None
+            due_date=due_date
         )
         db.session.add(task)
         db.session.commit()
@@ -229,14 +213,6 @@ class DataManager:
         """Get all teams"""
         return Team.query.all()
     
-    def get_all_projects(self) -> List[Project]:
-        """Get all projects"""
-        return Project.query.all()
-    
-    def get_parent_tasks(self) -> List[Task]:
-        """Get tasks that can be parent tasks (epics and stories)"""
-        return Task.query.filter(Task.task_type.in_(['epic', 'story'])).all()
-    
     def get_team(self, team_id: str) -> Optional[Team]:
         """Get team by ID"""
         return Team.query.get(int(team_id))
@@ -341,173 +317,6 @@ class DataManager:
             
             db.session.commit()
         return task
-    
-    # Project Management Methods
-    def create_project(self, name: str, description: str = None, owner_id: str = None, team_id: str = None, 
-                      priority: str = 'medium', start_date: datetime = None, target_end_date: datetime = None) -> Project:
-        """Create a new project"""
-        project = Project(
-            name=name,
-            description=description,
-            owner_id=int(owner_id),
-            team_id=int(team_id) if team_id else None,
-            priority=priority,
-            start_date=start_date,
-            target_end_date=target_end_date
-        )
-        db.session.add(project)
-        db.session.commit()
-        return project
-    
-    def get_project(self, project_id: str) -> Optional[Project]:
-        """Get project by ID"""
-        return Project.query.get(int(project_id))
-    
-    def get_projects_by_team(self, team_id: str) -> List[Project]:
-        """Get projects by team"""
-        return Project.query.filter_by(team_id=int(team_id)).all()
-    
-    def get_all_projects(self) -> List[Project]:
-        """Get all projects"""
-        return Project.query.all()
-    
-    def update_project_status(self, project_id: str, status: str) -> Optional[Project]:
-        """Update project status"""
-        project = self.get_project(project_id)
-        if project:
-            project.status = status
-            if status == 'completed':
-                project.actual_end_date = datetime.utcnow()
-            db.session.commit()
-        return project
-    
-    # Task Hierarchy Methods
-    def create_child_task(self, parent_task_id: str, title: str, description: str = None, 
-                         assignee_id: str = None, priority: str = 'medium', 
-                         complexity: str = 'medium', task_type: str = 'subtask') -> Task:
-        """Create a child task"""
-        parent_task = self.get_task(parent_task_id)
-        if not parent_task:
-            raise ValueError("Parent task not found")
-        
-        # Determine hierarchy level
-        hierarchy_level = parent_task.hierarchy_level + 1
-        
-        child_task = Task(
-            title=title,
-            description=description,
-            assignee_id=int(assignee_id) if assignee_id else None,
-            created_by=parent_task.created_by,
-            team_id=parent_task.team_id,
-            project_id=parent_task.project_id,
-            priority=priority,
-            complexity=complexity,
-            parent_task_id=int(parent_task_id),
-            task_type=task_type,
-            hierarchy_level=hierarchy_level
-        )
-        
-        db.session.add(child_task)
-        db.session.commit()
-        return child_task
-    
-    def get_child_tasks(self, parent_task_id: str) -> List[Task]:
-        """Get child tasks of a parent task"""
-        return Task.query.filter_by(parent_task_id=int(parent_task_id)).all()
-    
-    def get_root_tasks(self) -> List[Task]:
-        """Get tasks with no parent (root level tasks)"""
-        return Task.query.filter_by(parent_task_id=None).all()
-    
-    def move_task_to_project(self, task_id: str, project_id: str) -> Optional[Task]:
-        """Move task to a different project"""
-        task = self.get_task(task_id)
-        if task:
-            task.project_id = int(project_id) if project_id else None
-            db.session.commit()
-        return task
-    
-    # Task Dependency Methods
-    def create_task_dependency(self, predecessor_task_id: str, successor_task_id: str, 
-                              dependency_type: str = 'finish_to_start', lag_days: int = 0, 
-                              created_by: str = None) -> TaskDependency:
-        """Create a task dependency"""
-        # Check if dependency already exists
-        existing = TaskDependency.query.filter_by(
-            predecessor_task_id=int(predecessor_task_id),
-            successor_task_id=int(successor_task_id)
-        ).first()
-        
-        if existing:
-            raise ValueError("Dependency already exists between these tasks")
-        
-        # Check for circular dependencies
-        if self._would_create_circular_dependency(predecessor_task_id, successor_task_id):
-            raise ValueError("This dependency would create a circular reference")
-        
-        dependency = TaskDependency(
-            predecessor_task_id=int(predecessor_task_id),
-            successor_task_id=int(successor_task_id),
-            dependency_type=dependency_type,
-            lag_days=lag_days,
-            created_by=int(created_by) if created_by else None
-        )
-        
-        db.session.add(dependency)
-        db.session.commit()
-        return dependency
-    
-    def get_task_dependencies(self, task_id: str) -> Dict[str, List[TaskDependency]]:
-        """Get both predecessor and successor dependencies for a task"""
-        predecessors = TaskDependency.query.filter_by(successor_task_id=int(task_id)).all()
-        successors = TaskDependency.query.filter_by(predecessor_task_id=int(task_id)).all()
-        
-        return {
-            'predecessors': predecessors,
-            'successors': successors
-        }
-    
-    def remove_task_dependency(self, dependency_id: str) -> bool:
-        """Remove a task dependency"""
-        dependency = TaskDependency.query.get(int(dependency_id))
-        if dependency:
-            db.session.delete(dependency)
-            db.session.commit()
-            return True
-        return False
-    
-    def _would_create_circular_dependency(self, predecessor_id: str, successor_id: str) -> bool:
-        """Check if adding a dependency would create a circular reference"""
-        # Simple check: if successor_id is already a predecessor of predecessor_id
-        visited = set()
-        
-        def has_path(start_id: str, target_id: str) -> bool:
-            if start_id in visited:
-                return False
-            visited.add(start_id)
-            
-            if start_id == target_id:
-                return True
-            
-            # Get all tasks that this task depends on
-            dependencies = TaskDependency.query.filter_by(successor_task_id=int(start_id)).all()
-            for dep in dependencies:
-                if has_path(str(dep.predecessor_task_id), target_id):
-                    return True
-            return False
-        
-        return has_path(successor_id, predecessor_id)
-    
-    def get_blocked_tasks(self) -> List[Task]:
-        """Get tasks that are blocked by dependencies"""
-        blocked_tasks = []
-        all_tasks = Task.query.filter_by(status='todo').all()
-        
-        for task in all_tasks:
-            if not task.can_start():
-                blocked_tasks.append(task)
-        
-        return blocked_tasks
     
     def get_time_report_data(self, team_id: str = None, start_date: datetime = None, end_date: datetime = None):
         """Generate time tracking report data"""
