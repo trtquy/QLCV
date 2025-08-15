@@ -994,11 +994,16 @@ function updateTaskCounts() {
     const inReviewCount = document.querySelectorAll('#in-review-column .task-card:not([style*="display: none"])').length;
     const completedCount = document.querySelectorAll('#completed-column .task-card:not([style*="display: none"])').length;
     
-    // Update badges
-    const todoBadge = document.querySelector('.kanban-column:nth-child(1) .badge');
-    const inProgressBadge = document.querySelector('.kanban-column:nth-child(2) .badge');
-    const inReviewBadge = document.querySelector('.kanban-column:nth-child(3) .badge');
-    const completedBadge = document.querySelector('.kanban-column:nth-child(4) .badge');
+    // Update badges - find them more specifically within each column header
+    const todoColumn = document.querySelector('#todo-column').closest('.kanban-column');
+    const inProgressColumn = document.querySelector('#in-progress-column').closest('.kanban-column');
+    const inReviewColumn = document.querySelector('#in-review-column').closest('.kanban-column');
+    const completedColumn = document.querySelector('#completed-column').closest('.kanban-column');
+    
+    const todoBadge = todoColumn.querySelector('.badge.bg-secondary');
+    const inProgressBadge = inProgressColumn.querySelector('.badge.bg-warning');
+    const inReviewBadge = inReviewColumn.querySelector('.badge.bg-info');
+    const completedBadge = completedColumn.querySelector('.badge.bg-success');
     
     if (todoBadge) todoBadge.textContent = todoCount;
     if (inProgressBadge) inProgressBadge.textContent = inProgressCount;
