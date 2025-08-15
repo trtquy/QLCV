@@ -328,21 +328,6 @@ function deleteTask(taskId) {
 
 function updateColumnCounts() {
     // Update badge counts for each column
-    const columns = ['todo', 'in_progress', 'completed'];
-    
-    columns.forEach(status => {
-        const column = document.querySelector(`[data-status="${status}"]`);
-        const badge = column?.querySelector('.badge');
-        const taskCount = column?.querySelectorAll('.task-card').length || 0;
-        
-        if (badge) {
-            badge.textContent = taskCount;
-        }
-    });
-}
-
-function updateColumnCounts() {
-    // Update badge counts for each column
     const todoCount = document.querySelectorAll('#todo-column .task-card:not([style*="display: none"])').length;
     const inProgressCount = document.querySelectorAll('#in-progress-column .task-card:not([style*="display: none"])').length;
     const inReviewCount = document.querySelectorAll('#in-review-column .task-card:not([style*="display: none"])').length;

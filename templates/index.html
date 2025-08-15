@@ -958,7 +958,32 @@ function filterMyTasks(filterValue) {
         }
     });
     
-    updateColumnCounts();
+    // Call updateColumnCounts if available, otherwise define locally
+    if (typeof updateColumnCounts === 'function') {
+        updateColumnCounts();
+    } else {
+        // Local column count update
+        updateTaskCounts();
+    }
+}
+
+// Local function to update column counts
+function updateTaskCounts() {
+    const todoCount = document.querySelectorAll('#todo-column .task-card:not([style*="display: none"])').length;
+    const inProgressCount = document.querySelectorAll('#in-progress-column .task-card:not([style*="display: none"])').length;
+    const inReviewCount = document.querySelectorAll('#in-review-column .task-card:not([style*="display: none"])').length;
+    const completedCount = document.querySelectorAll('#completed-column .task-card:not([style*="display: none"])').length;
+    
+    // Update badges
+    const todoBadge = document.querySelector('.kanban-column:nth-child(1) .badge');
+    const inProgressBadge = document.querySelector('.kanban-column:nth-child(2) .badge');
+    const inReviewBadge = document.querySelector('.kanban-column:nth-child(3) .badge');
+    const completedBadge = document.querySelector('.kanban-column:nth-child(4) .badge');
+    
+    if (todoBadge) todoBadge.textContent = todoCount;
+    if (inProgressBadge) inProgressBadge.textContent = inProgressCount;
+    if (inReviewBadge) inReviewBadge.textContent = inReviewCount;
+    if (completedBadge) completedBadge.textContent = completedCount;
 }
 
 // Team filter function
@@ -977,7 +1002,12 @@ function filterByTeam() {
         }
     });
     
-    updateColumnCounts();
+    // Call updateColumnCounts if available, otherwise use local function
+    if (typeof updateColumnCounts === 'function') {
+        updateColumnCounts();
+    } else {
+        updateTaskCounts();
+    }
 }
 </script>
 <style>
