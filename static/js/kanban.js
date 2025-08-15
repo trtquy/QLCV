@@ -1019,6 +1019,113 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Priority Management Functions
+function cyclePriority(event, taskId, currentPriority) {
+    // Stop event from bubbling to prevent opening edit modal
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // Define priority cycle
+    const priorityCycle = ['low', 'medium', 'high', 'urgent'];
+    const currentIndex = priorityCycle.indexOf(currentPriority);
+    const nextIndex = (currentIndex + 1) % priorityCycle.length;
+    const newPriority = priorityCycle[nextIndex];
+    
+    console.log(`Cycling priority for task ${taskId}: ${currentPriority} -> ${newPriority}`);
+    
+    updateTaskPriority(taskId, newPriority);
+}
+
+function updateTaskPriority(taskId, newPriority) {
+    const button = document.querySelector(`[data-task-id="${taskId}"].priority-btn`);
+    
+    if (!button) {
+        console.error('Priority button not found for task:', taskId);
+        return;
+    }
+    
+    // Show loading state
+    button.disabled = true;
+    button.classList.add('priority-loading');
+    
+    const formData = new FormData();
+    formData.append('priority', newPriority);
+    
+    fetch(`/update_task_priority/${taskId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updatePriorityUI(taskId, newPriority);
+            showNotification(`Priority updated to ${newPriority}`, 'success');
+            
+            // Update tasks data if available
+            if (window.tasksData) {
+                const task = window.tasksData.find(t => t.id == taskId);
+                if (task) {
+                    task.priority = newPriority;
+                }
+            }
+        } else {
+            showNotification(data.error || 'Failed to update priority', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating priority:', error);
+        showNotification('Failed to update priority', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.classList.remove('priority-loading');
+    });
+}
+
+function updatePriorityUI(taskId, newPriority) {
+    const button = document.querySelector(`[data-task-id="${taskId}"].priority-btn`);
+    const taskCard = document.querySelector(`[data-task-id="${taskId}"].task-card`);
+    
+    if (!button || !taskCard) return;
+    
+    // Update button classes
+    button.className = `btn btn-sm priority-btn priority-${newPriority}`;
+    button.setAttribute('data-current-priority', newPriority);
+    
+    // Update task card class
+    taskCard.className = taskCard.className.replace(/priority-\w+/, `priority-${newPriority}`);
+    
+    // Update icon
+    const icon = button.querySelector('i');
+    const iconMap = {
+        'urgent': 'alert-triangle',
+        'high': 'arrow-up',
+        'medium': 'minus',
+        'low': 'arrow-down'
+    };
+    
+    if (icon) {
+        icon.setAttribute('data-feather', iconMap[newPriority]);
+    }
+    
+    // Update text
+    const textSpan = button.querySelector('.priority-text');
+    if (textSpan) {
+        textSpan.textContent = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
+    }
+    
+    // Add animation effect
+    button.classList.add('priority-updated');
+    setTimeout(() => {
+        button.classList.remove('priority-updated');
+    }, 500);
+    
+    // Refresh feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
 // Export functions for global use
 window.loadTaskForEdit = loadTaskForEdit;
 window.updateTaskStatus = updateTaskStatus;
@@ -1028,3 +1135,4 @@ window.toggleTimeTracking = toggleTimeTracking;
 window.updateTaskEstimate = updateTaskEstimate;
 window.deleteAttachment = deleteAttachment;
 window.initializeFileUpload = initializeFileUpload;
+window.cyclePriority = cyclePriority;

@@ -1124,48 +1124,6 @@ def api_team_users():
             })
     
     return jsonify(users_data)
-
-@app.route('/update_task_priority/<task_id>', methods=['POST'])
-def update_task_priority(task_id):
-    """Update task priority via AJAX"""
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    
-    try:
-        current_user = data_manager.get_current_user()
-        logging.debug(f"Current user: {current_user}")
-        
-        if not current_user:
-            logging.error("No current user found")
-            return jsonify({'error': 'Not authenticated'}), 401
-        
-        new_priority = request.form.get('priority')
-        logging.debug(f"New priority: {new_priority}")
-        
-        if not new_priority or new_priority not in ['low', 'medium', 'high', 'urgent']:
-            logging.error(f"Invalid priority: {new_priority}")
-            return jsonify({'error': 'Invalid priority'}), 400
-        
-        # Get the task
-        task = data_manager.get_task(task_id)
-        logging.debug(f"Task found: {task}")
-        
-        if not task:
-            logging.error(f"Task not found: {task_id}")
-            return jsonify({'error': 'Task not found'}), 404
-        
-        # Check permissions - broader permissions for priority updates
-        can_update_priority = False
-        
-        # Allow if user is administrator
-        if current_user.is_administrator:
-            can_update_priority = True
-            logging.debug("User is administrator - priority update allowed")
-        
-        # Allow if user is the assignee
-        elif task.assignee_id == current_user.id:
-            can_update_priority = True
-            logging.debug("User is task assignee - priority update allowed")
         
         # Allow if user is a manager/director in the same team
         elif current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id:
@@ -1400,3 +1358,5 @@ def get_task_attachments(task_id):
         'success': True,
         'attachments': [attachment.to_dict() for attachment in attachments]
     })
+
+
