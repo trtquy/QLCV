@@ -1035,6 +1035,40 @@ def update_task_estimate(task_id):
     else:
         return jsonify({'error': 'Task not found'}), 404
 
+@app.route('/update_task_priority/<task_id>', methods=['POST'])
+def update_task_priority(task_id):
+    """Update task priority"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    # Check if user can edit priority (admin or assigned user)
+    task = data_manager.get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    can_edit = (current_user.is_administrator or 
+                (task.assignee_id and task.assignee_id == current_user.id))
+    
+    if not can_edit:
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    new_priority = request.form.get('priority')
+    if new_priority not in ['low', 'medium', 'high', 'urgent']:
+        return jsonify({'error': 'Invalid priority'}), 400
+    
+    # Update task priority
+    updated_task = data_manager.update_task(task_id, priority=new_priority)
+    
+    if updated_task:
+        return jsonify({
+            'success': True,
+            'priority': new_priority,
+            'message': f'Priority updated to {new_priority}'
+        })
+    else:
+        return jsonify({'error': 'Failed to update priority'}), 500
+
 # Template context processors
 @app.route('/user/<int:user_id>/update', methods=['POST'])
 def update_user_inline(user_id):
