@@ -1020,7 +1020,7 @@ def update_task_estimate(task_id):
     
     estimated_hours = request.form.get('estimated_hours')
     try:
-        estimated_hours = float(estimated_hours)
+        estimated_hours = float(estimated_hours) if estimated_hours is not None else 0.0
     except (ValueError, TypeError):
         return jsonify({'error': 'Invalid hours format'}), 400
     
@@ -1124,43 +1124,6 @@ def api_team_users():
             })
     
     return jsonify(users_data)
-        
-        # Allow if user is a manager/director in the same team
-        elif current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id:
-            can_update_priority = True
-            logging.debug("User is team manager/director - priority update allowed")
-        
-        # Allow if user created the task
-        elif task.created_by == current_user.id:
-            can_update_priority = True
-            logging.debug("User is task creator - priority update allowed")
-        
-        logging.debug(f"User {current_user.id} can update priority: {can_update_priority}")
-        
-        if not can_update_priority:
-            logging.error(f"Permission denied for user {current_user.id} on task {task_id}")
-            return jsonify({'error': 'Permission denied - only assignees, team managers, or administrators can change priority'}), 403
-        
-        # Update task priority
-        logging.debug(f"Updating task {task_id} priority to {new_priority}")
-        updated_task = data_manager.update_task(task_id, priority=new_priority)
-        
-        if updated_task:
-            logging.debug(f"Task updated successfully: {updated_task.priority}")
-            return jsonify({
-                'success': True,
-                'priority': new_priority,
-                'message': f'Priority updated to {new_priority.upper()}'
-            })
-        else:
-            logging.error("Failed to update task in database")
-            return jsonify({'error': 'Failed to update task'}), 500
-            
-    except Exception as e:
-        logging.error(f"Error updating task priority: {e}")
-        import traceback
-        logging.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @app.context_processor
 def inject_current_user():
@@ -1234,7 +1197,7 @@ def upload_file(task_id):
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     
     # Generate secure filename
-    original_filename = secure_filename(file.filename)
+    original_filename = secure_filename(file.filename) if file.filename else "unknown"
     file_extension = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
     unique_filename = f"{uuid.uuid4().hex}.{file_extension}" if file_extension else uuid.uuid4().hex
     

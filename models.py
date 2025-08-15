@@ -114,7 +114,10 @@ class Task(db.Model):
     
     def get_total_time_logged(self):
         """Calculate total time logged from time entries"""
-        return sum(log.duration_hours for log in self.time_logs if log.duration_hours) if hasattr(self, 'time_logs') else 0.0
+        # Import here to avoid circular imports
+        from models import TimeLog
+        time_logs = TimeLog.query.filter_by(task_id=self.id).all()
+        return sum(log.duration_hours for log in time_logs if log.duration_hours) or 0.0
     
     def get_time_variance(self):
         """Calculate variance between estimated and actual time"""
@@ -147,6 +150,14 @@ class Task(db.Model):
 class TaskAttachment(db.Model):
     __tablename__ = 'task_attachments'
     
+    def __init__(self, task_id=None, filename=None, original_filename=None, file_size=None, file_type=None, uploaded_by=None):
+        self.task_id = task_id
+        self.filename = filename
+        self.original_filename = original_filename
+        self.file_size = file_size
+        self.file_type = file_type
+        self.uploaded_by = uploaded_by
+    
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
@@ -177,11 +188,15 @@ class TaskAttachment(db.Model):
     
     def get_human_readable_size(self):
         """Convert file size to human readable format"""
+        if self.file_size is None:
+            return "0 B"
+        
+        size = float(self.file_size)
         for unit in ['B', 'KB', 'MB', 'GB']:
-            if self.file_size < 1024.0:
-                return f"{self.file_size:.1f} {unit}"
-            self.file_size /= 1024.0
-        return f"{self.file_size:.1f} TB"
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
 
 
 class TimeLog(db.Model):
