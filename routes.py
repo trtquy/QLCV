@@ -77,6 +77,60 @@ def logout():
     flash('You have been logged out', 'info')
     return redirect(url_for('login'))
 
+@app.route('/profile')
+def profile():
+    """User profile page"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html', current_user=current_user)
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    """Update user profile"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    display_name = request.form.get('display_name', '').strip()
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+    
+    # Update display name if provided
+    if display_name:
+        data_manager.update_user(current_user.id, display_name=display_name)
+        flash('Display name updated successfully', 'success')
+    
+    # Update password if provided
+    if current_password and new_password and confirm_password:
+        # Verify current password
+        if not current_user.check_password(current_password):
+            flash('Current password is incorrect', 'error')
+            return redirect(url_for('profile'))
+        
+        # Check if new passwords match
+        if new_password != confirm_password:
+            flash('New passwords do not match', 'error')
+            return redirect(url_for('profile'))
+        
+        # Check password strength
+        if len(new_password) < 6:
+            flash('Password must be at least 6 characters long', 'error')
+            return redirect(url_for('profile'))
+        
+        # Update password
+        current_user.set_password(new_password)
+        db.session.commit()
+        flash('Password updated successfully', 'success')
+    elif current_password or new_password or confirm_password:
+        # Partial password fields provided
+        flash('All password fields are required to change password', 'error')
+        return redirect(url_for('profile'))
+    
+    return redirect(url_for('profile'))
+
 @app.route('/create_task', methods=['POST'])
 def create_task():
     """Create a new task - Only managers can create tasks"""

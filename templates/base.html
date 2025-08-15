@@ -77,12 +77,21 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i data-feather="user" class="me-1"></i>
-                            {{ current_user.username }}
+                            {{ current_user.display_name or current_user.username }}
                             {% if current_user.role == 'manager' %}
                                 <span class="badge bg-warning ms-1">Manager</span>
+                            {% elif current_user.role == 'director' %}
+                                <span class="badge bg-info ms-1">Director</span>
+                            {% elif current_user.is_administrator %}
+                                <span class="badge bg-danger ms-1">Admin</span>
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i data-feather="settings" class="me-2"></i>
+                                Profile Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('logout') }}">
                                 <i data-feather="log-out" class="me-2"></i>
                                 Logout

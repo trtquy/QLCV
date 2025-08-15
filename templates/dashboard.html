@@ -163,10 +163,10 @@
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-3">
                                                 <div class="user-avatar me-3">
-                                                    {{ stats.user.username[0].upper() }}
+                                                    {{ (stats.user.display_name or stats.user.username)[0].upper() }}
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <h6 class="mb-1">{{ stats.user.username }}</h6>
+                                                    <h6 class="mb-1">{{ stats.user.display_name or stats.user.username }}</h6>
                                                     <div class="d-flex align-items-center">
                                                         <small class="text-muted me-2">{{ stats.user.role.title() }}</small>
                                                         {% if stats.user.role == 'manager' %}
