@@ -115,7 +115,7 @@ class DataManager:
         if task:
             for key, value in kwargs.items():
                 if hasattr(task, key):
-                    if key in ['assignee_id', 'supervisor_id'] and value:
+                    if key == 'assignee_id' and value:
                         setattr(task, key, int(value))
                     else:
                         setattr(task, key, value)

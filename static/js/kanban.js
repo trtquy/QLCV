@@ -433,6 +433,8 @@ function filterMyTasks(filterValue) {
             const supervisorId = card.dataset.supervisorId;
             const taskStatus = card.closest('.task-container').id; // Get column ID to determine status
             
+            console.log(`Task ${card.dataset.taskId}: assignee=${assigneeId}, supervisor=${supervisorId}, status=${taskStatus}, currentUser=${currentUserId}, role=${currentUserRole}`);
+            
             let showTask = false;
             
             // Always show tasks assigned to current user
@@ -454,6 +456,7 @@ function filterMyTasks(filterValue) {
             if ((currentUserRole === 'manager' || currentUserRole === 'director') && 
                 taskStatus === 'in-review-column' && 
                 supervisorId && supervisorId === currentUserId) {
+                console.log(`Supervisor match found - Task: ${card.dataset.taskId}, Supervisor: ${supervisorId}, Current User: ${currentUserId}`);
                 showTask = true;
             }
             
