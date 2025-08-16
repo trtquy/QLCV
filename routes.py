@@ -365,8 +365,8 @@ def send_task_for_review(task_id):
         flash('You do not have permission to modify this task', 'error')
         return redirect(url_for('index'))
     
-    # Only allow if task is in progress and user is analyst assigned to task
-    if task.status == 'in_progress' and current_user.role == 'analyst' and task.assignee_id == current_user.id:
+    # Allow if task is in progress and user is assigned to task (any role)
+    if task.status == 'in_progress' and task.assignee_id == current_user.id:
         data_manager.update_task(task_id, status='in_review')
         flash('Task sent for review successfully!', 'success')
     else:
