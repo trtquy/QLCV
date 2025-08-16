@@ -367,7 +367,21 @@ def send_task_for_review(task_id):
     
     # Allow if task is in progress and user is assigned to task (any role)
     if task.status == 'in_progress' and task.assignee_id == current_user.id:
-        data_manager.update_task(task_id, status='in_review')
+        # Find a supervisor - look for managers/directors in the same team
+        supervisor = None
+        if task.team_id:
+            from models import User
+            potential_supervisors = User.query.filter(
+                User.team_id == task.team_id,
+                User.role.in_(['manager', 'director']),
+                User.is_active == True,
+                User.id != current_user.id  # Don't assign current user as supervisor
+            ).first()
+            supervisor = potential_supervisors
+        
+        # Update task status and assign supervisor if found
+        supervisor_id = str(supervisor.id) if supervisor else None
+        data_manager.update_task(task_id, status='in_review', supervisor_id=supervisor_id)
         flash('Task sent for review successfully!', 'success')
     else:
         flash('Task cannot be sent for review at this time', 'error')
