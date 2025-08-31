@@ -1198,6 +1198,7 @@ def update_task_detail(task_id):
     # Handle assignee change
     new_assignee_id = int(assignee_id) if assignee_id else None
     if new_assignee_id != task.assignee_id:
+        from models import User
         old_assignee_user = User.query.get(task.assignee_id) if task.assignee_id else None
         old_assignee = old_assignee_user.display_name or old_assignee_user.username if old_assignee_user else 'Unassigned'
         new_assignee_user = data_manager.get_user(assignee_id) if assignee_id else None
@@ -1209,6 +1210,7 @@ def update_task_detail(task_id):
     if current_user.role in ['manager', 'director'] or current_user.is_administrator:
         new_supervisor_id = int(supervisor_id) if supervisor_id else None
         if new_supervisor_id != task.supervisor_id:
+            from models import User
             old_supervisor_user = User.query.get(task.supervisor_id) if task.supervisor_id else None
             old_supervisor = old_supervisor_user.display_name or old_supervisor_user.username if old_supervisor_user else 'No supervisor'
             new_supervisor_user = data_manager.get_user(supervisor_id) if supervisor_id else None
