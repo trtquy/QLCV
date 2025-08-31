@@ -1076,6 +1076,59 @@ def update_task_priority(task_id):
         return jsonify({'error': 'Failed to update priority'}), 500
 
 # Template context processors
+@app.route('/task/<int:task_id>/detail')
+def task_detail(task_id):
+    """Display detailed task view with comments and history"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(str(task_id))
+    if not task:
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check if user can view this task (same team or admin)
+    can_view = (current_user.is_administrator or 
+                task.team_id == current_user.team_id or
+                task.assignee_id == current_user.id or
+                task.created_by == current_user.id)
+    
+    if not can_view:
+        flash('You do not have permission to view this task', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('task_detail.html', 
+                         task=task, 
+                         current_user=current_user)
+
+@app.route('/task/<int:task_id>/comment', methods=['POST'])
+def add_task_comment(task_id):
+    """Add a comment to a task"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(str(task_id))
+    if not task:
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    content = request.form.get('content', '').strip()
+    if not content:
+        flash('Comment cannot be empty', 'error')
+        return redirect(url_for('task_detail', task_id=task_id))
+    
+    # Add comment via data manager
+    comment = data_manager.add_task_comment(str(task_id), str(current_user.id), content)
+    
+    if comment:
+        flash('Comment added successfully', 'success')
+    else:
+        flash('Failed to add comment', 'error')
+    
+    return redirect(url_for('task_detail', task_id=task_id))
+
 @app.route('/user/<int:user_id>/update', methods=['POST'])
 def update_user_inline(user_id):
     """Update user details via inline editing"""

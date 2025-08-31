@@ -243,3 +243,76 @@ class TimeLog(db.Model):
             'description': self.description,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class TaskComment(db.Model):
+    __tablename__ = 'task_comments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    
+    # Relationships
+    task = db.relationship('Task', backref=db.backref('comments', order_by='TaskComment.created_at'))
+    user = db.relationship('User', backref='task_comments')
+    
+    def __repr__(self):
+        return f'<TaskComment {self.id}: Task {self.task_id}>'
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'task_id': str(self.task_id),
+            'user_id': str(self.user_id),
+            'content': self.content,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'user': {
+                'username': self.user.username,
+                'display_name': self.user.display_name or self.user.username
+            } if self.user else None
+        }
+
+class TaskHistory(db.Model):
+    __tablename__ = 'task_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    action = db.Column(db.String(100), nullable=False)  # 'created', 'updated', 'status_changed', etc.
+    field_name = db.Column(db.String(50))  # which field was changed
+    old_value = db.Column(db.Text)  # previous value
+    new_value = db.Column(db.Text)  # new value
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+    # Relationships
+    task = db.relationship('Task', backref=db.backref('history', order_by='TaskHistory.created_at.desc()'))
+    user = db.relationship('User', backref='task_history')
+    
+    # Indexes
+    __table_args__ = (
+        db.Index('idx_task_history_task', 'task_id'),
+        db.Index('idx_task_history_user', 'user_id'),
+        db.Index('idx_task_history_date', 'created_at'),
+    )
+    
+    def __repr__(self):
+        return f'<TaskHistory {self.id}: {self.action} on Task {self.task_id}>'
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'task_id': str(self.task_id),
+            'user_id': str(self.user_id),
+            'action': self.action,
+            'field_name': self.field_name,
+            'old_value': self.old_value,
+            'new_value': self.new_value,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'user': {
+                'username': self.user.username,
+                'display_name': self.user.display_name or self.user.username
+            } if self.user else None
+        }

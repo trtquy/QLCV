@@ -427,6 +427,43 @@ class DataManager:
             'names': list(team_hours.keys()),
             'hours': list(team_hours.values())
         }
+    
+    def add_task_comment(self, task_id: str, user_id: str, content: str):
+        """Add a comment to a task"""
+        try:
+            from models import TaskComment
+            comment = TaskComment(
+                task_id=int(task_id),
+                user_id=int(user_id),
+                content=content
+            )
+            db.session.add(comment)
+            db.session.commit()
+            return comment
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding comment: {e}")
+            return None
+    
+    def add_task_history(self, task_id: str, user_id: str, action: str, field_name: str = None, old_value: str = None, new_value: str = None):
+        """Add a history entry for a task"""
+        try:
+            from models import TaskHistory
+            history = TaskHistory(
+                task_id=int(task_id),
+                user_id=int(user_id),
+                action=action,
+                field_name=field_name,
+                old_value=old_value,
+                new_value=new_value
+            )
+            db.session.add(history)
+            db.session.commit()
+            return history
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding task history: {e}")
+            return None
 
 # Global instance
 data_manager = DataManager()

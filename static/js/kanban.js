@@ -426,29 +426,12 @@ function filterMyTasks(filterValue) {
     const currentUserId = window.currentUserId; // This will be set from the template
     const currentUserRole = window.currentUserRole; // Role information from template
     
-    console.log(`=== My Tasks Filter Debug ===`);
-    console.log(`Current User ID: "${currentUserId}" (type: ${typeof currentUserId})`);
-    console.log(`Current User Role: "${currentUserRole}"`);
-    console.log(`Total task cards found: ${taskCards.length}`);
-    
     taskCards.forEach(card => {
         if (filterValue === 'my-tasks') {
             const assigneeId = card.dataset.assigneeId;
             const createdBy = card.dataset.createdBy;
             const supervisorId = card.dataset.supervisorId;
             const taskStatus = card.closest('.task-container').id; // Get column ID to determine status
-            
-            // Debug specific task data
-            if (taskStatus === 'in-review-column') {
-                console.log(`In Review Task ${card.dataset.taskId}:`);
-                console.log(`  - Assignee ID: "${assigneeId}" (type: ${typeof assigneeId})`);
-                console.log(`  - Supervisor ID: "${supervisorId}" (type: ${typeof supervisorId})`);
-                console.log(`  - Created By: "${createdBy}" (type: ${typeof createdBy})`);
-                console.log(`  - Task Status: "${taskStatus}"`);
-                console.log(`  - Is Manager/Director: ${currentUserRole === 'manager' || currentUserRole === 'director'}`);
-                console.log(`  - Supervisor match: ${supervisorId === currentUserId}`);
-                console.log(`  - Supervisor match (==): ${supervisorId == currentUserId}`);
-            }
             
             let showTask = false;
             

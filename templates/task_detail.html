@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} - Task Details{% endblock %}
+
+{% block extra_css %}
+<style>
+.task-detail-container {
+    min-height: calc(100vh - 120px);
+    background: #f8f9fa;
+}
+
+.task-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.task-sidebar {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.task-header {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.task-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-todo { background: #e9ecef; color: #495057; }
+.status-in_progress { background: #fff3cd; color: #856404; }
+.status-in_review { background: #d1ecf1; color: #0c5460; }
+.status-completed { background: #d4edda; color: #155724; }
+
+.priority-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.priority-low { background: #2196f3; }
+.priority-medium { background: #4caf50; }
+.priority-high { background: #ff9800; }
+.priority-urgent { background: #f44336; }
+
+.comments-section {
+    margin-top: 3rem;
+}
+
+.comment-item {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+}
+
+.comment-header {
+    display: flex;
+    justify-content-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #495057;
+}
+
+.comment-date {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.comment-content {
+    color: #495057;
+    line-height: 1.5;
+}
+
+.history-section {
+    margin-top: 2rem;
+}
+
+.history-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.history-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.history-created { background: #e3f2fd; color: #1976d2; }
+.history-updated { background: #f3e5f5; color: #7b1fa2; }
+.history-status_changed { background: #e8f5e8; color: #388e3c; }
+.history-assigned { background: #fff3e0; color: #f57c00; }
+
+.history-content {
+    flex: 1;
+}
+
+.history-action {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.history-details {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.comment-form {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    color: #6c757d;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+}
+
+.back-button:hover {
+    color: #495057;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.sidebar-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.detail-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #495057;
+    font-size: 0.9rem;
+    text-align: right;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid task-detail-container">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="task-content">
+                <a href="{{ url_for('index') }}" class="back-button">
+                    <i data-feather="arrow-left" class="me-2"></i>
+                    Back to Kanban Board
+                </a>
+                
+                <div class="task-header">
+                    <h1 class="task-title">{{ task.title }}</h1>
+                    <div class="task-meta">
+                        <span class="status-badge status-{{ task.status }}">
+                            {{ task.status.replace('_', ' ').title() }}
+                        </span>
+                        <span>
+                            <span class="priority-indicator priority-{{ task.priority }}"></span>
+                            {{ task.priority.title() }} Priority
+                        </span>
+                        <span>Task #{{ task.id }}</span>
+                        <span>Created {{ task.created_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                </div>
+                
+                <div class="task-description">
+                    <h3>Description</h3>
+                    {% if task.description %}
+                        <div class="description-content">
+                            {{ task.description|replace('\n', '<br>')|safe }}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No description provided.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Comments Section -->
+                <div class="comments-section">
+                    <h3>Comments</h3>
+                    
+                    <!-- Add Comment Form -->
+                    {% if current_user %}
+                    <div class="comment-form">
+                        <form method="POST" action="{{ url_for('add_task_comment', task_id=task.id) }}">
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Add a comment</label>
+                                <textarea class="form-control" id="comment" name="content" rows="4" 
+                                         placeholder="Share updates, ask questions, or provide feedback..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="message-circle" class="me-1"></i>
+                                Post Comment
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Comments List -->
+                    <div class="comments-list">
+                        {% for comment in task.comments %}
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-author">
+                                    {{ comment.user.display_name or comment.user.username }}
+                                </span>
+                                <span class="comment-date">
+                                    {{ comment.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                </span>
+                            </div>
+                            <div class="comment-content">
+                                {{ comment.content|replace('\n', '<br>')|safe }}
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No comments yet. Be the first to comment!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="task-sidebar">
+                <!-- Task Details -->
+                <div class="sidebar-section">
+                    <h4 class="sidebar-title">Task Details</h4>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">
+                            <span class="status-badge status-{{ task.status }}">
+                                {{ task.status.replace('_', ' ').title() }}
+                            </span>
+                        </span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Priority</span>
+                        <span class="detail-value">
+                            <span class="priority-indicator priority-{{ task.priority }}"></span>
+                            {{ task.priority.title() }}
+                        </span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Complexity</span>
+                        <span class="detail-value">{{ task.complexity.replace('_', ' ').title() }}</span>
+                    </div>
+                    
+                    {% if task.assignee %}
+                    <div class="detail-item">
+                        <span class="detail-label">Assignee</span>
+                        <span class="detail-value">{{ task.assignee.display_name or task.assignee.username }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if task.supervisor %}
+                    <div class="detail-item">
+                        <span class="detail-label">Supervisor</span>
+                        <span class="detail-value">{{ task.supervisor.display_name or task.supervisor.username }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if task.team %}
+                    <div class="detail-item">
+                        <span class="detail-label">Team</span>
+                        <span class="detail-value">{{ task.team.name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Time Tracking -->
+                <div class="sidebar-section">
+                    <h4 class="sidebar-title">Time Tracking</h4>
+                    
+                    {% if task.estimated_hours %}
+                    <div class="detail-item">
+                        <span class="detail-label">Estimated</span>
+                        <span class="detail-value">{{ "%.1f"|format(task.estimated_hours) }}h</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Time Logged</span>
+                        <span class="detail-value">{{ "%.1f"|format(task.get_total_time_logged()) }}h</span>
+                    </div>
+                    
+                    {% if task.started_at %}
+                    <div class="detail-item">
+                        <span class="detail-label">Started</span>
+                        <span class="detail-value">{{ task.started_at.strftime('%m/%d/%Y') }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if task.due_date %}
+                    <div class="detail-item">
+                        <span class="detail-label">Due Date</span>
+                        <span class="detail-value">{{ task.due_date.strftime('%m/%d/%Y') }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if task.completed_at %}
+                    <div class="detail-item">
+                        <span class="detail-label">Completed</span>
+                        <span class="detail-value">{{ task.completed_at.strftime('%m/%d/%Y') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Task History -->
+                <div class="sidebar-section">
+                    <h4 class="sidebar-title">Recent Activity</h4>
+                    
+                    <div class="history-section">
+                        {% for entry in task.history[:10] %}
+                        <div class="history-item">
+                            <div class="history-icon history-{{ entry.action }}">
+                                {% if entry.action == 'created' %}
+                                    <i data-feather="plus"></i>
+                                {% elif entry.action == 'status_changed' %}
+                                    <i data-feather="arrow-right"></i>
+                                {% elif entry.action == 'assigned' %}
+                                    <i data-feather="user"></i>
+                                {% else %}
+                                    <i data-feather="edit"></i>
+                                {% endif %}
+                            </div>
+                            <div class="history-content">
+                                <div class="history-action">
+                                    {% if entry.action == 'created' %}
+                                        Task created
+                                    {% elif entry.action == 'status_changed' %}
+                                        Status changed
+                                    {% elif entry.action == 'assigned' %}
+                                        Task assigned
+                                    {% elif entry.action == 'updated' %}
+                                        {{ entry.field_name|title }} updated
+                                    {% else %}
+                                        {{ entry.action|title }}
+                                    {% endif %}
+                                </div>
+                                <div class="history-details">
+                                    {% if entry.action == 'status_changed' %}
+                                        from {{ entry.old_value }} to {{ entry.new_value }}
+                                    {% elif entry.old_value and entry.new_value %}
+                                        from "{{ entry.old_value }}" to "{{ entry.new_value }}"
+                                    {% endif %}
+                                    <br>
+                                    <small>{{ entry.created_at.strftime('%m/%d %I:%M %p') }} by {{ entry.user.display_name or entry.user.username }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No activity recorded.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Feather icons
+if (typeof feather !== 'undefined') {
+    feather.replace();
+}
+
+// Auto-expand textarea
+document.getElementById('comment').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+</script>
+{% endblock %}
