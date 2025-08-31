@@ -225,6 +225,16 @@ class DataManager:
         """Get users by team"""
         return User.query.filter_by(team_id=int(team_id)).all()
     
+    def get_team_users(self, team_id: str):
+        """Get all users in a team"""
+        try:
+            team_id_int = int(team_id) if team_id else None
+            if team_id_int:
+                return User.query.filter_by(team_id=team_id_int, is_active=True).order_by(User.display_name, User.username).all()
+            return []
+        except (ValueError, TypeError):
+            return []
+    
     # Time tracking methods
     def start_time_tracking(self, task_id: str, user_id: str, description: str = None) -> TimeLog:
         """Start time tracking for a task"""

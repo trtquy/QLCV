@@ -209,6 +209,24 @@
     font-size: 0.9rem;
     text-align: right;
 }
+
+.detail-edit {
+    flex: 1;
+    text-align: right;
+}
+
+.detail-edit .form-select {
+    max-width: 200px;
+    margin-left: auto;
+}
+
+.edit-mode .detail-display {
+    display: none !important;
+}
+
+.edit-mode .detail-edit {
+    display: block !important;
+}
 </style>
 {% endblock %}
 
@@ -299,50 +317,128 @@
             <div class="task-sidebar">
                 <!-- Task Details -->
                 <div class="sidebar-section">
-                    <h4 class="sidebar-title">Task Details</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="sidebar-title mb-0">Task Details</h4>
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleEditMode()" id="editToggleBtn">
+                            <i data-feather="edit-2"></i>
+                            Edit
+                        </button>
+                        {% endif %}
+                    </div>
                     
-                    <div class="detail-item">
-                        <span class="detail-label">Status</span>
-                        <span class="detail-value">
-                            <span class="status-badge status-{{ task.status }}">
-                                {{ task.status.replace('_', ' ').title() }}
+                    <form id="taskEditForm" method="POST" action="{{ url_for('update_task_detail', task_id=task.id) }}">
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value detail-display" id="status-display">
+                                <span class="status-badge status-{{ task.status }}">
+                                    {{ task.status.replace('_', ' ').title() }}
+                                </span>
                             </span>
-                        </span>
-                    </div>
-                    
-                    <div class="detail-item">
-                        <span class="detail-label">Priority</span>
-                        <span class="detail-value">
-                            <span class="priority-indicator priority-{{ task.priority }}"></span>
-                            {{ task.priority.title() }}
-                        </span>
-                    </div>
-                    
-                    <div class="detail-item">
-                        <span class="detail-label">Complexity</span>
-                        <span class="detail-value">{{ task.complexity.replace('_', ' ').title() }}</span>
-                    </div>
-                    
-                    {% if task.assignee %}
-                    <div class="detail-item">
-                        <span class="detail-label">Assignee</span>
-                        <span class="detail-value">{{ task.assignee.display_name or task.assignee.username }}</span>
-                    </div>
-                    {% endif %}
-                    
-                    {% if task.supervisor %}
-                    <div class="detail-item">
-                        <span class="detail-label">Supervisor</span>
-                        <span class="detail-value">{{ task.supervisor.display_name or task.supervisor.username }}</span>
-                    </div>
-                    {% endif %}
-                    
-                    {% if task.team %}
-                    <div class="detail-item">
-                        <span class="detail-label">Team</span>
-                        <span class="detail-value">{{ task.team.name }}</span>
-                    </div>
-                    {% endif %}
+                            <div class="detail-edit" id="status-edit" style="display: none;">
+                                <select name="status" class="form-select form-select-sm">
+                                    <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
+                                    <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="in_review" {% if task.status == 'in_review' %}selected{% endif %}>In Review</option>
+                                    <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Priority</span>
+                            <span class="detail-value detail-display" id="priority-display">
+                                <span class="priority-indicator priority-{{ task.priority }}"></span>
+                                {{ task.priority.title() }}
+                            </span>
+                            <div class="detail-edit" id="priority-edit" style="display: none;">
+                                <select name="priority" class="form-select form-select-sm">
+                                    <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
+                                    <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
+                                    <option value="urgent" {% if task.priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Complexity</span>
+                            <span class="detail-value detail-display" id="complexity-display">{{ task.complexity.replace('_', ' ').title() }}</span>
+                            <div class="detail-edit" id="complexity-edit" style="display: none;">
+                                <select name="complexity" class="form-select form-select-sm">
+                                    <option value="very_simple" {% if task.complexity == 'very_simple' %}selected{% endif %}>Very Simple</option>
+                                    <option value="simple" {% if task.complexity == 'simple' %}selected{% endif %}>Simple</option>
+                                    <option value="medium" {% if task.complexity == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="complex" {% if task.complexity == 'complex' %}selected{% endif %}>Complex</option>
+                                    <option value="very_complex" {% if task.complexity == 'very_complex' %}selected{% endif %}>Very Complex</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Assignee</span>
+                            <span class="detail-value detail-display" id="assignee-display">
+                                {% if task.assignee %}
+                                    {{ task.assignee.display_name or task.assignee.username }}
+                                {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </span>
+                            <div class="detail-edit" id="assignee-edit" style="display: none;">
+                                <select name="assignee_id" class="form-select form-select-sm">
+                                    <option value="">Unassigned</option>
+                                    {% for user in team_users %}
+                                    <option value="{{ user.id }}" {% if task.assignee_id == user.id %}selected{% endif %}>
+                                        {{ user.display_name or user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                        <div class="detail-item">
+                            <span class="detail-label">Supervisor</span>
+                            <span class="detail-value detail-display" id="supervisor-display">
+                                {% if task.supervisor %}
+                                    {{ task.supervisor.display_name or task.supervisor.username }}
+                                {% else %}
+                                    <span class="text-muted">No supervisor</span>
+                                {% endif %}
+                            </span>
+                            <div class="detail-edit" id="supervisor-edit" style="display: none;">
+                                <select name="supervisor_id" class="form-select form-select-sm">
+                                    <option value="">No supervisor</option>
+                                    {% for user in supervisors %}
+                                    <option value="{{ user.id }}" {% if task.supervisor_id == user.id %}selected{% endif %}>
+                                        {{ user.display_name or user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.team %}
+                        <div class="detail-item">
+                            <span class="detail-label">Team</span>
+                            <span class="detail-value">{{ task.team.name }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="detail-edit" id="edit-actions" style="display: none;">
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i data-feather="check"></i>
+                                    Save
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit()">
+                                    <i data-feather="x"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 
                 <!-- Time Tracking -->
@@ -445,9 +541,90 @@ if (typeof feather !== 'undefined') {
 }
 
 // Auto-expand textarea
-document.getElementById('comment').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
+const commentTextarea = document.getElementById('comment');
+if (commentTextarea) {
+    commentTextarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+}
+
+// Task editing functionality
+function toggleEditMode() {
+    const sidebar = document.querySelector('.task-sidebar');
+    const editBtn = document.getElementById('editToggleBtn');
+    
+    if (sidebar.classList.contains('edit-mode')) {
+        cancelEdit();
+    } else {
+        sidebar.classList.add('edit-mode');
+        editBtn.innerHTML = '<i data-feather="x"></i> Cancel';
+        feather.replace();
+    }
+}
+
+function cancelEdit() {
+    const sidebar = document.querySelector('.task-sidebar');
+    const editBtn = document.getElementById('editToggleBtn');
+    const form = document.getElementById('taskEditForm');
+    
+    sidebar.classList.remove('edit-mode');
+    editBtn.innerHTML = '<i data-feather="edit-2"></i> Edit';
+    form.reset();
+    feather.replace();
+}
+
+// Handle form submission
+document.getElementById('taskEditForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showMessage('Task updated successfully', 'success');
+            
+            // Refresh the page to show updated data
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showMessage(data.error || 'Failed to update task', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('An error occurred while updating the task', 'error');
+    });
 });
+
+function showMessage(message, type) {
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
 </script>
 {% endblock %}

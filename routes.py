@@ -1098,9 +1098,20 @@ def task_detail(task_id):
         flash('You do not have permission to view this task', 'error')
         return redirect(url_for('index'))
     
+    # Get team users for assignee dropdown
+    team_users = []
+    supervisors = []
+    
+    if task.team_id:
+        team_users = data_manager.get_team_users(str(task.team_id))
+        # Get potential supervisors (managers and directors from the team)
+        supervisors = [u for u in team_users if u.role in ['manager', 'director']]
+    
     return render_template('task_detail.html', 
                          task=task, 
-                         current_user=current_user)
+                         current_user=current_user,
+                         team_users=team_users,
+                         supervisors=supervisors)
 
 @app.route('/task/<int:task_id>/comment', methods=['POST'])
 def add_task_comment(task_id):
@@ -1128,6 +1139,114 @@ def add_task_comment(task_id):
         flash('Failed to add comment', 'error')
     
     return redirect(url_for('task_detail', task_id=task_id))
+
+@app.route('/task/<int:task_id>/update', methods=['POST'])
+def update_task_detail(task_id):
+    """Update task details from the detail page"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Unauthorized'}), 401
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(str(task_id))
+    if not task:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Task not found'}), 404
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check permissions
+    can_edit = (current_user.is_administrator or 
+                task.assignee_id == current_user.id or 
+                task.created_by == current_user.id or
+                (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id))
+    
+    if not can_edit:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Permission denied'}), 403
+        flash('You do not have permission to edit this task', 'error')
+        return redirect(url_for('task_detail', task_id=task_id))
+    
+    # Get form data
+    status = request.form.get('status')
+    priority = request.form.get('priority')
+    complexity = request.form.get('complexity')
+    assignee_id = request.form.get('assignee_id')
+    supervisor_id = request.form.get('supervisor_id')
+    
+    # Track changes for history
+    changes = []
+    
+    # Update fields and track changes
+    if status and status != task.status:
+        changes.append(('status', task.status, status))
+        task.status = status
+        if status == 'completed':
+            task.completed_at = datetime.utcnow()
+        elif status == 'in_progress' and not task.started_at:
+            task.started_at = datetime.utcnow()
+    
+    if priority and priority != task.priority:
+        changes.append(('priority', task.priority, priority))
+        task.priority = priority
+    
+    if complexity and complexity != task.complexity:
+        changes.append(('complexity', task.complexity, complexity))
+        task.complexity = complexity
+    
+    # Handle assignee change
+    new_assignee_id = int(assignee_id) if assignee_id else None
+    if new_assignee_id != task.assignee_id:
+        old_assignee_user = User.query.get(task.assignee_id) if task.assignee_id else None
+        old_assignee = old_assignee_user.display_name or old_assignee_user.username if old_assignee_user else 'Unassigned'
+        new_assignee_user = data_manager.get_user(assignee_id) if assignee_id else None
+        new_assignee = new_assignee_user.display_name or new_assignee_user.username if new_assignee_user else 'Unassigned'
+        changes.append(('assignee', old_assignee, new_assignee))
+        task.assignee_id = new_assignee_id
+    
+    # Handle supervisor change (only for managers/directors/admins)
+    if current_user.role in ['manager', 'director'] or current_user.is_administrator:
+        new_supervisor_id = int(supervisor_id) if supervisor_id else None
+        if new_supervisor_id != task.supervisor_id:
+            old_supervisor_user = User.query.get(task.supervisor_id) if task.supervisor_id else None
+            old_supervisor = old_supervisor_user.display_name or old_supervisor_user.username if old_supervisor_user else 'No supervisor'
+            new_supervisor_user = data_manager.get_user(supervisor_id) if supervisor_id else None
+            new_supervisor = new_supervisor_user.display_name or new_supervisor_user.username if new_supervisor_user else 'No supervisor'
+            changes.append(('supervisor', old_supervisor, new_supervisor))
+            task.supervisor_id = new_supervisor_id
+    
+    try:
+        # Update timestamp
+        task.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        # Add history entries for each change
+        for field_name, old_value, new_value in changes:
+            data_manager.add_task_history(
+                str(task_id), 
+                str(current_user.id), 
+                'updated', 
+                field_name=field_name,
+                old_value=old_value, 
+                new_value=new_value
+            )
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'Task updated successfully'})
+        
+        flash('Task updated successfully', 'success')
+        return redirect(url_for('task_detail', task_id=task_id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating task: {e}")
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Failed to update task'}), 500
+        
+        flash('Failed to update task', 'error')
+        return redirect(url_for('task_detail', task_id=task_id))
 
 @app.route('/user/<int:user_id>/update', methods=['POST'])
 def update_user_inline(user_id):
