@@ -1042,13 +1042,19 @@ def update_task_priority(task_id):
     if not current_user:
         return jsonify({'error': 'Not logged in'}), 401
     
-    # Check if user can edit priority (admin or assigned user)
+    # Check if user can edit priority 
     task = data_manager.get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
     
+    # Allow editing if:
+    # - User is administrator
+    # - User is assigned to the task  
+    # - User is manager/director and task is in their team
     can_edit = (current_user.is_administrator or 
-                (task.assignee_id and task.assignee_id == current_user.id))
+                (task.assignee_id and task.assignee_id == current_user.id) or
+                (current_user.role in ['manager', 'director'] and 
+                 task.team_id == current_user.team_id))
     
     if not can_edit:
         return jsonify({'error': 'Permission denied'}), 403
