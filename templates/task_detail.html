@@ -462,6 +462,36 @@
         margin-left: 0;
     }
 }
+
+/* Edit Mode Functionality */
+.task-sidebar .detail-edit {
+    display: none !important;
+}
+
+.task-sidebar.edit-mode .detail-display {
+    display: none !important;
+}
+
+.task-sidebar.edit-mode .detail-edit {
+    display: block !important;
+}
+
+.task-sidebar.edit-mode #edit-actions {
+    display: block !important;
+}
+
+/* Enhanced Form Controls */
+.form-select, .form-control {
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
 </style>
 {% endblock %}
 
@@ -828,34 +858,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Task editing functionality
-function toggleEditMode() {
+// Task editing functionality - Make sure it's in global scope
+window.toggleEditMode = function() {
     const sidebar = document.querySelector('.task-sidebar');
     const editBtn = document.getElementById('editToggleBtn');
     
-    if (sidebar.classList.contains('edit-mode')) {
-        cancelEdit();
-    } else {
-        sidebar.classList.add('edit-mode');
-        editBtn.innerHTML = '<i data-feather="x"></i> Cancel';
-        if (typeof feather !== 'undefined') {
-            feather.replace();
+    console.log('Toggle edit mode called', sidebar, editBtn); // Debug log
+    
+    if (sidebar && editBtn) {
+        if (sidebar.classList.contains('edit-mode')) {
+            cancelEdit();
+        } else {
+            sidebar.classList.add('edit-mode');
+            editBtn.innerHTML = '<i data-feather="x"></i> Cancel';
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         }
+    } else {
+        console.error('Sidebar or edit button not found');
     }
 }
 
-function cancelEdit() {
+window.cancelEdit = function() {
     const sidebar = document.querySelector('.task-sidebar');
     const editBtn = document.getElementById('editToggleBtn');
     const form = document.getElementById('taskEditForm');
     
-    sidebar.classList.remove('edit-mode');
-    editBtn.innerHTML = '<i data-feather="edit-2"></i> Edit';
-    if (form) {
-        form.reset();
-    }
-    if (typeof feather !== 'undefined') {
-        feather.replace();
+    if (sidebar && editBtn) {
+        sidebar.classList.remove('edit-mode');
+        editBtn.innerHTML = '<i data-feather="edit-2"></i> Edit';
+        if (form) {
+            form.reset();
+        }
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
     }
 }
 
