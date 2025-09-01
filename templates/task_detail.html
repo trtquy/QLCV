@@ -11,7 +11,7 @@
 /* Base Layout */
 .task-detail-container {
     min-height: calc(100vh - 120px);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     padding: 2rem 0;
     position: relative;
 }
@@ -301,6 +301,161 @@
 
 .edit-mode .detail-edit {
     display: block !important;
+}
+
+/* Real-time Validation Styles */
+.form-field {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.form-field.valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-field.invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.validation-message {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.validation-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.validation-message.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.validation-message.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.validation-message.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
+/* Field Labels with Validation */
+.detail-label {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.detail-item.field-valid .detail-label::after {
+    content: '✓';
+    color: #28a745;
+    font-weight: bold;
+    margin-left: 5px;
+    opacity: 0;
+    animation: checkmark-appear 0.3s ease forwards;
+}
+
+.detail-item.field-invalid .detail-label::after {
+    content: '!';
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 5px;
+    opacity: 0;
+    animation: warning-appear 0.3s ease forwards;
+}
+
+@keyframes checkmark-appear {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes warning-appear {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Enhanced Form Controls */
+.form-select, .form-control {
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Save Button States */
+.btn-save {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-save.saving {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.btn-save.success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-save.error {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+    margin-right: 5px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Form Validation Summary */
+.validation-summary {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #dc3545;
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.validation-summary.show {
+    display: block;
+    animation: slide-down 0.3s ease;
+}
+
+@keyframes slide-down {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 /* History Section */
@@ -593,8 +748,14 @@
                         {% endif %}
                     </div>
                     
+                    <!-- Validation Summary -->
+                    <div id="validationSummary" class="validation-summary">
+                        <h6><i data-feather="alert-triangle" class="me-2"></i>Please correct the following errors:</h6>
+                        <ul id="validationErrors"></ul>
+                    </div>
+
                     <form id="taskEditForm" method="POST" action="{{ url_for('update_task_detail', task_id=task.id) }}">
-                        <div class="detail-item">
+                        <div class="detail-item" data-field="status">
                             <span class="detail-label">Status</span>
                             <span class="detail-value detail-display" id="status-display">
                                 <span class="status-badge status-{{ task.status }}">
@@ -602,46 +763,49 @@
                                 </span>
                             </span>
                             <div class="detail-edit" id="status-edit" style="display: none;">
-                                <select name="status" class="form-select form-select-sm">
+                                <select name="status" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Status">
                                     <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
                                     <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
                                     <option value="in_review" {% if task.status == 'in_review' %}selected{% endif %}>In Review</option>
                                     <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
                                 </select>
+                                <div class="validation-message" id="status-validation"></div>
                             </div>
                         </div>
                         
-                        <div class="detail-item">
+                        <div class="detail-item" data-field="priority">
                             <span class="detail-label">Priority</span>
                             <span class="detail-value detail-display" id="priority-display">
                                 <span class="priority-indicator priority-{{ task.priority }}"></span>
                                 {{ task.priority.title() }}
                             </span>
                             <div class="detail-edit" id="priority-edit" style="display: none;">
-                                <select name="priority" class="form-select form-select-sm">
+                                <select name="priority" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Priority">
                                     <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
                                     <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
                                     <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
                                     <option value="urgent" {% if task.priority == 'urgent' %}selected{% endif %}>Urgent</option>
                                 </select>
+                                <div class="validation-message" id="priority-validation"></div>
                             </div>
                         </div>
                         
-                        <div class="detail-item">
+                        <div class="detail-item" data-field="complexity">
                             <span class="detail-label">Complexity</span>
                             <span class="detail-value detail-display" id="complexity-display">{{ task.complexity.replace('_', ' ').title() }}</span>
                             <div class="detail-edit" id="complexity-edit" style="display: none;">
-                                <select name="complexity" class="form-select form-select-sm">
+                                <select name="complexity" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Complexity">
                                     <option value="very_simple" {% if task.complexity == 'very_simple' %}selected{% endif %}>Very Simple</option>
                                     <option value="simple" {% if task.complexity == 'simple' %}selected{% endif %}>Simple</option>
                                     <option value="medium" {% if task.complexity == 'medium' %}selected{% endif %}>Medium</option>
                                     <option value="complex" {% if task.complexity == 'complex' %}selected{% endif %}>Complex</option>
                                     <option value="very_complex" {% if task.complexity == 'very_complex' %}selected{% endif %}>Very Complex</option>
                                 </select>
+                                <div class="validation-message" id="complexity-validation"></div>
                             </div>
                         </div>
                         
-                        <div class="detail-item">
+                        <div class="detail-item" data-field="assignee">
                             <span class="detail-label">Assignee</span>
                             <span class="detail-value detail-display" id="assignee-display">
                                 {% if task.assignee_id %}
@@ -655,7 +819,7 @@
                                 {% endif %}
                             </span>
                             <div class="detail-edit" id="assignee-edit" style="display: none;">
-                                <select name="assignee_id" class="form-select form-select-sm">
+                                <select name="assignee_id" class="form-select form-select-sm form-field" data-validate="optional" data-field-name="Assignee">
                                     <option value="">Unassigned</option>
                                     {% for user in team_users %}
                                     <option value="{{ user.id }}" {% if task.assignee_id == user.id %}selected{% endif %}>
@@ -663,6 +827,7 @@
                                     </option>
                                     {% endfor %}
                                 </select>
+                                <div class="validation-message" id="assignee-validation"></div>
                             </div>
                         </div>
                         
@@ -702,9 +867,15 @@
                         
                         <div class="detail-edit" id="edit-actions" style="display: none;">
                             <div class="d-flex gap-2 mt-3">
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i data-feather="check"></i>
-                                    Save
+                                <button type="submit" class="btn btn-sm btn-success btn-save" id="saveBtn">
+                                    <span id="saveText">
+                                        <i data-feather="check"></i>
+                                        Save
+                                    </span>
+                                    <span id="savingText" style="display: none;">
+                                        <span class="loading-spinner"></span>
+                                        Saving...
+                                    </span>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit()">
                                     <i data-feather="x"></i>
@@ -809,7 +980,128 @@
 
 {% block extra_scripts %}
 <script>
-// FINAL FIX: Functions explicitly on window object
+// Real-time validation engine
+class TaskFormValidator {
+    constructor() {
+        this.validationRules = {
+            required: (value) => value && value.trim() !== '',
+            optional: () => true // Always valid for optional fields
+        };
+        
+        this.validatedFields = new Set();
+        this.errorMessages = {};
+        this.isFormValid = false;
+    }
+    
+    validateField(field) {
+        const fieldName = field.dataset.fieldName;
+        const validationType = field.dataset.validate;
+        const value = field.value;
+        const validationRule = this.validationRules[validationType];
+        
+        if (!validationRule) return true;
+        
+        const isValid = validationRule(value);
+        const fieldContainer = field.closest('.detail-item');
+        const validationMessage = fieldContainer.querySelector('.validation-message');
+        
+        // Update field styling
+        field.classList.remove('valid', 'invalid');
+        field.classList.add(isValid ? 'valid' : 'invalid');
+        
+        // Update container styling
+        fieldContainer.classList.remove('field-valid', 'field-invalid');
+        fieldContainer.classList.add(isValid ? 'field-valid' : 'field-invalid');
+        
+        // Show validation message
+        if (validationMessage) {
+            validationMessage.classList.remove('show', 'success', 'error');
+            
+            if (isValid) {
+                validationMessage.textContent = validationType === 'required' ? 'Valid selection' : '';
+                validationMessage.classList.add('success', 'show');
+                this.validatedFields.add(fieldName);
+                delete this.errorMessages[fieldName];
+            } else {
+                const errorMsg = validationType === 'required' ? `${fieldName} is required` : 'Invalid value';
+                validationMessage.textContent = errorMsg;
+                validationMessage.classList.add('error', 'show');
+                this.validatedFields.delete(fieldName);
+                this.errorMessages[fieldName] = errorMsg;
+            }
+        }
+        
+        this.updateFormState();
+        return isValid;
+    }
+    
+    updateFormState() {
+        const requiredFields = document.querySelectorAll('[data-validate="required"]');
+        const allRequiredValid = Array.from(requiredFields).every(field => 
+            field.classList.contains('valid')
+        );
+        
+        this.isFormValid = allRequiredValid;
+        this.updateSaveButton();
+        this.updateValidationSummary();
+    }
+    
+    updateSaveButton() {
+        const saveBtn = document.getElementById('saveBtn');
+        if (!saveBtn) return;
+        
+        saveBtn.disabled = !this.isFormValid;
+        if (this.isFormValid) {
+            saveBtn.classList.remove('error');
+            saveBtn.classList.add('success');
+        } else {
+            saveBtn.classList.remove('success');
+            saveBtn.classList.add('error');
+        }
+    }
+    
+    updateValidationSummary() {
+        const summary = document.getElementById('validationSummary');
+        const errorsList = document.getElementById('validationErrors');
+        
+        if (!summary || !errorsList) return;
+        
+        if (Object.keys(this.errorMessages).length > 0) {
+            errorsList.innerHTML = Object.values(this.errorMessages)
+                .map(msg => `<li>${msg}</li>`)
+                .join('');
+            summary.classList.add('show');
+        } else {
+            summary.classList.remove('show');
+        }
+    }
+    
+    reset() {
+        this.validatedFields.clear();
+        this.errorMessages = {};
+        this.isFormValid = false;
+        
+        // Clear all field states
+        document.querySelectorAll('.form-field').forEach(field => {
+            field.classList.remove('valid', 'invalid');
+            const container = field.closest('.detail-item');
+            container.classList.remove('field-valid', 'field-invalid');
+            
+            const message = container.querySelector('.validation-message');
+            if (message) {
+                message.classList.remove('show', 'success', 'error');
+            }
+        });
+        
+        this.updateSaveButton();
+        this.updateValidationSummary();
+    }
+}
+
+// Global validator instance
+let formValidator = new TaskFormValidator();
+
+// Enhanced edit mode functions
 window.toggleEditMode = function() {
     const sidebar = document.querySelector('.task-sidebar');
     const editBtn = document.getElementById('editToggleBtn');
@@ -823,6 +1115,13 @@ window.toggleEditMode = function() {
             if (typeof feather !== 'undefined') {
                 feather.replace();
             }
+            
+            // Initialize validation for all fields
+            setTimeout(() => {
+                document.querySelectorAll('.form-field').forEach(field => {
+                    formValidator.validateField(field);
+                });
+            }, 100);
         }
     }
 };
@@ -838,10 +1137,82 @@ window.cancelEdit = function() {
         if (form) {
             form.reset();
         }
+        formValidator.reset();
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
     }
+};
+
+// Enhanced form submission with loading states
+window.submitTaskForm = function(form) {
+    const saveBtn = document.getElementById('saveBtn');
+    const saveText = document.getElementById('saveText');
+    const savingText = document.getElementById('savingText');
+    
+    // Show loading state
+    saveBtn.classList.add('saving');
+    saveBtn.disabled = true;
+    saveText.style.display = 'none';
+    savingText.style.display = 'inline';
+    
+    const formData = new FormData(form);
+    
+    return fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success state
+            saveBtn.classList.remove('saving');
+            saveBtn.classList.add('success');
+            savingText.style.display = 'none';
+            saveText.innerHTML = '<i data-feather="check-circle"></i> Saved!';
+            saveText.style.display = 'inline';
+            
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+            
+            // Reload after short delay to show success state
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            throw new Error(data.error || 'Failed to update task');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Show error state
+        saveBtn.classList.remove('saving');
+        saveBtn.classList.add('error');
+        savingText.style.display = 'none';
+        saveText.innerHTML = '<i data-feather="alert-circle"></i> Error';
+        saveText.style.display = 'inline';
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Reset button after delay
+        setTimeout(() => {
+            saveBtn.classList.remove('error');
+            saveBtn.disabled = false;
+            saveText.innerHTML = '<i data-feather="check"></i> Save';
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }, 3000);
+        
+        alert('Error: ' + error.message);
+    });
 };
 
 // Initialize when page loads
@@ -850,6 +1221,28 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
+
+    // Set up real-time validation
+    document.querySelectorAll('.form-field').forEach(field => {
+        // Validate on change
+        field.addEventListener('change', function() {
+            formValidator.validateField(this);
+        });
+        
+        // Validate on input for immediate feedback
+        field.addEventListener('input', function() {
+            // Debounce validation for performance
+            clearTimeout(this.validationTimeout);
+            this.validationTimeout = setTimeout(() => {
+                formValidator.validateField(this);
+            }, 300);
+        });
+        
+        // Validate on blur
+        field.addEventListener('blur', function() {
+            formValidator.validateField(this);
+        });
+    });
 
     // Auto-expand textarea
     const commentTextarea = document.getElementById('comment');
@@ -860,36 +1253,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle form submission
+    // Enhanced form submission
     const editForm = document.getElementById('taskEditForm');
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const formData = new FormData(this);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+            // Final validation check
+            let isValid = true;
+            document.querySelectorAll('.form-field').forEach(field => {
+                if (!formValidator.validateField(field) && field.dataset.validate === 'required') {
+                    isValid = false;
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Task updated successfully!');
-                    location.reload();
-                } else {
-                    alert('Error: ' + (data.error || 'Failed to update task'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating the task');
             });
+            
+            if (isValid) {
+                window.submitTaskForm(this);
+            } else {
+                // Shake effect for invalid form
+                this.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    this.style.animation = '';
+                }, 500);
+            }
         });
     }
 });
+
+// Add shake animation CSS
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+`;
+document.head.appendChild(shakeStyle);
 </script>
 {% endblock %}
