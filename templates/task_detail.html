@@ -809,14 +809,14 @@
 
 {% block extra_js %}
 <script>
-// FIXED: Global functions defined at top level
-function toggleEditMode() {
+// FINAL FIX: Functions explicitly on window object
+window.toggleEditMode = function() {
     const sidebar = document.querySelector('.task-sidebar');
     const editBtn = document.getElementById('editToggleBtn');
     
     if (sidebar && editBtn) {
         if (sidebar.classList.contains('edit-mode')) {
-            cancelEdit();
+            window.cancelEdit();
         } else {
             sidebar.classList.add('edit-mode');
             editBtn.innerHTML = '<i data-feather="x"></i> Cancel';
@@ -825,9 +825,9 @@ function toggleEditMode() {
             }
         }
     }
-}
+};
 
-function cancelEdit() {
+window.cancelEdit = function() {
     const sidebar = document.querySelector('.task-sidebar');
     const editBtn = document.getElementById('editToggleBtn');
     const form = document.getElementById('taskEditForm');
@@ -842,7 +842,7 @@ function cancelEdit() {
             feather.replace();
         }
     }
-}
+};
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
