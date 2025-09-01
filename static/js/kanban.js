@@ -343,6 +343,30 @@ function updateColumnCounts() {
     if (inProgressBadge) inProgressBadge.textContent = inProgressCount;
     if (inReviewBadge) inReviewBadge.textContent = inReviewCount;
     if (completedBadge) completedBadge.textContent = completedCount;
+    
+    // Show/hide empty states based on task counts
+    updateEmptyStates(todoCount, inProgressCount, inReviewCount, completedCount);
+}
+
+function updateEmptyStates(todoCount, inProgressCount, inReviewCount, completedCount) {
+    const columns = [
+        { id: 'todo-column', count: todoCount },
+        { id: 'in-progress-column', count: inProgressCount },
+        { id: 'in-review-column', count: inReviewCount },
+        { id: 'completed-column', count: completedCount }
+    ];
+    
+    columns.forEach(column => {
+        const container = document.getElementById(column.id);
+        if (!container) return;
+        
+        const emptyState = container.querySelector('.empty-state');
+        const visibleTasks = container.querySelectorAll('.task-card:not([style*="display: none"])').length;
+        
+        if (emptyState) {
+            emptyState.style.display = visibleTasks === 0 ? 'flex' : 'none';
+        }
+    });
 }
 
 function showNotification(message, type = 'info') {

@@ -1211,6 +1211,74 @@ function filterByTeam() {
         background-color: #FF5630;
     }
     
+    /* Empty State Styling */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: #6c757d;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 249, 250, 0.9));
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        margin: 1rem 0;
+        transition: all 0.3s ease;
+    }
+    
+    .empty-state:hover {
+        border-color: #adb5bd;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 1));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .empty-state-icon {
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+    
+    .empty-state-icon i {
+        width: 3rem;
+        height: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state-text h6 {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .empty-state-text p {
+        color: #6c757d;
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    /* Responsive empty state adjustments */
+    @media (max-width: 768px) {
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+        
+        .empty-state-icon i {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+        
+        .empty-state-text h6 {
+            font-size: 1rem;
+        }
+        
+        .empty-state-text p {
+            font-size: 0.85rem;
+        }
+    }
+
     /* Enhanced priority selector */
     .priority-selector {
         position: relative;
@@ -1420,6 +1488,18 @@ function filterByTeam() {
                             </div>
                         </div>
                     {% endfor %}
+                    
+                    {% if not todo_tasks %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-feather="plus-circle"></i>
+                        </div>
+                        <div class="empty-state-text">
+                            <h6>No tasks to do</h6>
+                            <p>{% if current_user and current_user.role in ['manager', 'director'] or current_user.is_administrator %}Create your first task to get started{% else %}Tasks will appear here when created{% endif %}</p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1513,6 +1593,18 @@ function filterByTeam() {
                             </div>
                         </div>
                     {% endfor %}
+                    
+                    {% if not in_progress_tasks %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-feather="play-circle"></i>
+                        </div>
+                        <div class="empty-state-text">
+                            <h6>No tasks in progress</h6>
+                            <p>Tasks being worked on will appear here</p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1624,6 +1716,18 @@ function filterByTeam() {
                             </div>
                         </div>
                     {% endfor %}
+                    
+                    {% if not in_review_tasks %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-feather="eye"></i>
+                        </div>
+                        <div class="empty-state-text">
+                            <h6>No tasks in review</h6>
+                            <p>Tasks ready for review will appear here</p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1701,6 +1805,18 @@ function filterByTeam() {
                             </div>
                         </div>
                     {% endfor %}
+                    
+                    {% if not completed_tasks %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-feather="check-circle"></i>
+                        </div>
+                        <div class="empty-state-text">
+                            <h6>No completed tasks</h6>
+                            <p>Finished tasks will appear here</p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
