@@ -411,9 +411,13 @@ def approve_task(task_id):
     if not task:
         return jsonify({'error': 'Task not found'}), 404
     
-    # Only the assigned supervisor can approve tasks
-    if not (current_user.is_administrator or task.supervisor_id == current_user.id):
-        return jsonify({'error': 'Only the assigned supervisor can approve tasks'}), 403
+    # Allow administrators, assigned supervisor, or team managers/directors to approve tasks
+    can_approve = (current_user.is_administrator or 
+                   task.supervisor_id == current_user.id or
+                   (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id))
+    
+    if not can_approve:
+        return jsonify({'error': 'You do not have permission to approve this task'}), 403
     
     # Task must be in review status
     if task.status != 'in_review':
@@ -441,9 +445,13 @@ def reject_task(task_id):
     if not task:
         return jsonify({'error': 'Task not found'}), 404
     
-    # Only the assigned supervisor can reject tasks
-    if not (current_user.is_administrator or task.supervisor_id == current_user.id):
-        return jsonify({'error': 'Only the assigned supervisor can reject tasks'}), 403
+    # Allow administrators, assigned supervisor, or team managers/directors to reject tasks
+    can_reject = (current_user.is_administrator or 
+                  task.supervisor_id == current_user.id or
+                  (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id))
+    
+    if not can_reject:
+        return jsonify({'error': 'You do not have permission to reject this task'}), 403
     
     # Task must be in review status
     if task.status != 'in_review':
@@ -1258,19 +1266,20 @@ def update_task_detail(task_id):
         changes.append(('complexity', task.complexity, complexity))
         task.complexity = complexity
     
-    # Handle assignee change
-    new_assignee_id = int(assignee_id) if assignee_id else None
-    if new_assignee_id != task.assignee_id:
-        from models import User
-        old_assignee_user = User.query.get(task.assignee_id) if task.assignee_id else None
-        old_assignee = old_assignee_user.display_name or old_assignee_user.username if old_assignee_user else 'Unassigned'
-        new_assignee_user = data_manager.get_user(assignee_id) if assignee_id else None
-        new_assignee = new_assignee_user.display_name or new_assignee_user.username if new_assignee_user else 'Unassigned'
-        changes.append(('assignee', old_assignee, new_assignee))
-        task.assignee_id = new_assignee_id
+    # Handle assignee change (only if assignee_id field is explicitly provided and not empty)
+    if assignee_id is not None and assignee_id != '':
+        new_assignee_id = int(assignee_id) if assignee_id else None
+        if new_assignee_id != task.assignee_id:
+            from models import User
+            old_assignee_user = User.query.get(task.assignee_id) if task.assignee_id else None
+            old_assignee = old_assignee_user.display_name or old_assignee_user.username if old_assignee_user else 'Unassigned'
+            new_assignee_user = data_manager.get_user(assignee_id) if assignee_id else None
+            new_assignee = new_assignee_user.display_name or new_assignee_user.username if new_assignee_user else 'Unassigned'
+            changes.append(('assignee', old_assignee, new_assignee))
+            task.assignee_id = new_assignee_id
     
-    # Handle supervisor change (only for managers/directors/admins)
-    if current_user.role in ['manager', 'director'] or current_user.is_administrator:
+    # Handle supervisor change (only for managers/directors/admins and if supervisor_id field is explicitly provided)
+    if (current_user.role in ['manager', 'director'] or current_user.is_administrator) and supervisor_id is not None and supervisor_id != '':
         new_supervisor_id = int(supervisor_id) if supervisor_id else None
         if new_supervisor_id != task.supervisor_id:
             from models import User

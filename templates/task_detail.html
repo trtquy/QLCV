@@ -1118,11 +1118,11 @@
                                 </button>
                                 {% elif task.status == 'in_review' %}
                                 {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
-                                <button type="button" class="btn btn-sm btn-success me-2" onclick="updateTaskStatus({{ task.id }}, 'completed')">
+                                <button type="button" class="btn btn-sm btn-success me-2" onclick="approveTask({{ task.id }})">
                                     <i data-feather="check-circle" class="me-1"></i>Approve
                                 </button>
-                                <button type="button" class="btn btn-sm btn-warning me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
-                                    <i data-feather="arrow-left" class="me-1"></i>Send Back
+                                <button type="button" class="btn btn-sm btn-warning me-2" onclick="rejectTask({{ task.id }})">
+                                    <i data-feather="x-circle" class="me-1"></i>Reject
                                 </button>
                                 {% endif %}
                                 {% elif task.status == 'completed' %}
@@ -1985,6 +1985,71 @@ function updateTaskStatus(taskId, newStatus) {
     .catch(error => {
         console.error('Error updating status:', error);
         showNotification('Error updating task status', 'error');
+    });
+}
+
+// Approve task function
+function approveTask(taskId) {
+    if (!confirm('Are you sure you want to approve this task?')) {
+        return;
+    }
+    
+    fetch(`/approve_task/${taskId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Task approved successfully', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Failed to approve task', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error approving task:', error);
+        showNotification('Error approving task', 'error');
+    });
+}
+
+// Reject task function
+function rejectTask(taskId) {
+    const reason = prompt('Please provide a reason for rejection (optional):');
+    if (reason === null) return; // User cancelled
+    
+    if (!confirm('Are you sure you want to reject this task?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('reason', reason || 'No reason provided');
+    
+    fetch(`/reject_task/${taskId}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Task rejected successfully', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Failed to reject task', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error rejecting task:', error);
+        showNotification('Error rejecting task', 'error');
     });
 }
 
