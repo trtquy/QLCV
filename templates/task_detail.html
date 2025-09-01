@@ -1106,7 +1106,7 @@
                                         <i data-feather="eye" class="me-1"></i>Send for Review
                                     </button>
                                     {% elif task.status == 'in_review' %}
-                                    {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                                    {% if current_user.id == task.supervisor_id or current_user.is_administrator %}
                                     <button type="button" class="btn btn-sm btn-success me-2" onclick="approveTask({{ task.id }})">
                                         <i data-feather="check-circle" class="me-1"></i>Approve
                                     </button>
@@ -1115,7 +1115,7 @@
                                     </button>
                                     {% endif %}
                                     {% elif task.status == 'completed' %}
-                                    {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                                    {% if current_user.id == task.supervisor_id or current_user.is_administrator %}
                                     <button type="button" class="btn btn-sm btn-secondary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
                                         <i data-feather="rotate-ccw" class="me-1"></i>Reopen
                                     </button>
