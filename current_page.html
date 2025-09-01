@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banking Task Board - TaskFlow</title>
+    <title>Tổng hợp ý kiến về chính sách - Task Details (v2.0)</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,36 +13,12 @@
     
     <!-- Custom CSS -->
     <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/static/css/login-animations.css" rel="stylesheet">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     
-<style>
-    .kanban-column {
-        min-height: 600px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-    }
-    
-    .task-card {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border-left: 4px solid #0052CC;
-    }
-    
-    .task-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .priority-urgent { border-left-color: #FF5630; }
-    .priority-high { border-left-color: #FF8B00; }
-    .priority-medium { border-left-color: #36B37E; }
-    .priority-low { border-left-color: #0065FF; }
-</style>
-
 </head>
 <body>
     <!-- Navigation -->
@@ -60,7 +36,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" 
+                        <a class="nav-link " 
                            href="/">
                             <i data-feather="grid" class="me-1"></i>
                             Board
@@ -101,10 +77,17 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i data-feather="user" class="me-1"></i>
-                            alice_johnson
+                            Test User
+                            
+                                <span class="badge bg-danger ms-1">Admin</span>
                             
                         </a>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i data-feather="settings" class="me-2"></i>
+                                Profile Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">
                                 <i data-feather="log-out" class="me-2"></i>
                                 Logout
@@ -117,744 +100,421 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
-    
+    <!-- Toast Container for Bottom-Left Notifications -->
+    <div class="toast-container position-fixed bottom-0 start-0 p-3" style="z-index: 1060;">
         
-            <div class="container-fluid mt-3">
+            
                 
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        Welcome back, alice_johnson!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="toast show" role="alert" data-bs-autohide="true" data-bs-delay="4000">
+                        <div class="toast-header">
+                            <div class="rounded me-2" style="width: 16px; height: 16px; background-color: #198754;"></div>
+                            <strong class="me-auto">Success</strong>
+                            <small class="text-muted">now</small>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            Welcome back, testuser!
+                        </div>
                     </div>
                 
-            </div>
+            
         
-    
+    </div>
 
     <!-- Main Content -->
     <main>
         
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h1 class="h3 mb-1">Banking Task Board</h1>
-                    <p class="text-muted mb-0">Manage your banking operations efficiently</p>
-                </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
-                    <i data-feather="plus" class="me-2"></i>
-                    Create New Task
-                </button>
-            </div>
-            
-            <!-- Team Filter -->
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i data-feather="filter"></i></span>
-                        <select class="form-select" id="teamFilter" onchange="filterByTeam()">
-                            <option value="">All Banking Teams</option>
-                            
-                                <option value="1" >
-                                    Credit Risk Team
-                                </option>
-                            
-                                <option value="2" >
-                                    Market Risk Team
-                                </option>
-                            
-                                <option value="3" >
-                                    Operational Risk Team
-                                </option>
-                            
-                                <option value="4" >
-                                    Compliance Team
-                                </option>
-                            
-                                <option value="5" >
-                                    Quantitative Risk Team
-                                </option>
-                            
-                        </select>
+<div class="container-fluid task-detail-container">
+    
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="task-content">
+                <a href="/" class="back-button">
+                    <i data-feather="arrow-left" class="me-2"></i>
+                    Back to Kanban Board
+                </a>
+                
+                <div class="task-header">
+                    <h1 class="task-title">Tổng hợp ý kiến về chính sách</h1>
+                    <div class="task-meta">
+                        <span class="status-badge status-in_progress">
+                            In Progress
+                        </span>
+                        <span>
+                            <span class="priority-indicator priority-high"></span>
+                            High Priority
+                        </span>
+                        <span>Task #7</span>
+                        <span>Created June 11, 2025</span>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center gap-3">
+                
+                <div class="task-description">
+                    <h3>Description</h3>
+                    
+                        <div class="description-content">
+                            Tổng hợp, phân tích các ý kiến góp ý cho các dự thảo chính sách tín dụng.
+                        </div>
+                    
+                </div>
+                
+                <!-- Comments Section -->
+                <div class="comments-section">
+                    <h3>Comments</h3>
+                    
+                    <!-- Add Comment Form -->
+                    
+                    <div class="comment-form">
+                        <form method="POST" action="/task/7/comment">
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Add a comment</label>
+                                <textarea class="form-control" id="comment" name="content" rows="4" 
+                                         placeholder="Share updates, ask questions, or provide feedback..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="message-circle" class="me-1"></i>
+                                Post Comment
+                            </button>
+                        </form>
+                    </div>
+                    
+                    
+                    <!-- Comments List -->
+                    <div class="comments-list">
                         
-                        <small class="text-muted">
-                            Showing 16 tasks
-                        </small>
+                        <p class="text-muted">No comments yet. Be the first to comment!</p>
+                        
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Kanban Board -->
-    <div class="row g-4">
-        <!-- Todo Column -->
+        
+        <!-- Sidebar -->
         <div class="col-lg-4">
-            <div class="kanban-column">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0 text-secondary">
-                        <i data-feather="circle" class="me-2"></i>
-                        To Do
-                    </h5>
-                    <span class="badge bg-secondary">7</span>
-                </div>
-                
-                <div class="task-container">
-                    
-                        <div class="card task-card mb-3 priority-urgent" 
-                             data-task-id="14" 
-                             onclick="openTaskEditModal('14')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Regulatory Compliance - Basel III Implementation</h6>
-                                    <span class="badge bg-primary ms-2">URGENT</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Update capital adequacy calculations according to Basel III requirements....
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #14</small>
-                                    <small class="text-muted">Urgent</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="17" 
-                             onclick="openTaskEditModal('17')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Liquidity Risk Analysis - Stress Testing</h6>
-                                    <span class="badge bg-primary ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Perform liquidity stress testing scenarios under adverse market conditions....
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #17</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-low" 
-                             data-task-id="23" 
-                             onclick="openTaskEditModal('23')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Risk Appetite Statement Update</h6>
-                                    <span class="badge bg-primary ms-2">LOW</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Annual review and update of enterprise risk appetite statement. Align with...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #23</small>
-                                    <small class="text-muted">Low</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="26" 
-                             onclick="openTaskEditModal('26')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">1</h6>
-                                    <span class="badge bg-primary ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    2
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #26</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-high" 
-                             data-task-id="27" 
-                             onclick="openTaskEditModal('27')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Sample Risk Assessment</h6>
-                                    <span class="badge bg-primary ms-2">HIGH</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Quarterly portfolio risk analysis for Q4 compliance review
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #27</small>
-                                    <small class="text-muted">High</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-high" 
-                             data-task-id="28" 
-                             onclick="openTaskEditModal('28')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Test Edit Task</h6>
-                                    <span class="badge bg-primary ms-2">HIGH</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    This task is for testing edit functionality
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #28</small>
-                                    <small class="text-muted">High</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="29" 
-                             onclick="openTaskEditModal('29')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">1213</h6>
-                                    <span class="badge bg-primary ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    123213
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #29</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                </div>
-            </div>
-        </div>
-
-        <!-- In Progress Column -->
-        <div class="col-lg-4">
-            <div class="kanban-column">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0 text-warning">
-                        <i data-feather="clock" class="me-2"></i>
-                        In Progress
-                    </h5>
-                    <span class="badge bg-warning">6</span>
-                </div>
-                
-                <div class="task-container">
-                    
-                        <div class="card task-card mb-3 priority-high" 
-                             data-task-id="13" 
-                             onclick="openTaskEditModal('13')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Credit Risk Assessment - Q4 Portfolio Review</h6>
-                                    <span class="badge bg-warning ms-2">HIGH</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Conduct comprehensive credit risk analysis for Q4 commercial lending...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #13</small>
-                                    <small class="text-muted">High</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="24" 
-                             onclick="openTaskEditModal('24')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Concentration Risk Assessment</h6>
-                                    <span class="badge bg-warning ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Assess concentration risk across geographic regions, industries, and...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #24</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="15" 
-                             onclick="openTaskEditModal('15')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Market Risk Dashboard - Real-time Monitoring</h6>
-                                    <span class="badge bg-warning ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Develop automated dashboard for real-time market risk monitoring. Include...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #15</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-urgent" 
-                             data-task-id="18" 
-                             onclick="openTaskEditModal('18')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Anti-Money Laundering (AML) Review</h6>
-                                    <span class="badge bg-warning ms-2">URGENT</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Review suspicious transaction reports and update AML monitoring procedures....
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #18</small>
-                                    <small class="text-muted">Urgent</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-urgent" 
-                             data-task-id="20" 
-                             onclick="openTaskEditModal('20')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Updated Task Title</h6>
-                                    <span class="badge bg-warning ms-2">URGENT</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Updated description
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #20</small>
-                                    <small class="text-muted">Urgent</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="21" 
-                             onclick="openTaskEditModal('21')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">ESG Risk Framework Development</h6>
-                                    <span class="badge bg-warning ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Develop comprehensive Environmental, Social, and Governance (ESG) risk...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #21</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                </div>
-            </div>
-        </div>
-
-        <!-- Completed Column -->
-        <div class="col-lg-4">
-            <div class="kanban-column">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0 text-success">
-                        <i data-feather="check-circle" class="me-2"></i>
-                        Completed
-                    </h5>
-                    <span class="badge bg-success">3</span>
-                </div>
-                
-                <div class="task-container">
-                    
-                        <div class="card task-card mb-3 priority-high" 
-                             data-task-id="22" 
-                             onclick="openTaskEditModal('22')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Counterparty Risk - Credit Exposure Analysis</h6>
-                                    <span class="badge bg-success ms-2">HIGH</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Analyze counterparty credit exposure across derivatives portfolio. Update...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #22</small>
-                                    <small class="text-muted">High</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-medium" 
-                             data-task-id="19" 
-                             onclick="openTaskEditModal('19')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Interest Rate Risk Modeling</h6>
-                                    <span class="badge bg-success ms-2">MEDIUM</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Update interest rate risk models for asset-liability management. Include...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #19</small>
-                                    <small class="text-muted">Medium</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div class="card task-card mb-3 priority-high" 
-                             data-task-id="16" 
-                             onclick="openTaskEditModal('16')"
-                             style="cursor: pointer;">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 flex-grow-1">Operational Risk - Cyber Security Assessment</h6>
-                                    <span class="badge bg-success ms-2">HIGH</span>
-                                </div>
-                                
-                                <p class="card-text text-muted small mb-2">
-                                    Complete annual cybersecurity risk assessment. Identify vulnerabilities and...
-                                </p>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Task #16</small>
-                                    <small class="text-muted">High</small>
-                                </div>
-                            </div>
-                        </div>
-                    
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Clean Create Task Modal -->
-<div class="modal fade" id="createTaskModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content clean-modal">
-            <div class="modal-header border-0">
-                <div>
-                    <h4 class="modal-title fw-bold text-dark mb-1">Create New Task</h4>
-                    <p class="text-muted small mb-0">Add a task to your banking workflow</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            
-            <form method="POST" action="/create_task" id="createTaskForm">
-                <div class="modal-body p-4">
-                    <!-- Task Title -->
-                    <div class="mb-4">
-                        <label for="title" class="form-label fw-medium mb-2">Task Title</label>
-                        <input type="text" class="form-control form-control-lg clean-input" 
-                               id="title" name="title" required
-                               placeholder="Enter task title...">
+            <div class="task-sidebar">
+                <!-- Task Details -->
+                <div class="sidebar-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="sidebar-title mb-0">Task Details</h4>
+                        
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleEditMode()" id="editToggleBtn">
+                            <i data-feather="edit-2"></i>
+                            Edit
+                        </button>
+                        
                     </div>
                     
-                    <!-- Description -->
-                    <div class="mb-4">
-                        <label for="description" class="form-label fw-medium mb-2">Description</label>
-                        <textarea class="form-control clean-input" id="description" name="description" 
-                                  rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
-                    </div>
-                    
-
-                    
-                    <div class="row">
-                        <!-- Priority Selection -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="priority" class="form-label fw-medium mb-2">Priority Level</label>
-                                <select class="form-select clean-input" id="priority" name="priority">
-                                    <option value="low">Low</option>
+                    <form id="taskEditForm" method="POST" action="/task/7/update">
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value detail-display" id="status-display">
+                                <span class="status-badge status-in_progress">
+                                    In Progress
+                                </span>
+                            </span>
+                            <div class="detail-edit" id="status-edit" style="display: none;">
+                                <select name="status" class="form-select form-select-sm">
+                                    <option value="todo" >To Do</option>
+                                    <option value="in_progress" selected>In Progress</option>
+                                    <option value="in_review" >In Review</option>
+                                    <option value="completed" >Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Priority</span>
+                            <span class="detail-value detail-display" id="priority-display">
+                                <span class="priority-indicator priority-high"></span>
+                                High
+                            </span>
+                            <div class="detail-edit" id="priority-edit" style="display: none;">
+                                <select name="priority" class="form-select form-select-sm">
+                                    <option value="low" >Low</option>
+                                    <option value="medium" >Medium</option>
+                                    <option value="high" selected>High</option>
+                                    <option value="urgent" >Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Complexity</span>
+                            <span class="detail-value detail-display" id="complexity-display">Medium</span>
+                            <div class="detail-edit" id="complexity-edit" style="display: none;">
+                                <select name="complexity" class="form-select form-select-sm">
+                                    <option value="very_simple" >Very Simple</option>
+                                    <option value="simple" >Simple</option>
                                     <option value="medium" selected>Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
+                                    <option value="complex" >Complex</option>
+                                    <option value="very_complex" >Very Complex</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <!-- Complexity Level -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="complexity" class="form-label fw-medium mb-2">Complexity Level</label>
-                                <select class="form-select clean-input" id="complexity" name="complexity">
-                                    <option value="very_simple">Very Simple</option>
-                                    <option value="simple">Simple</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="complex">Complex</option>
-                                    <option value="very_complex">Very Complex</option>
+                        <div class="detail-item">
+                            <span class="detail-label">Assignee</span>
+                            <span class="detail-value detail-display" id="assignee-display">
+                                
+                                    <span class="text-muted">Unassigned</span>
+                                
+                            </span>
+                            <div class="detail-edit" id="assignee-edit" style="display: none;">
+                                <select name="assignee_id" class="form-select form-select-sm">
+                                    <option value="">Unassigned</option>
+                                    
+                                    <option value="60" >
+                                        Lê Nguyễn Cẩm Vân
+                                    </option>
+                                    
+                                    <option value="77" >
+                                        Lê Trung Thành
+                                    </option>
+                                    
+                                    <option value="39" >
+                                        Lê Việt Anh
+                                    </option>
+                                    
+                                    <option value="2" >
+                                        Lương Thị Thùy Trang
+                                    </option>
+                                    
+                                    <option value="82" >
+                                        Nguyễn Huy Hoàng
+                                    </option>
+                                    
+                                    <option value="91" >
+                                        Nguyễn Hải Anh
+                                    </option>
+                                    
+                                    <option value="45" >
+                                        Nguyễn Ngọc Diệp
+                                    </option>
+                                    
+                                    <option value="42" >
+                                        Nguyễn Thị Minh Tâm
+                                    </option>
+                                    
+                                    <option value="33" >
+                                        Nguyễn Thị Vân Khánh
+                                    </option>
+                                    
+                                    <option value="35" >
+                                        Nguyễn Thị Định
+                                    </option>
+                                    
+                                    <option value="79" >
+                                        Phạm Khánh Ly
+                                    </option>
+                                    
+                                    <option value="85" >
+                                        Phạm Thu Thủy
+                                    </option>
+                                    
+                                    <option value="155" >
+                                        Test User
+                                    </option>
+                                    
+                                    <option value="68" >
+                                        Trần Hữu Hoàng Anh
+                                    </option>
+                                    
+                                    <option value="83" >
+                                        Đinh Thị Ngọc Lan
+                                    </option>
+                                    
+                                    <option value="96" >
+                                        123
+                                    </option>
+                                    
                                 </select>
                             </div>
                         </div>
                         
-                        <!-- Assignment -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="assignee_id" class="form-label fw-medium mb-2">Assign To</label>
-                                <select class="form-select clean-input" id="assignee_id" name="assignee_id">
-                                    <option value="">Select team member...</option>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Supervisor</span>
+                            <span class="detail-value detail-display" id="supervisor-display">
+                                
+                                    <span class="text-muted">No supervisor</span>
+                                
+                            </span>
+                            <div class="detail-edit" id="supervisor-edit" style="display: none;">
+                                <select name="supervisor_id" class="form-select form-select-sm">
+                                    <option value="">No supervisor</option>
                                     
-                                        <option value="1">admin</option>
+                                    <option value="60" >
+                                        Lê Nguyễn Cẩm Vân
+                                    </option>
                                     
-                                        <option value="4">mike_rodriguez</option>
+                                    <option value="82" >
+                                        Nguyễn Huy Hoàng
+                                    </option>
                                     
-                                        <option value="6">david_kim</option>
+                                    <option value="91" >
+                                        Nguyễn Hải Anh
+                                    </option>
                                     
-                                        <option value="7">jennifer_lopez</option>
+                                    <option value="42" >
+                                        Nguyễn Thị Minh Tâm
+                                    </option>
                                     
-                                        <option value="5">emily_watson</option>
+                                    <option value="33" >
+                                        Nguyễn Thị Vân Khánh
+                                    </option>
                                     
-                                        <option value="3">sarah_chen</option>
+                                    <option value="79" >
+                                        Phạm Khánh Ly
+                                    </option>
                                     
-                                        <option value="8">user</option>
+                                    <option value="85" >
+                                        Phạm Thu Thủy
+                                    </option>
                                     
-                                        <option value="9">alice_johnson</option>
+                                    <option value="83" >
+                                        Đinh Thị Ngọc Lan
+                                    </option>
+                                    
+                                    <option value="96" >
+                                        123
+                                    </option>
                                     
                                 </select>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="team_id" class="form-label fw-medium mb-2">Banking Team</label>
-                                <select class="form-select clean-input" id="team_id" name="team_id">
-                                    <option value="">Select team...</option>
-                                    
-                                        <option value="1">Credit Risk Team</option>
-                                    
-                                        <option value="2">Market Risk Team</option>
-                                    
-                                        <option value="3">Operational Risk Team</option>
-                                    
-                                        <option value="4">Compliance Team</option>
-                                    
-                                        <option value="5">Quantitative Risk Team</option>
-                                    
-                                </select>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="estimated_hours" class="form-label fw-medium mb-2">
-                                    <i data-feather="clock" class="me-1" style="width: 16px; height: 16px;"></i>
-                                    Time Estimate (hours)
-                                </label>
-                                <input type="number" class="form-control clean-input" id="estimated_hours" 
-                                       name="estimated_hours" min="0.5" max="200" step="0.5" 
-                                       placeholder="e.g. 4.5">
-                                <div class="form-text">Optional: Estimated time to complete this task</div>
                             </div>
                         </div>
-                    </div>
+                        
+                        
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Team</span>
+                            <span class="detail-value">Chính sách tín dụng</span>
+                        </div>
+                        
+                        
+                        <div class="detail-edit" id="edit-actions" style="display: none;">
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i data-feather="check"></i>
+                                    Save
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit()">
+                                    <i data-feather="x"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 
-                <div class="modal-footer border-0 pt-0 pb-4">
-                    <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        Create Task
-                    </button>
+                <!-- Time Tracking -->
+                <div class="sidebar-section">
+                    <h4 class="sidebar-title">Time Tracking</h4>
+                    
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Estimated</span>
+                        <span class="detail-value">5.8h</span>
+                    </div>
+                    
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Time Logged</span>
+                        <span class="detail-value">0.0h</span>
+                    </div>
+                    
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Started</span>
+                        <span class="detail-value">09/01/2025</span>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    <div class="detail-item">
+                        <span class="detail-label">Completed</span>
+                        <span class="detail-value">06/12/2025</span>
+                    </div>
+                    
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Task Modal -->
-<div class="modal fade" id="editTaskModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content clean-modal">
-            <div class="modal-header border-0">
-                <div>
-                    <h4 class="modal-title fw-bold text-dark mb-1">Edit Task</h4>
-                    <p class="text-muted small mb-0">Update task details</p>
+                
+                <!-- Task History -->
+                <div class="sidebar-section">
+                    <h4 class="sidebar-title">Recent Activity</h4>
+                    
+                    <div class="history-section">
+                        
+                        <div class="history-item">
+                            <div class="history-icon history-updated">
+                                
+                                    <i data-feather="edit"></i>
+                                
+                            </div>
+                            <div class="history-content">
+                                <div class="history-action">
+                                    
+                                        Assignee updated
+                                    
+                                </div>
+                                <div class="history-details">
+                                    
+                                        from "Lương Thị Thùy Trang" to "Unassigned"
+                                    
+                                    <br>
+                                    <small>09/01 04:29 PM by Test User</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="history-item">
+                            <div class="history-icon history-updated">
+                                
+                                    <i data-feather="edit"></i>
+                                
+                            </div>
+                            <div class="history-content">
+                                <div class="history-action">
+                                    
+                                        Priority updated
+                                    
+                                </div>
+                                <div class="history-details">
+                                    
+                                        from "low" to "high"
+                                    
+                                    <br>
+                                    <small>09/01 04:29 PM by Test User</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="history-item">
+                            <div class="history-icon history-updated">
+                                
+                                    <i data-feather="edit"></i>
+                                
+                            </div>
+                            <div class="history-content">
+                                <div class="history-action">
+                                    
+                                        Status updated
+                                    
+                                </div>
+                                <div class="history-details">
+                                    
+                                        from "completed" to "in_progress"
+                                    
+                                    <br>
+                                    <small>09/01 04:29 PM by Test User</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            
-            <form method="POST" id="editTaskForm">
-                <div class="modal-body p-4">
-                    <!-- Task Title -->
-                    <div class="mb-4">
-                        <label for="edit_title" class="form-label fw-medium mb-2">Task Title</label>
-                        <input type="text" class="form-control form-control-lg clean-input" 
-                               id="edit_title" name="title" required
-                               placeholder="Enter task title...">
-                    </div>
-                    
-                    <!-- Description -->
-                    <div class="mb-4">
-                        <label for="edit_description" class="form-label fw-medium mb-2">Description</label>
-                        <textarea class="form-control clean-input" id="edit_description" name="description" 
-                                  rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Priority Selection -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_priority" class="form-label fw-medium mb-2">Priority Level</label>
-                                <select class="form-select clean-input" id="edit_priority" name="priority">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Complexity Level -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_complexity" class="form-label fw-medium mb-2">Complexity Level</label>
-                                <select class="form-select clean-input" id="edit_complexity" name="complexity">
-                                    <option value="very_simple">Very Simple</option>
-                                    <option value="simple">Simple</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="complex">Complex</option>
-                                    <option value="very_complex">Very Complex</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Status -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_status" class="form-label fw-medium mb-2">Status</label>
-                                <select class="form-select clean-input" id="edit_status" name="task_status">
-                                    <option value="todo">To Do</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Assignment -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_assignee_id" class="form-label fw-medium mb-2">Assign To</label>
-                                <select class="form-select clean-input" id="edit_assignee_id" name="assignee_id">
-                                    <option value="">Select team member...</option>
-                                    
-                                        <option value="1">admin</option>
-                                    
-                                        <option value="4">mike_rodriguez</option>
-                                    
-                                        <option value="6">david_kim</option>
-                                    
-                                        <option value="7">jennifer_lopez</option>
-                                    
-                                        <option value="5">emily_watson</option>
-                                    
-                                        <option value="3">sarah_chen</option>
-                                    
-                                        <option value="8">user</option>
-                                    
-                                        <option value="9">alice_johnson</option>
-                                    
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Team Assignment -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_team_id" class="form-label fw-medium mb-2">Banking Team</label>
-                                <select class="form-select clean-input" id="edit_team_id" name="team_id">
-                                    <option value="">Select team...</option>
-                                    
-                                        <option value="1">Credit Risk Team</option>
-                                    
-                                        <option value="2">Market Risk Team</option>
-                                    
-                                        <option value="3">Operational Risk Team</option>
-                                    
-                                        <option value="4">Compliance Team</option>
-                                    
-                                        <option value="5">Quantitative Risk Team</option>
-                                    
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Time Estimate -->
-                        <div class="col-md-6">
-                            <div class="mb-4">
-                                <label for="edit_estimated_hours" class="form-label fw-medium mb-2">
-                                    <i data-feather="clock" class="me-1" style="width: 16px; height: 16px;"></i>
-                                    Time Estimate (hours)
-                                </label>
-                                <input type="number" class="form-control clean-input" id="edit_estimated_hours" 
-                                       name="estimated_hours" min="0.5" max="200" step="0.5" 
-                                       placeholder="e.g. 4.5">
-                                <div class="form-text">Optional: Estimated time to complete this task</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer border-0 pt-0 pb-4">
-                    <button type="button" class="btn btn-danger me-auto" id="deleteTaskBtn">
-                        <i data-feather="trash-2" class="me-1" style="width: 16px; height: 16px;"></i>
-                        Delete
-                    </button>
-                    <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        Update Task
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

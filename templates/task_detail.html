@@ -2,7 +2,7 @@
 
 {% block title %}{{ task.title }} - Task Details (v2.0){% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <!-- Force cache bust -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -807,7 +807,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
 <script>
 // FINAL FIX: Functions explicitly on window object
 window.toggleEditMode = function() {
