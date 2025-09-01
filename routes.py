@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from app import app, db
 from data_manager import data_manager
-from models import Team, TaskAttachment
+from models import Team, TaskAttachment, Task
 from datetime import datetime, timedelta
 import logging
 import os
@@ -1618,5 +1618,155 @@ def get_task_attachments(task_id):
         'success': True,
         'attachments': attachment_data
     })
+
+# Sub-task Management Routes
+@app.route('/task/<int:task_id>/subtask/create', methods=['POST'])
+def create_subtask(task_id):
+    """Create a new subtask for a parent task"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    parent_task = data_manager.get_task(str(task_id))
+    if not parent_task:
+        return jsonify({'error': 'Parent task not found'}), 404
+    
+    # Check permissions
+    can_create = (current_user.is_administrator or 
+                 parent_task.assignee_id == current_user.id or 
+                 parent_task.created_by == current_user.id or
+                 (current_user.role in ['manager', 'director'] and parent_task.team_id == current_user.team_id))
+    
+    if not can_create:
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    
+    if not title:
+        return jsonify({'error': 'Subtask title is required'}), 400
+    
+    try:
+        # Create subtask using SQLAlchemy directly
+        subtask = Task(
+            title=title,
+            description=description,
+            status='todo',
+            priority='medium',
+            complexity='medium',
+            created_by=current_user.id,
+            team_id=parent_task.team_id,
+            parent_task_id=parent_task.id,
+            assignee_id=parent_task.assignee_id  # Default to parent task assignee
+        )
+        
+        db.session.add(subtask)
+        db.session.commit()
+        
+        # Add to task history
+        data_manager.add_task_history(str(parent_task.id), str(current_user.id), 'subtask_created', 
+                                    field_name='subtask', 
+                                    new_value=f'Created subtask: {title}')
+        
+        return jsonify({
+            'success': True,
+            'subtask': {
+                'id': subtask.id,
+                'title': subtask.title,
+                'description': subtask.description,
+                'status': subtask.status,
+                'priority': subtask.priority,
+                'assignee_name': subtask.assignee.display_name or subtask.assignee.username if subtask.assignee else 'Unassigned'
+            },
+            'message': 'Subtask created successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error creating subtask: {str(e)}")
+        return jsonify({'error': 'Failed to create subtask'}), 500
+
+@app.route('/task/<int:task_id>/subtasks')
+def get_subtasks(task_id):
+    """Get all subtasks for a parent task"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    parent_task = data_manager.get_task(str(task_id))
+    if not parent_task:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    subtasks = Task.query.filter_by(parent_task_id=task_id).order_by(Task.created_at).all()
+    
+    subtasks_data = []
+    for subtask in subtasks:
+        subtask_data = subtask.to_dict()
+        # Add assignee name
+        if subtask.assignee:
+            subtask_data['assignee_name'] = subtask.assignee.display_name or subtask.assignee.username
+        else:
+            subtask_data['assignee_name'] = 'Unassigned'
+        subtasks_data.append(subtask_data)
+    
+    return jsonify({
+        'subtasks': subtasks_data,
+        'total': len(subtasks_data),
+        'progress': parent_task.get_subtask_progress()
+    })
+
+@app.route('/subtask/<int:subtask_id>/update', methods=['POST'])
+def update_subtask(subtask_id):
+    """Update a subtask"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    subtask = Task.query.get(subtask_id)
+    if not subtask or not subtask.is_subtask():
+        return jsonify({'error': 'Subtask not found'}), 404
+    
+    # Check permissions
+    can_edit = (current_user.is_administrator or 
+                subtask.assignee_id == current_user.id or 
+                subtask.created_by == current_user.id or
+                (current_user.role in ['manager', 'director'] and subtask.team_id == current_user.team_id))
+    
+    if not can_edit:
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    try:
+        # Get update fields
+        if 'status' in request.form:
+            old_status = subtask.status
+            subtask.status = request.form.get('status')
+            if old_status != subtask.status:
+                data_manager.add_task_history(str(subtask.id), str(current_user.id), 'status_changed', 
+                                            field_name='status', 
+                                            old_value=old_status, 
+                                            new_value=subtask.status)
+        
+        if 'title' in request.form:
+            subtask.title = request.form.get('title').strip()
+        
+        if 'description' in request.form:
+            subtask.description = request.form.get('description', '').strip()
+        
+        if 'priority' in request.form:
+            subtask.priority = request.form.get('priority')
+        
+        subtask.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'subtask': subtask.to_dict(),
+            'message': 'Subtask updated successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating subtask: {str(e)}")
+        return jsonify({'error': 'Failed to update subtask'}), 500
 
 

@@ -989,10 +989,72 @@
                     </div>
                 </div>
                 
-                <!-- File Attachments Section -->
-                <div class="attachments-section">
+                <!-- Sub-tasks Section -->
+                <div class="subtasks-section mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3>Attachments</h3>
+                        <h3>
+                            Sub-tasks
+                            <span class="badge bg-light text-dark ms-2" id="subtaskCount">0</span>
+                        </h3>
+                        {% if current_user and (current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id)) %}
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="toggleSubtaskForm()">
+                            <i data-feather="plus" class="me-1"></i>
+                            Add Sub-task
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div id="subtaskProgress" class="mb-3" style="display: none;">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Progress</span>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create Sub-task Form -->
+                    <div id="subtaskForm" class="card mb-3" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="card-title">Create Sub-task</h6>
+                            <form id="createSubtaskForm">
+                                <div class="mb-3">
+                                    <label for="subtaskTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="subtaskTitle" name="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="subtaskDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="subtaskDescription" name="description" rows="3"></textarea>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i data-feather="plus" class="me-1"></i>
+                                        Create
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSubtaskForm()">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-tasks List -->
+                    <div id="subtasksList">
+                        <div class="d-flex justify-content-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading sub-tasks...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Attachments Section -->
+                <div class="attachments-section mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>Documents & Files</h3>
                         {% if current_user %}
                         <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('fileUpload').click()">
                             <i data-feather="paperclip" class="me-1"></i>
@@ -1021,9 +1083,37 @@
                     
                     <!-- Attachments List -->
                     <div id="attachmentsList">
-                        <div class="d-flex justify-content-center">
+                        <div class="d-flex justify-content-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading attachments...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Preview Modal -->
+                <div class="modal fade" id="documentPreviewModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="previewModalTitle">Document Preview</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <div id="previewContent" style="min-height: 400px;">
+                                    <div class="d-flex justify-content-center align-items-center h-100 p-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading preview...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="downloadPreviewFile">
+                                    <i data-feather="download" class="me-1"></i>
+                                    Download
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1676,8 +1766,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize file upload system
     initializeFileUpload();
     
-    // Load existing attachments
+    // Load existing attachments and subtasks
     loadAttachments();
+    loadSubtasks();
+    
+    // Initialize subtask form handler
+    const subtaskForm = document.getElementById('createSubtaskForm');
+    if (subtaskForm) {
+        subtaskForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            createSubtask(formData);
+        });
+    }
 
     // Auto-expand comment textarea
     const commentTextarea = document.getElementById('comment');
@@ -1846,6 +1947,12 @@ function displayAttachments(attachments) {
                     </div>
                 </div>
                 <div class="attachment-actions">
+                    ${canPreview(attachment.file_type) ? `
+                    <button type="button" class="btn btn-outline-info btn-sm" 
+                            onclick="previewDocument(${attachment.id}, '${attachment.original_filename}')" title="Preview">
+                        <i data-feather="eye"></i>
+                    </button>
+                    ` : ''}
                     <button type="button" class="btn btn-outline-primary btn-sm" 
                             onclick="downloadAttachment(${attachment.id})" title="Download">
                         <i data-feather="download"></i>
@@ -1875,6 +1982,11 @@ function getFileIcon(fileType) {
     if (fileType.includes('zip') || fileType.includes('compressed')) return 'archive';
     
     return 'file';
+}
+
+function canPreview(fileType) {
+    if (!fileType) return false;
+    return fileType.startsWith('image/') || fileType.includes('pdf');
 }
 
 function formatFileSize(bytes) {
@@ -1926,6 +2038,290 @@ function getCurrentTaskId() {
     const path = window.location.pathname;
     const match = path.match(/\/task\/(\d+)/);
     return match ? match[1] : null;
+}
+
+// SUB-TASK MANAGEMENT
+function toggleSubtaskForm() {
+    const form = document.getElementById('subtaskForm');
+    const isVisible = form.style.display !== 'none';
+    
+    if (isVisible) {
+        form.style.display = 'none';
+        document.getElementById('createSubtaskForm').reset();
+    } else {
+        form.style.display = 'block';
+        document.getElementById('subtaskTitle').focus();
+    }
+}
+
+function loadSubtasks() {
+    const taskId = getCurrentTaskId();
+    if (!taskId) return;
+    
+    fetch(`/task/${taskId}/subtasks`)
+        .then(response => response.json())
+        .then(data => {
+            displaySubtasks(data.subtasks || []);
+            updateSubtaskProgress(data.progress, data.total);
+        })
+        .catch(error => {
+            console.error('Error loading subtasks:', error);
+            displaySubtasks([]);
+        });
+}
+
+function displaySubtasks(subtasks) {
+    const container = document.getElementById('subtasksList');
+    const countBadge = document.getElementById('subtaskCount');
+    
+    countBadge.textContent = subtasks.length;
+    
+    if (subtasks.length === 0) {
+        container.innerHTML = `
+            <div class="no-subtasks text-center py-4">
+                <div class="empty-state-icon mb-3">
+                    <i data-feather="list" style="width: 48px; height: 48px;" class="text-muted"></i>
+                </div>
+                <h5 class="text-muted">No sub-tasks yet</h5>
+                <p class="text-muted">Break this task down into smaller, manageable pieces</p>
+            </div>
+        `;
+    } else {
+        container.innerHTML = subtasks.map(subtask => `
+            <div class="subtask-item card mb-3" data-subtask-id="${subtask.id}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="subtask-title mb-1">${subtask.title}</h6>
+                        <div class="subtask-actions">
+                            <span class="badge bg-${getStatusColor(subtask.status)}">${getStatusLabel(subtask.status)}</span>
+                            <div class="dropdown d-inline-block ms-2">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                    <i data-feather="more-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="updateSubtaskStatus(${subtask.id}, 'todo')">
+                                        <i data-feather="circle" class="me-2"></i>To Do</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateSubtaskStatus(${subtask.id}, 'in_progress')">
+                                        <i data-feather="play" class="me-2"></i>In Progress</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateSubtaskStatus(${subtask.id}, 'completed')">
+                                        <i data-feather="check-circle" class="me-2"></i>Completed</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    ${subtask.description ? `<p class="subtask-description text-muted small mb-2">${subtask.description}</p>` : ''}
+                    <div class="subtask-meta small text-muted">
+                        <span><i data-feather="user" class="me-1"></i>${subtask.assignee_name}</span>
+                        <span class="ms-3"><i data-feather="flag" class="me-1"></i>${subtask.priority}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function updateSubtaskProgress(progress, total) {
+    const progressContainer = document.getElementById('subtaskProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    if (total > 0 && progress !== null) {
+        progressContainer.style.display = 'block';
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+    } else {
+        progressContainer.style.display = 'none';
+    }
+}
+
+function createSubtask(formData) {
+    const taskId = getCurrentTaskId();
+    if (!taskId) return;
+    
+    fetch(`/task/${taskId}/subtask/create`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Sub-task created successfully', 'success');
+            toggleSubtaskForm();
+            loadSubtasks();
+        } else {
+            showNotification(data.error || 'Failed to create sub-task', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating subtask:', error);
+        showNotification('Error creating sub-task', 'error');
+    });
+}
+
+function updateSubtaskStatus(subtaskId, newStatus) {
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch(`/subtask/${subtaskId}/update`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Sub-task updated successfully', 'success');
+            loadSubtasks();
+            
+            // Add confetti effect for completed subtasks
+            if (newStatus === 'completed') {
+                triggerConfetti();
+            }
+        } else {
+            showNotification(data.error || 'Failed to update sub-task', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating subtask:', error);
+        showNotification('Error updating sub-task', 'error');
+    });
+}
+
+// DOCUMENT PREVIEW FUNCTIONALITY
+function previewDocument(attachmentId, filename) {
+    const modal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+    const titleElement = document.getElementById('previewModalTitle');
+    const contentElement = document.getElementById('previewContent');
+    const downloadBtn = document.getElementById('downloadPreviewFile');
+    
+    titleElement.textContent = filename;
+    downloadBtn.onclick = () => downloadAttachment(attachmentId);
+    
+    // Show loading state
+    contentElement.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center h-100 p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading preview...</span>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Load preview content
+    fetch(`/attachment/${attachmentId}/preview`)
+        .then(response => {
+            if (response.ok) {
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.startsWith('image/')) {
+                    return response.blob().then(blob => {
+                        const imageUrl = URL.createObjectURL(blob);
+                        contentElement.innerHTML = `
+                            <div class="text-center p-3">
+                                <img src="${imageUrl}" class="img-fluid" style="max-height: 500px;" alt="${filename}">
+                            </div>
+                        `;
+                    });
+                } else if (contentType && contentType.includes('pdf')) {
+                    return response.blob().then(blob => {
+                        const pdfUrl = URL.createObjectURL(blob);
+                        contentElement.innerHTML = `
+                            <div class="embed-responsive" style="height: 500px;">
+                                <iframe src="${pdfUrl}" class="w-100 h-100" frameborder="0"></iframe>
+                            </div>
+                        `;
+                    });
+                } else {
+                    throw new Error('File type not supported for preview');
+                }
+            } else {
+                throw new Error('Preview not available');
+            }
+        })
+        .catch(error => {
+            contentElement.innerHTML = `
+                <div class="text-center p-4">
+                    <div class="mb-3">
+                        <i data-feather="file-text" style="width: 64px; height: 64px;" class="text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">Preview not available</h5>
+                    <p class="text-muted">This file type cannot be previewed in the browser.</p>
+                    <button class="btn btn-primary" onclick="downloadAttachment(${attachmentId})">
+                        <i data-feather="download" class="me-2"></i>Download File
+                    </button>
+                </div>
+            `;
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        });
+}
+
+// UTILITY FUNCTIONS
+function getStatusColor(status) {
+    switch(status) {
+        case 'todo': return 'secondary';
+        case 'in_progress': return 'warning';
+        case 'in_review': return 'info';
+        case 'completed': return 'success';
+        default: return 'secondary';
+    }
+}
+
+function getStatusLabel(status) {
+    switch(status) {
+        case 'todo': return 'To Do';
+        case 'in_progress': return 'In Progress';
+        case 'in_review': return 'In Review';
+        case 'completed': return 'Completed';
+        default: return status;
+    }
+}
+
+function triggerConfetti() {
+    // Simple confetti effect
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    for (let i = 0; i < 50; i++) {
+        createConfettiPiece(colors[Math.floor(Math.random() * colors.length)]);
+    }
+}
+
+function createConfettiPiece(color) {
+    const confetti = document.createElement('div');
+    confetti.style.cssText = `
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: ${color};
+        pointer-events: none;
+        z-index: 10000;
+        border-radius: 50%;
+        top: -10px;
+        left: ${Math.random() * window.innerWidth}px;
+        animation: confetti-fall 3s linear forwards;
+    `;
+    
+    // Add CSS animation if not exists
+    if (!document.getElementById('confetti-styles')) {
+        const style = document.createElement('style');
+        style.id = 'confetti-styles';
+        style.textContent = `
+            @keyframes confetti-fall {
+                0% { transform: translateY(-100vh) rotate(0deg); }
+                100% { transform: translateY(100vh) rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(confetti);
+    setTimeout(() => {
+        document.body.removeChild(confetti);
+    }, 3000);
 }
 
 function showNotification(message, type = 'info') {

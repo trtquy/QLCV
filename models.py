@@ -100,6 +100,10 @@ class Task(db.Model):
     assignee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     supervisor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
+    parent_task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)  # For sub-tasks
+    
+    # Sub-task relationships
+    parent_task = db.relationship('Task', remote_side=[id], backref=db.backref('subtasks', lazy='dynamic'))
     
     # Indexes for better performance
     __table_args__ = (
@@ -118,6 +122,30 @@ class Task(db.Model):
         from models import TimeLog
         time_logs = TimeLog.query.filter_by(task_id=self.id).all()
         return sum(log.duration_hours for log in time_logs if log.duration_hours) or 0.0
+    
+    def get_subtask_progress(self):
+        """Calculate progress based on completed subtasks"""
+        subtask_list = list(self.subtasks.all()) if self.subtasks else []
+        if not subtask_list:
+            return None
+        
+        total_subtasks = len(subtask_list)
+        completed_subtasks = len([st for st in subtask_list if st.status == 'completed'])
+        
+        if total_subtasks == 0:
+            return 0
+        
+        return (completed_subtasks / total_subtasks) * 100
+    
+    def is_subtask(self):
+        """Check if this task is a subtask"""
+        return self.parent_task_id is not None
+    
+    def can_be_completed(self):
+        """Check if task can be completed (all subtasks must be completed)"""
+        subtask_list = list(self.subtasks.all()) if self.subtasks else []
+        incomplete_subtasks = [st for st in subtask_list if st.status != 'completed']
+        return len(incomplete_subtasks) == 0
     
     def get_time_variance(self):
         """Calculate variance between estimated and actual time"""
@@ -144,7 +172,12 @@ class Task(db.Model):
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'total_time_logged': self.get_total_time_logged(),
-            'time_variance': self.get_time_variance()
+            'time_variance': self.get_time_variance(),
+            'parent_task_id': str(self.parent_task_id) if self.parent_task_id else None,
+            'subtask_progress': self.get_subtask_progress(),
+            'subtask_count': self.subtasks.count() if self.subtasks else 0,
+            'is_subtask': self.is_subtask(),
+            'can_be_completed': self.can_be_completed()
         }
 
 class TaskAttachment(db.Model):
