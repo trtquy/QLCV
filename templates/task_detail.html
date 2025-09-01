@@ -164,14 +164,14 @@
 
 /* Comments Section */
 .comments-section {
-    margin-top: 4rem;
+    margin-top: 2rem;
 }
 
 .comments-section h3 {
     font-size: 1.5rem;
     font-weight: 600;
     color: #2d3748;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     border-bottom: 2px solid #e2e8f0;
     padding-bottom: 0.5rem;
 }
@@ -179,16 +179,16 @@
 .comment-form {
     background: linear-gradient(135deg, #f7fafc, #edf2f7);
     border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
     border: 1px solid #e2e8f0;
 }
 
 .comment-item {
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
     background: linear-gradient(135deg, #ffffff, #f7fafc);
     transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -795,8 +795,8 @@
 
 /* File Attachments Styles */
 .attachments-section {
-    margin-top: 2rem;
-    padding-top: 2rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
     border-top: 2px solid #e2e8f0;
 }
 
@@ -827,7 +827,7 @@
     background: linear-gradient(135deg, #ffffff, #f7fafc);
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     transition: all 0.3s ease;
     position: relative;
 }
@@ -1070,37 +1070,16 @@
                     </div>
 
                     <form id="taskEditForm" method="POST" action="{{ url_for('update_task_detail', task_id=task.id) }}">
-                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
-                        <div class="detail-item inline-editable can-edit" data-field="status" data-url="{{ url_for('update_task_detail', task_id=task.id) }}">
-                        {% else %}
                         <div class="detail-item" data-field="status">
-                        {% endif %}
                             <span class="detail-label">Status</span>
                             <div class="detail-value-container">
-                                <span class="detail-value detail-display clickable-field" data-field-type="select">
+                                <span class="detail-value">
                                     <span class="status-badge status-{{ task.status }}">
                                         {{ task.status.replace('_', ' ').title() }}
                                     </span>
-                                    <i data-feather="edit-3" class="edit-icon"></i>
                                 </span>
-                                <div class="detail-edit" style="display: none;">
-                                    <select name="status" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Status" data-original-value="{{ task.status }}">
-                                        <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
-                                        <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                                        <option value="in_review" {% if task.status == 'in_review' %}selected{% endif %}>In Review</option>
-                                        <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-                                    </select>
-                                    <div class="inline-actions">
-                                        <button type="button" class="btn btn-sm btn-success save-field" title="Save">
-                                            <i data-feather="check"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-secondary cancel-field" title="Cancel">
-                                            <i data-feather="x"></i>
-                                        </button>
-                                    </div>
-                                    <div class="validation-message"></div>
-                                </div>
                             </div>
+                            <small class="text-muted">Use Kanban board to change status</small>
                         </div>
                         
                         {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
@@ -1875,7 +1854,7 @@ function deleteAttachment(attachmentId) {
     if (!confirm('Are you sure you want to delete this file?')) return;
     
     fetch(`/delete_file/${attachmentId}`, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
@@ -1913,12 +1892,12 @@ function showNotification(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    // Auto-remove after 5 seconds
+    // Auto-remove after 3 seconds
     setTimeout(() => {
         if (toast.parentNode) {
             toast.parentNode.removeChild(toast);
         }
-    }, 5000);
+    }, 3000);
 }
 
 // Add shake animation CSS

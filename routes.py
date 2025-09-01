@@ -1180,14 +1180,13 @@ def update_task_description(task_id):
         
         # Log the change in task history
         from models import TaskHistory
-        history_entry = TaskHistory(
-            task_id=task.id,
-            user_id=current_user.id,
-            action='updated',
-            field_changed='description',
-            old_value=old_description or '',
-            new_value=new_description or ''
-        )
+        history_entry = TaskHistory()
+        history_entry.task_id = task.id
+        history_entry.user_id = current_user.id
+        history_entry.action = 'updated'
+        history_entry.field_name = 'description'
+        history_entry.old_value = old_description or ''
+        history_entry.new_value = new_description or ''
         db.session.add(history_entry)
         db.session.commit()
         
@@ -1540,7 +1539,7 @@ def download_file(attachment_id):
     
     return send_file(file_path, as_attachment=True, download_name=attachment.original_filename)
 
-@app.route('/delete_file/<attachment_id>', methods=['POST'])
+@app.route('/delete_file/<attachment_id>', methods=['POST', 'DELETE'])
 def delete_file(attachment_id):
     """Delete file attachment"""
     current_user = data_manager.get_current_user()
