@@ -515,7 +515,7 @@
 
 /* Navigation */
 .back-button {
-    color: #fff;
+    color: #4299e1;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -524,17 +524,17 @@
     border-radius: 25px;
     transition: all 0.3s ease;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(66, 153, 225, 0.1);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid #4299e1;
 }
 
 .back-button:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.3);
+    color: #2b77cb;
+    background: rgba(66, 153, 225, 0.2);
     transform: translateY(-2px);
     text-decoration: none;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
 }
 
 /* Buttons */
@@ -897,6 +897,31 @@
     margin-bottom: 1rem;
     opacity: 0.5;
 }
+
+/* Status Actions */
+.status-actions {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.status-actions .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.status-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.status-actions .btn i {
+    width: 14px;
+    height: 14px;
+}
 </style>
 {% endblock %}
 
@@ -1079,7 +1104,36 @@
                                     </span>
                                 </span>
                             </div>
-                            <small class="text-muted">Use Kanban board to change status</small>
+                            
+                            <!-- Status Action Buttons -->
+                            {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                            <div class="status-actions mt-2">
+                                {% if task.status == 'todo' %}
+                                <button type="button" class="btn btn-sm btn-primary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
+                                    <i data-feather="play" class="me-1"></i>Start Work
+                                </button>
+                                {% elif task.status == 'in_progress' %}
+                                <button type="button" class="btn btn-sm btn-info me-2" onclick="updateTaskStatus({{ task.id }}, 'in_review')">
+                                    <i data-feather="eye" class="me-1"></i>Send for Review
+                                </button>
+                                {% elif task.status == 'in_review' %}
+                                {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                                <button type="button" class="btn btn-sm btn-success me-2" onclick="updateTaskStatus({{ task.id }}, 'completed')">
+                                    <i data-feather="check-circle" class="me-1"></i>Approve
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
+                                    <i data-feather="arrow-left" class="me-1"></i>Send Back
+                                </button>
+                                {% endif %}
+                                {% elif task.status == 'completed' %}
+                                {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                                <button type="button" class="btn btn-sm btn-secondary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
+                                    <i data-feather="rotate-ccw" class="me-1"></i>Reopen
+                                </button>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
                         </div>
                         
                         {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
@@ -1900,6 +1954,40 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// Update task status function
+function updateTaskStatus(taskId, newStatus) {
+    if (!confirm(`Are you sure you want to change the task status to ${newStatus.replace('_', ' ')}?`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch(`/task/${taskId}/update`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Task status updated to ${newStatus.replace('_', ' ')}`, 'success');
+            // Reload page to reflect changes
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Failed to update status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating status:', error);
+        showNotification('Error updating task status', 'error');
+    });
+}
+
 // Add shake animation CSS
 const shakeStyle = document.createElement('style');
 shakeStyle.textContent = `
@@ -1910,5 +1998,10 @@ shakeStyle.textContent = `
 }
 `;
 document.head.appendChild(shakeStyle);
+
+// Initialize Feather icons safely
+if (typeof feather !== 'undefined') {
+    feather.replace();
+}
 </script>
 {% endblock %}
