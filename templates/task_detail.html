@@ -900,9 +900,8 @@
 
 /* Status Actions */
 .status-actions {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #e2e8f0;
+    margin: 0;
+    padding: 0;
 }
 
 .status-actions .btn {
@@ -1095,46 +1094,40 @@
                     </div>
 
                     <form id="taskEditForm" method="POST" action="{{ url_for('update_task_detail', task_id=task.id) }}">
-                        <div class="detail-item" data-field="status">
-                            <span class="detail-label">Status</span>
+                        <!-- Task Actions -->
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <div class="detail-item">
+                            <span class="detail-label">Actions</span>
                             <div class="detail-value-container">
-                                <span class="detail-value">
-                                    <span class="status-badge status-{{ task.status }}">
-                                        {{ task.status.replace('_', ' ').title() }}
-                                    </span>
-                                </span>
+                                <div class="status-actions">
+                                    {% if task.status == 'todo' %}
+                                    <button type="button" class="btn btn-sm btn-primary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
+                                        <i data-feather="play" class="me-1"></i>Start Work
+                                    </button>
+                                    {% elif task.status == 'in_progress' %}
+                                    <button type="button" class="btn btn-sm btn-info me-2" onclick="updateTaskStatus({{ task.id }}, 'in_review')">
+                                        <i data-feather="eye" class="me-1"></i>Send for Review
+                                    </button>
+                                    {% elif task.status == 'in_review' %}
+                                    {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                                    <button type="button" class="btn btn-sm btn-success me-2" onclick="approveTask({{ task.id }})">
+                                        <i data-feather="check-circle" class="me-1"></i>Approve
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning me-2" onclick="rejectTask({{ task.id }})">
+                                        <i data-feather="x-circle" class="me-1"></i>Reject
+                                    </button>
+                                    {% endif %}
+                                    {% elif task.status == 'completed' %}
+                                    {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
+                                    <button type="button" class="btn btn-sm btn-secondary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
+                                        <i data-feather="rotate-ccw" class="me-1"></i>Reopen
+                                    </button>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
                             </div>
-                            
-                            <!-- Status Action Buttons -->
-                            {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
-                            <div class="status-actions mt-2">
-                                {% if task.status == 'todo' %}
-                                <button type="button" class="btn btn-sm btn-primary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
-                                    <i data-feather="play" class="me-1"></i>Start Work
-                                </button>
-                                {% elif task.status == 'in_progress' %}
-                                <button type="button" class="btn btn-sm btn-info me-2" onclick="updateTaskStatus({{ task.id }}, 'in_review')">
-                                    <i data-feather="eye" class="me-1"></i>Send for Review
-                                </button>
-                                {% elif task.status == 'in_review' %}
-                                {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
-                                <button type="button" class="btn btn-sm btn-success me-2" onclick="approveTask({{ task.id }})">
-                                    <i data-feather="check-circle" class="me-1"></i>Approve
-                                </button>
-                                <button type="button" class="btn btn-sm btn-warning me-2" onclick="rejectTask({{ task.id }})">
-                                    <i data-feather="x-circle" class="me-1"></i>Reject
-                                </button>
-                                {% endif %}
-                                {% elif task.status == 'completed' %}
-                                {% if current_user.role in ['manager', 'director'] or current_user.is_administrator %}
-                                <button type="button" class="btn btn-sm btn-secondary me-2" onclick="updateTaskStatus({{ task.id }}, 'in_progress')">
-                                    <i data-feather="rotate-ccw" class="me-1"></i>Reopen
-                                </button>
-                                {% endif %}
-                                {% endif %}
-                            </div>
-                            {% endif %}
                         </div>
+                        {% endif %}
                         
                         {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
                         <div class="detail-item inline-editable can-edit" data-field="priority" data-url="{{ url_for('update_task_detail', task_id=task.id) }}">
