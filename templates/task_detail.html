@@ -1102,9 +1102,13 @@
                                         <i data-feather="play" class="me-1"></i>Start Work
                                     </button>
                                     {% elif task.status == 'in_progress' %}
+                                    {% if task.assignee_id == current_user.id %}
                                     <button type="button" class="btn btn-sm btn-info me-2" onclick="updateTaskStatus({{ task.id }}, 'in_review')">
                                         <i data-feather="eye" class="me-1"></i>Send for Review
                                     </button>
+                                    {% else %}
+                                    <span class="text-muted small">Only the assigned user can send this task for review</span>
+                                    {% endif %}
                                     {% elif task.status == 'in_review' %}
                                     {% if current_user.id == task.supervisor_id or current_user.is_administrator %}
                                     <button type="button" class="btn btn-sm btn-success me-2" onclick="approveTask({{ task.id }})">
