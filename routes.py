@@ -1140,6 +1140,70 @@ def add_task_comment(task_id):
     
     return redirect(url_for('task_detail', task_id=task_id))
 
+@app.route('/task/<int:task_id>/update_description', methods=['POST'])
+def update_task_description(task_id):
+    """Update task description from inline editing"""
+    current_user = data_manager.get_current_user()
+    if not current_user:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Unauthorized'}), 401
+        return redirect(url_for('login'))
+    
+    task = data_manager.get_task(str(task_id))
+    if not task:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Task not found'}), 404
+        flash('Task not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Check permissions
+    can_edit = (current_user.is_administrator or 
+                task.assignee_id == current_user.id or 
+                task.created_by == current_user.id or
+                (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id))
+    
+    if not can_edit:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Permission denied'}), 403
+        flash('You do not have permission to edit this task', 'error')
+        return redirect(url_for('task_detail', task_id=task_id))
+    
+    # Get new description
+    new_description = request.form.get('description', '').strip()
+    
+    # Update description
+    old_description = task.description
+    task.description = new_description if new_description else None
+    
+    try:
+        db.session.commit()
+        
+        # Log the change in task history
+        from models import TaskHistory
+        history_entry = TaskHistory(
+            task_id=task.id,
+            user_id=current_user.id,
+            action='updated',
+            field_changed='description',
+            old_value=old_description or '',
+            new_value=new_description or ''
+        )
+        db.session.add(history_entry)
+        db.session.commit()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'Description updated successfully'})
+        else:
+            flash('Description updated successfully', 'success')
+            return redirect(url_for('task_detail', task_id=task_id))
+            
+    except Exception as e:
+        db.session.rollback()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Failed to update description'}), 500
+        flash('Failed to update description', 'error')
+        return redirect(url_for('task_detail', task_id=task_id))
+
 @app.route('/task/<int:task_id>/update', methods=['POST'])
 def update_task_detail(task_id):
     """Update task details from the detail page"""
@@ -1531,9 +1595,20 @@ def get_task_attachments(task_id):
     
     attachments = TaskAttachment.query.filter_by(task_id=task_id).all()
     
+    # Include uploader information
+    attachment_data = []
+    for attachment in attachments:
+        attachment_dict = attachment.to_dict()
+        if attachment.uploader:
+            attachment_dict['uploader'] = {
+                'username': attachment.uploader.username,
+                'display_name': attachment.uploader.display_name
+            }
+        attachment_data.append(attachment_dict)
+    
     return jsonify({
         'success': True,
-        'attachments': [attachment.to_dict() for attachment in attachments]
+        'attachments': attachment_data
     })
 
 

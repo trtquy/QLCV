@@ -754,6 +754,149 @@
 .detail-item:not(.can-edit) .edit-icon {
     display: none;
 }
+
+/* Description Editing Styles */
+.description-editable {
+    position: relative;
+}
+
+.description-editable .description-display {
+    min-height: 60px;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.description-editable .description-display:hover {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.description-editable .description-content {
+    line-height: 1.6;
+    color: #2d3748;
+}
+
+.description-editable.editing .description-display {
+    display: none !important;
+}
+
+.description-editable.editing .description-edit {
+    display: block !important;
+}
+
+.description-edit textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* File Attachments Styles */
+.attachments-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e2e8f0;
+}
+
+.upload-area {
+    border: 2px dashed #e1e5e9;
+    border-radius: 12px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.upload-area:hover {
+    border-color: #0052CC;
+    background-color: #f8f9ff;
+}
+
+.upload-area.dragover {
+    border-color: #0052CC;
+    background-color: #f8f9ff;
+    transform: scale(1.02);
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ffffff, #f7fafc);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.attachment-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e0;
+}
+
+.attachment-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    flex-shrink: 0;
+}
+
+.attachment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.attachment-name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+    word-break: break-word;
+}
+
+.attachment-meta {
+    font-size: 0.875rem;
+    color: #718096;
+    display: flex;
+    gap: 1rem;
+}
+
+.attachment-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.attachment-actions .btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-attachments {
+    text-align: center;
+    padding: 2rem;
+    color: #718096;
+}
+
+.no-attachments i {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
 </style>
 {% endblock %}
 
@@ -785,16 +928,86 @@
                 </div>
                 
                 <div class="task-description">
-                    <h3>Description</h3>
-                    {% if task.description %}
-                        <div class="description-content">
-                            {{ task.description|replace('\n', '<br>')|safe }}
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>Description</h3>
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <small class="text-muted">Click to edit</small>
+                        {% endif %}
+                    </div>
+                    
+                    {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                    <div class="description-editable can-edit" data-field="description" data-url="{{ url_for('update_task_description', task_id=task.id) }}">
                     {% else %}
-                        <p class="text-muted">No description provided.</p>
+                    <div class="description-editable">
                     {% endif %}
+                        <div class="description-display clickable-field" data-field-type="textarea">
+                            {% if task.description %}
+                                <div class="description-content">
+                                    {{ task.description|replace('\n', '<br>')|safe }}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No description provided.</p>
+                            {% endif %}
+                            <i data-feather="edit-3" class="edit-icon"></i>
+                        </div>
+                        <div class="description-edit" style="display: none;">
+                            <textarea name="description" class="form-control form-field" rows="6" 
+                                      data-validate="optional" data-field-name="Description" 
+                                      data-original-value="{{ task.description or '' }}" 
+                                      placeholder="Enter task description...">{{ task.description or '' }}</textarea>
+                            <div class="inline-actions">
+                                <button type="button" class="btn btn-sm btn-success save-field" title="Save">
+                                    <i data-feather="check"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary cancel-field" title="Cancel">
+                                    <i data-feather="x"></i>
+                                </button>
+                            </div>
+                            <div class="validation-message"></div>
+                        </div>
+                    </div>
                 </div>
                 
+                <!-- File Attachments Section -->
+                <div class="attachments-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>Attachments</h3>
+                        {% if current_user %}
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('fileUpload').click()">
+                            <i data-feather="paperclip" class="me-1"></i>
+                            Add File
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- File Upload (Hidden) -->
+                    <input type="file" id="fileUpload" style="display: none;" multiple 
+                           accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.csv">
+                    
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="progress mb-3" style="display: none;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    
+                    <!-- Drag and Drop Area -->
+                    <div class="upload-area" id="uploadArea" style="display: none;">
+                        <div class="text-center p-4">
+                            <i data-feather="upload-cloud" class="mb-2" style="width: 48px; height: 48px;"></i>
+                            <p class="mb-1">Drag and drop files here, or <a href="#" onclick="document.getElementById('fileUpload').click()">browse</a></p>
+                            <small class="text-muted">Supports: PDF, Images, Documents, Spreadsheets, Archives (Max: 16MB each)</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Attachments List -->
+                    <div id="attachmentsList">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading attachments...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Comments Section -->
                 <div class="comments-section">
                     <h3>Comments</h3>
@@ -1139,10 +1352,52 @@ class InlineFieldEditor {
     
     // Initialize inline editing for all editable fields
     init() {
+        // Handle regular detail fields
         document.querySelectorAll('.detail-item.can-edit .clickable-field').forEach(field => {
             field.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.startEditing(field.closest('.detail-item'));
+            });
+        });
+        
+        // Handle description field
+        document.querySelectorAll('.description-editable.can-edit .clickable-field').forEach(field => {
+            field.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.startEditing(field.closest('.description-editable'));
+            });
+        });
+        
+        // Handle description save/cancel buttons
+        document.querySelectorAll('.description-edit .save-field').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.saveField(btn.closest('.description-editable'));
+            });
+        });
+        
+        document.querySelectorAll('.description-edit .cancel-field').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.cancelEditing(btn.closest('.description-editable'));
+            });
+        });
+        
+        // Handle description field keyboard events
+        document.querySelectorAll('.description-edit .form-field').forEach(field => {
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    this.saveField(field.closest('.description-editable'));
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.cancelEditing(field.closest('.description-editable'));
+                }
+            });
+            
+            // Real-time validation for description
+            field.addEventListener('input', () => {
+                this.validateField(field);
             });
         });
         
@@ -1161,15 +1416,27 @@ class InlineFieldEditor {
             });
         });
         
-        // Auto-save on Enter key for select fields
+        // Auto-save on Enter key for select fields (not textareas)
         document.querySelectorAll('.detail-edit .form-field').forEach(field => {
             field.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.saveField(field.closest('.detail-item'));
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    this.cancelEditing(field.closest('.detail-item'));
+                // For textareas, only save on Ctrl+Enter, allow normal Enter for line breaks
+                if (field.tagName.toLowerCase() === 'textarea') {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.saveField(field.closest('.detail-item, .description-editable'));
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.cancelEditing(field.closest('.detail-item, .description-editable'));
+                    }
+                } else {
+                    // For selects and other inputs
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.saveField(field.closest('.detail-item'));
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.cancelEditing(field.closest('.detail-item'));
+                    }
                 }
             });
             
@@ -1195,6 +1462,12 @@ class InlineFieldEditor {
         if (formField) {
             setTimeout(() => {
                 formField.focus();
+                
+                // For textareas, position cursor at end
+                if (formField.tagName.toLowerCase() === 'textarea') {
+                    formField.setSelectionRange(formField.value.length, formField.value.length);
+                }
+                
                 this.validateField(formField);
             }, 100);
         }
@@ -1211,7 +1484,7 @@ class InlineFieldEditor {
         
         const formField = fieldContainer.querySelector('.form-field');
         if (formField) {
-            const originalValue = formField.dataset.originalValue;
+            const originalValue = formField.dataset.originalValue || '';
             formField.value = originalValue;
         }
         
@@ -1372,6 +1645,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize inline editing
     inlineEditor.init();
+    
+    // Initialize file upload system
+    initializeFileUpload();
+    
+    // Load existing attachments
+    loadAttachments();
 
     // Auto-expand comment textarea
     const commentTextarea = document.getElementById('comment');
@@ -1386,14 +1665,261 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (inlineEditor.currentlyEditing && 
             !inlineEditor.currentlyEditing.contains(e.target)) {
-            // Check if click is on another editable field
-            const clickedEditableField = e.target.closest('.detail-item.can-edit .clickable-field');
+            // Check if click is on another editable field (both detail items and description)
+            const clickedEditableField = e.target.closest('.detail-item.can-edit .clickable-field, .description-editable.can-edit .clickable-field');
             if (!clickedEditableField) {
                 inlineEditor.cancelEditing(inlineEditor.currentlyEditing);
             }
         }
     });
 });
+
+// File Upload Functions
+function initializeFileUpload() {
+    const fileInput = document.getElementById('fileUpload');
+    const uploadArea = document.getElementById('uploadArea');
+    
+    if (!fileInput) return;
+    
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            uploadFiles(files);
+            fileInput.value = ''; // Reset input
+        }
+    });
+    
+    // Show upload area when files are dragged over the attachments section
+    const attachmentsSection = document.querySelector('.attachments-section');
+    if (attachmentsSection && uploadArea) {
+        attachmentsSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.style.display = 'block';
+            uploadArea.classList.add('dragover');
+        });
+        
+        attachmentsSection.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            if (!attachmentsSection.contains(e.relatedTarget)) {
+                uploadArea.style.display = 'none';
+                uploadArea.classList.remove('dragover');
+            }
+        });
+        
+        attachmentsSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.style.display = 'none';
+            uploadArea.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                uploadFiles(files);
+            }
+        });
+    }
+}
+
+function uploadFiles(files) {
+    const taskId = getCurrentTaskId();
+    if (!taskId) {
+        showNotification('Task ID not found', 'error');
+        return;
+    }
+    
+    const progressContainer = document.getElementById('uploadProgress');
+    const progressBar = progressContainer.querySelector('.progress-bar');
+    
+    progressContainer.style.display = 'block';
+    
+    let uploaded = 0;
+    const total = files.length;
+    
+    files.forEach((file, index) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch(`/upload_file/${taskId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            uploaded++;
+            const progress = (uploaded / total) * 100;
+            progressBar.style.width = progress + '%';
+            
+            if (data.success) {
+                showNotification(`${file.name} uploaded successfully`, 'success');
+            } else {
+                showNotification(data.error || `Failed to upload ${file.name}`, 'error');
+            }
+            
+            if (uploaded === total) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    loadAttachments();
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            uploaded++;
+            showNotification(`Error uploading ${file.name}`, 'error');
+            
+            if (uploaded === total) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1000);
+            }
+        });
+    });
+}
+
+function loadAttachments() {
+    const taskId = getCurrentTaskId();
+    if (!taskId) return;
+    
+    fetch(`/api/task/${taskId}/attachments`)
+        .then(response => response.json())
+        .then(data => {
+            displayAttachments(data.attachments || []);
+        })
+        .catch(error => {
+            console.error('Error loading attachments:', error);
+            displayAttachments([]);
+        });
+}
+
+function displayAttachments(attachments) {
+    const container = document.getElementById('attachmentsList');
+    
+    if (attachments.length === 0) {
+        container.innerHTML = `
+            <div class="no-attachments">
+                <i data-feather="paperclip"></i>
+                <p>No files attached yet</p>
+                <small>Click "Add File" or drag and drop files to attach them</small>
+            </div>
+        `;
+    } else {
+        container.innerHTML = attachments.map(attachment => `
+            <div class="attachment-item">
+                <div class="attachment-icon">
+                    <i data-feather="${getFileIcon(attachment.file_type)}"></i>
+                </div>
+                <div class="attachment-info">
+                    <div class="attachment-name">${attachment.original_filename}</div>
+                    <div class="attachment-meta">
+                        <span>${formatFileSize(attachment.file_size)}</span>
+                        <span>Uploaded by ${attachment.uploader?.display_name || attachment.uploader?.username || 'Unknown'}</span>
+                        <span>${formatDate(attachment.uploaded_at)}</span>
+                    </div>
+                </div>
+                <div class="attachment-actions">
+                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                            onclick="downloadAttachment(${attachment.id})" title="Download">
+                        <i data-feather="download"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                            onclick="deleteAttachment(${attachment.id})" title="Delete">
+                        <i data-feather="trash-2"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function getFileIcon(fileType) {
+    if (!fileType) return 'file';
+    
+    if (fileType.startsWith('image/')) return 'image';
+    if (fileType.includes('pdf')) return 'file-text';
+    if (fileType.includes('word') || fileType.includes('document')) return 'file-text';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'grid';
+    if (fileType.includes('powerpoint') || fileType.includes('presentation')) return 'monitor';
+    if (fileType.includes('zip') || fileType.includes('compressed')) return 'archive';
+    
+    return 'file';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function downloadAttachment(attachmentId) {
+    window.open(`/download_file/${attachmentId}`, '_blank');
+}
+
+function deleteAttachment(attachmentId) {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+    
+    fetch(`/delete_file/${attachmentId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('File deleted successfully', 'success');
+            loadAttachments();
+        } else {
+            showNotification(data.error || 'Failed to delete file', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Delete error:', error);
+        showNotification('Error deleting file', 'error');
+    });
+}
+
+function getCurrentTaskId() {
+    const path = window.location.pathname;
+    const match = path.match(/\/task\/(\d+)/);
+    return match ? match[1] : null;
+}
+
+function showNotification(message, type = 'info') {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
+}
 
 // Add shake animation CSS
 const shakeStyle = document.createElement('style');
