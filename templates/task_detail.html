@@ -635,17 +635,124 @@
     display: block !important;
 }
 
+/* Inline Editing Styles */
+.clickable-field {
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px solid transparent;
+}
+
+.clickable-field:hover {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-icon {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    width: 14px;
+    height: 14px;
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+.clickable-field:hover .edit-icon {
+    opacity: 1;
+}
+
+.detail-value-container {
+    flex: 1;
+    position: relative;
+}
+
+.detail-edit {
+    position: relative;
+    width: 100%;
+}
+
+.inline-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    justify-content: flex-end;
+}
+
+.inline-actions .btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.inline-actions .btn i {
+    width: 14px;
+    height: 14px;
+}
+
+/* Field Edit States */
+.detail-item.editing .detail-display {
+    display: none !important;
+}
+
+.detail-item.editing .detail-edit {
+    display: block !important;
+}
+
+.detail-item.saving {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.detail-item.saving::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #6c757d;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
 /* Enhanced Form Controls */
-.form-select, .form-control {
+.detail-edit .form-select, .detail-edit .form-control {
     border-radius: 8px;
     border: 2px solid #e2e8f0;
     padding: 0.5rem 0.75rem;
     transition: all 0.2s ease;
+    width: 100%;
 }
 
-.form-select:focus, .form-control:focus {
+.detail-edit .form-select:focus, .detail-edit .form-control:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+/* Permission-based styling */
+.detail-item:not(.can-edit) .clickable-field {
+    cursor: default;
+}
+
+.detail-item:not(.can-edit) .clickable-field:hover {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.detail-item:not(.can-edit) .edit-icon {
+    display: none;
 }
 </style>
 {% endblock %}
@@ -740,12 +847,7 @@
                 <div class="sidebar-section">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="sidebar-title mb-0">Task Details</h4>
-                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleEditMode()" id="editToggleBtn">
-                            <i data-feather="edit-2"></i>
-                            Edit
-                        </button>
-                        {% endif %}
+                        <small class="text-muted">Click any field to edit</small>
                     </div>
                     
                     <!-- Validation Summary -->
@@ -755,79 +857,141 @@
                     </div>
 
                     <form id="taskEditForm" method="POST" action="{{ url_for('update_task_detail', task_id=task.id) }}">
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <div class="detail-item inline-editable can-edit" data-field="status" data-url="{{ url_for('update_task_detail', task_id=task.id) }}">
+                        {% else %}
                         <div class="detail-item" data-field="status">
+                        {% endif %}
                             <span class="detail-label">Status</span>
-                            <span class="detail-value detail-display" id="status-display">
-                                <span class="status-badge status-{{ task.status }}">
-                                    {{ task.status.replace('_', ' ').title() }}
+                            <div class="detail-value-container">
+                                <span class="detail-value detail-display clickable-field" data-field-type="select">
+                                    <span class="status-badge status-{{ task.status }}">
+                                        {{ task.status.replace('_', ' ').title() }}
+                                    </span>
+                                    <i data-feather="edit-3" class="edit-icon"></i>
                                 </span>
-                            </span>
-                            <div class="detail-edit" id="status-edit" style="display: none;">
-                                <select name="status" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Status">
-                                    <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
-                                    <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                                    <option value="in_review" {% if task.status == 'in_review' %}selected{% endif %}>In Review</option>
-                                    <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-                                </select>
-                                <div class="validation-message" id="status-validation"></div>
+                                <div class="detail-edit" style="display: none;">
+                                    <select name="status" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Status" data-original-value="{{ task.status }}">
+                                        <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
+                                        <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="in_review" {% if task.status == 'in_review' %}selected{% endif %}>In Review</option>
+                                        <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                    <div class="inline-actions">
+                                        <button type="button" class="btn btn-sm btn-success save-field" title="Save">
+                                            <i data-feather="check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary cancel-field" title="Cancel">
+                                            <i data-feather="x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="validation-message"></div>
+                                </div>
                             </div>
                         </div>
                         
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <div class="detail-item inline-editable can-edit" data-field="priority" data-url="{{ url_for('update_task_detail', task_id=task.id) }}">
+                        {% else %}
                         <div class="detail-item" data-field="priority">
+                        {% endif %}
                             <span class="detail-label">Priority</span>
-                            <span class="detail-value detail-display" id="priority-display">
-                                <span class="priority-indicator priority-{{ task.priority }}"></span>
-                                {{ task.priority.title() }}
-                            </span>
-                            <div class="detail-edit" id="priority-edit" style="display: none;">
-                                <select name="priority" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Priority">
-                                    <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
-                                    <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
-                                    <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
-                                    <option value="urgent" {% if task.priority == 'urgent' %}selected{% endif %}>Urgent</option>
-                                </select>
-                                <div class="validation-message" id="priority-validation"></div>
+                            <div class="detail-value-container">
+                                <span class="detail-value detail-display clickable-field" data-field-type="select">
+                                    <span class="priority-indicator priority-{{ task.priority }}"></span>
+                                    {{ task.priority.title() }}
+                                    <i data-feather="edit-3" class="edit-icon"></i>
+                                </span>
+                                <div class="detail-edit" style="display: none;">
+                                    <select name="priority" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Priority" data-original-value="{{ task.priority }}">
+                                        <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
+                                        <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
+                                        <option value="urgent" {% if task.priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                                    </select>
+                                    <div class="inline-actions">
+                                        <button type="button" class="btn btn-sm btn-success save-field" title="Save">
+                                            <i data-feather="check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary cancel-field" title="Cancel">
+                                            <i data-feather="x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="validation-message"></div>
+                                </div>
                             </div>
                         </div>
                         
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <div class="detail-item inline-editable can-edit" data-field="complexity" data-url="{{ url_for('update_task_detail', task_id=task.id) }}">
+                        {% else %}
                         <div class="detail-item" data-field="complexity">
+                        {% endif %}
                             <span class="detail-label">Complexity</span>
-                            <span class="detail-value detail-display" id="complexity-display">{{ task.complexity.replace('_', ' ').title() }}</span>
-                            <div class="detail-edit" id="complexity-edit" style="display: none;">
-                                <select name="complexity" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Complexity">
-                                    <option value="very_simple" {% if task.complexity == 'very_simple' %}selected{% endif %}>Very Simple</option>
-                                    <option value="simple" {% if task.complexity == 'simple' %}selected{% endif %}>Simple</option>
-                                    <option value="medium" {% if task.complexity == 'medium' %}selected{% endif %}>Medium</option>
-                                    <option value="complex" {% if task.complexity == 'complex' %}selected{% endif %}>Complex</option>
-                                    <option value="very_complex" {% if task.complexity == 'very_complex' %}selected{% endif %}>Very Complex</option>
-                                </select>
-                                <div class="validation-message" id="complexity-validation"></div>
+                            <div class="detail-value-container">
+                                <span class="detail-value detail-display clickable-field" data-field-type="select">
+                                    {{ task.complexity.replace('_', ' ').title() }}
+                                    <i data-feather="edit-3" class="edit-icon"></i>
+                                </span>
+                                <div class="detail-edit" style="display: none;">
+                                    <select name="complexity" class="form-select form-select-sm form-field" data-validate="required" data-field-name="Complexity" data-original-value="{{ task.complexity }}">
+                                        <option value="very_simple" {% if task.complexity == 'very_simple' %}selected{% endif %}>Very Simple</option>
+                                        <option value="simple" {% if task.complexity == 'simple' %}selected{% endif %}>Simple</option>
+                                        <option value="medium" {% if task.complexity == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="complex" {% if task.complexity == 'complex' %}selected{% endif %}>Complex</option>
+                                        <option value="very_complex" {% if task.complexity == 'very_complex' %}selected{% endif %}>Very Complex</option>
+                                    </select>
+                                    <div class="inline-actions">
+                                        <button type="button" class="btn btn-sm btn-success save-field" title="Save">
+                                            <i data-feather="check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary cancel-field" title="Cancel">
+                                            <i data-feather="x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="validation-message"></div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="detail-item" data-field="assignee">
+                        {% if current_user.is_administrator or task.assignee_id == current_user.id or task.created_by == current_user.id or (current_user.role in ['manager', 'director'] and task.team_id == current_user.team_id) %}
+                        <div class="detail-item inline-editable can-edit" data-field="assignee_id" data-url="{{ url_for('update_task_detail', task_id=task.id) }}">
+                        {% else %}
+                        <div class="detail-item" data-field="assignee_id">
+                        {% endif %}
                             <span class="detail-label">Assignee</span>
-                            <span class="detail-value detail-display" id="assignee-display">
-                                {% if task.assignee_id %}
-                                    {% for user in team_users %}
-                                        {% if user.id == task.assignee_id %}
+                            <div class="detail-value-container">
+                                <span class="detail-value detail-display clickable-field" data-field-type="select">
+                                    {% if task.assignee_id %}
+                                        {% for user in team_users %}
+                                            {% if user.id == task.assignee_id %}
+                                                {{ user.display_name or user.username }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                    <i data-feather="edit-3" class="edit-icon"></i>
+                                </span>
+                                <div class="detail-edit" style="display: none;">
+                                    <select name="assignee_id" class="form-select form-select-sm form-field" data-validate="optional" data-field-name="Assignee" data-original-value="{{ task.assignee_id or '' }}">
+                                        <option value="">Unassigned</option>
+                                        {% for user in team_users %}
+                                        <option value="{{ user.id }}" {% if task.assignee_id == user.id %}selected{% endif %}>
                                             {{ user.display_name or user.username }}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-muted">Unassigned</span>
-                                {% endif %}
-                            </span>
-                            <div class="detail-edit" id="assignee-edit" style="display: none;">
-                                <select name="assignee_id" class="form-select form-select-sm form-field" data-validate="optional" data-field-name="Assignee">
-                                    <option value="">Unassigned</option>
-                                    {% for user in team_users %}
-                                    <option value="{{ user.id }}" {% if task.assignee_id == user.id %}selected{% endif %}>
-                                        {{ user.display_name or user.username }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <div class="validation-message" id="assignee-validation"></div>
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="inline-actions">
+                                        <button type="button" class="btn btn-sm btn-success save-field" title="Save">
+                                            <i data-feather="check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary cancel-field" title="Cancel">
+                                            <i data-feather="x"></i>
+                                        </button>
+                                    </div>
+                                    <div class="validation-message"></div>
+                                </div>
                             </div>
                         </div>
                         
@@ -865,24 +1029,7 @@
                         </div>
                         {% endif %}
                         
-                        <div class="detail-edit" id="edit-actions" style="display: none;">
-                            <div class="d-flex gap-2 mt-3">
-                                <button type="submit" class="btn btn-sm btn-success btn-save" id="saveBtn">
-                                    <span id="saveText">
-                                        <i data-feather="check"></i>
-                                        Save
-                                    </span>
-                                    <span id="savingText" style="display: none;">
-                                        <span class="loading-spinner"></span>
-                                        Saving...
-                                    </span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit()">
-                                    <i data-feather="x"></i>
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
+
                     </form>
                 </div>
                 
@@ -980,240 +1127,241 @@
 
 {% block extra_scripts %}
 <script>
-// Real-time validation engine
-class TaskFormValidator {
+// Individual Field Inline Editing System
+class InlineFieldEditor {
     constructor() {
         this.validationRules = {
             required: (value) => value && value.trim() !== '',
-            optional: () => true // Always valid for optional fields
+            optional: () => true
         };
-        
-        this.validatedFields = new Set();
-        this.errorMessages = {};
-        this.isFormValid = false;
+        this.currentlyEditing = null;
     }
     
-    validateField(field) {
-        const fieldName = field.dataset.fieldName;
-        const validationType = field.dataset.validate;
-        const value = field.value;
-        const validationRule = this.validationRules[validationType];
+    // Initialize inline editing for all editable fields
+    init() {
+        document.querySelectorAll('.detail-item.can-edit .clickable-field').forEach(field => {
+            field.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.startEditing(field.closest('.detail-item'));
+            });
+        });
         
+        // Set up save/cancel buttons
+        document.querySelectorAll('.save-field').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.saveField(btn.closest('.detail-item'));
+            });
+        });
+        
+        document.querySelectorAll('.cancel-field').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.cancelEditing(btn.closest('.detail-item'));
+            });
+        });
+        
+        // Auto-save on Enter key for select fields
+        document.querySelectorAll('.detail-edit .form-field').forEach(field => {
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.saveField(field.closest('.detail-item'));
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.cancelEditing(field.closest('.detail-item'));
+                }
+            });
+            
+            // Real-time validation
+            field.addEventListener('change', () => {
+                this.validateField(field);
+            });
+        });
+    }
+    
+    // Start editing a specific field
+    startEditing(fieldContainer) {
+        // Cancel any other field being edited
+        if (this.currentlyEditing && this.currentlyEditing !== fieldContainer) {
+            this.cancelEditing(this.currentlyEditing);
+        }
+        
+        this.currentlyEditing = fieldContainer;
+        fieldContainer.classList.add('editing');
+        
+        // Focus on the form field
+        const formField = fieldContainer.querySelector('.form-field');
+        if (formField) {
+            setTimeout(() => {
+                formField.focus();
+                this.validateField(formField);
+            }, 100);
+        }
+        
+        // Re-render icons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+    
+    // Cancel editing and restore original value
+    cancelEditing(fieldContainer) {
+        if (!fieldContainer.classList.contains('editing')) return;
+        
+        const formField = fieldContainer.querySelector('.form-field');
+        if (formField) {
+            const originalValue = formField.dataset.originalValue;
+            formField.value = originalValue;
+        }
+        
+        fieldContainer.classList.remove('editing', 'field-valid', 'field-invalid');
+        this.clearValidationMessage(fieldContainer);
+        
+        if (this.currentlyEditing === fieldContainer) {
+            this.currentlyEditing = null;
+        }
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+    
+    // Validate a field and show feedback
+    validateField(formField) {
+        const fieldContainer = formField.closest('.detail-item');
+        const validationType = formField.dataset.validate;
+        const value = formField.value;
+        const fieldName = formField.dataset.fieldName;
+        
+        const validationRule = this.validationRules[validationType];
         if (!validationRule) return true;
         
         const isValid = validationRule(value);
-        const fieldContainer = field.closest('.detail-item');
-        const validationMessage = fieldContainer.querySelector('.validation-message');
         
         // Update field styling
-        field.classList.remove('valid', 'invalid');
-        field.classList.add(isValid ? 'valid' : 'invalid');
+        formField.classList.remove('valid', 'invalid');
+        formField.classList.add(isValid ? 'valid' : 'invalid');
         
         // Update container styling
         fieldContainer.classList.remove('field-valid', 'field-invalid');
         fieldContainer.classList.add(isValid ? 'field-valid' : 'field-invalid');
         
         // Show validation message
+        const validationMessage = fieldContainer.querySelector('.validation-message');
         if (validationMessage) {
             validationMessage.classList.remove('show', 'success', 'error');
             
             if (isValid) {
-                validationMessage.textContent = validationType === 'required' ? 'Valid selection' : '';
-                validationMessage.classList.add('success', 'show');
-                this.validatedFields.add(fieldName);
-                delete this.errorMessages[fieldName];
+                if (validationType === 'required') {
+                    validationMessage.textContent = 'Valid selection';
+                    validationMessage.classList.add('success', 'show');
+                }
             } else {
                 const errorMsg = validationType === 'required' ? `${fieldName} is required` : 'Invalid value';
                 validationMessage.textContent = errorMsg;
                 validationMessage.classList.add('error', 'show');
-                this.validatedFields.delete(fieldName);
-                this.errorMessages[fieldName] = errorMsg;
             }
         }
         
-        this.updateFormState();
         return isValid;
     }
     
-    updateFormState() {
-        const requiredFields = document.querySelectorAll('[data-validate="required"]');
-        const allRequiredValid = Array.from(requiredFields).every(field => 
-            field.classList.contains('valid')
-        );
-        
-        this.isFormValid = allRequiredValid;
-        this.updateSaveButton();
-        this.updateValidationSummary();
-    }
-    
-    updateSaveButton() {
-        const saveBtn = document.getElementById('saveBtn');
-        if (!saveBtn) return;
-        
-        saveBtn.disabled = !this.isFormValid;
-        if (this.isFormValid) {
-            saveBtn.classList.remove('error');
-            saveBtn.classList.add('success');
-        } else {
-            saveBtn.classList.remove('success');
-            saveBtn.classList.add('error');
+    // Clear validation message
+    clearValidationMessage(fieldContainer) {
+        const validationMessage = fieldContainer.querySelector('.validation-message');
+        if (validationMessage) {
+            validationMessage.classList.remove('show', 'success', 'error');
+            validationMessage.textContent = '';
         }
     }
     
-    updateValidationSummary() {
-        const summary = document.getElementById('validationSummary');
-        const errorsList = document.getElementById('validationErrors');
+    // Save field changes via AJAX
+    async saveField(fieldContainer) {
+        const formField = fieldContainer.querySelector('.form-field');
+        if (!formField) return;
         
-        if (!summary || !errorsList) return;
-        
-        if (Object.keys(this.errorMessages).length > 0) {
-            errorsList.innerHTML = Object.values(this.errorMessages)
-                .map(msg => `<li>${msg}</li>`)
-                .join('');
-            summary.classList.add('show');
-        } else {
-            summary.classList.remove('show');
+        // Validate before saving
+        if (!this.validateField(formField)) {
+            // Shake effect for invalid field
+            fieldContainer.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                fieldContainer.style.animation = '';
+            }, 500);
+            return;
         }
-    }
-    
-    reset() {
-        this.validatedFields.clear();
-        this.errorMessages = {};
-        this.isFormValid = false;
         
-        // Clear all field states
-        document.querySelectorAll('.form-field').forEach(field => {
-            field.classList.remove('valid', 'invalid');
-            const container = field.closest('.detail-item');
-            container.classList.remove('field-valid', 'field-invalid');
+        const fieldName = formField.name;
+        const fieldValue = formField.value;
+        const url = fieldContainer.dataset.url;
+        
+        // Show saving state
+        fieldContainer.classList.add('saving');
+        
+        try {
+            const formData = new FormData();
+            formData.append(fieldName, fieldValue);
             
-            const message = container.querySelector('.validation-message');
-            if (message) {
-                message.classList.remove('show', 'success', 'error');
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update original value
+                formField.dataset.originalValue = fieldValue;
+                
+                // Show success briefly then reload to update UI
+                fieldContainer.classList.remove('saving');
+                fieldContainer.classList.add('field-valid');
+                
+                // Show success message
+                const validationMessage = fieldContainer.querySelector('.validation-message');
+                if (validationMessage) {
+                    validationMessage.textContent = 'Saved!';
+                    validationMessage.classList.remove('error');
+                    validationMessage.classList.add('success', 'show');
+                }
+                
+                // Reload page after brief delay to update all UI
+                setTimeout(() => {
+                    location.reload();
+                }, 800);
+                
+            } else {
+                throw new Error(data.error || 'Failed to update field');
             }
-        });
-        
-        this.updateSaveButton();
-        this.updateValidationSummary();
+            
+        } catch (error) {
+            console.error('Error saving field:', error);
+            
+            fieldContainer.classList.remove('saving');
+            fieldContainer.classList.add('field-invalid');
+            
+            // Show error message
+            const validationMessage = fieldContainer.querySelector('.validation-message');
+            if (validationMessage) {
+                validationMessage.textContent = 'Error: ' + error.message;
+                validationMessage.classList.remove('success');
+                validationMessage.classList.add('error', 'show');
+            }
+            
+            // Auto-clear error after 3 seconds
+            setTimeout(() => {
+                this.clearValidationMessage(fieldContainer);
+                fieldContainer.classList.remove('field-invalid');
+            }, 3000);
+        }
     }
 }
 
-// Global validator instance
-let formValidator = new TaskFormValidator();
-
-// Enhanced edit mode functions
-window.toggleEditMode = function() {
-    const sidebar = document.querySelector('.task-sidebar');
-    const editBtn = document.getElementById('editToggleBtn');
-    
-    if (sidebar && editBtn) {
-        if (sidebar.classList.contains('edit-mode')) {
-            window.cancelEdit();
-        } else {
-            sidebar.classList.add('edit-mode');
-            editBtn.innerHTML = '<i data-feather="x"></i> Cancel';
-            if (typeof feather !== 'undefined') {
-                feather.replace();
-            }
-            
-            // Initialize validation for all fields
-            setTimeout(() => {
-                document.querySelectorAll('.form-field').forEach(field => {
-                    formValidator.validateField(field);
-                });
-            }, 100);
-        }
-    }
-};
-
-window.cancelEdit = function() {
-    const sidebar = document.querySelector('.task-sidebar');
-    const editBtn = document.getElementById('editToggleBtn');
-    const form = document.getElementById('taskEditForm');
-    
-    if (sidebar && editBtn) {
-        sidebar.classList.remove('edit-mode');
-        editBtn.innerHTML = '<i data-feather="edit-2"></i> Edit';
-        if (form) {
-            form.reset();
-        }
-        formValidator.reset();
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-    }
-};
-
-// Enhanced form submission with loading states
-window.submitTaskForm = function(form) {
-    const saveBtn = document.getElementById('saveBtn');
-    const saveText = document.getElementById('saveText');
-    const savingText = document.getElementById('savingText');
-    
-    // Show loading state
-    saveBtn.classList.add('saving');
-    saveBtn.disabled = true;
-    saveText.style.display = 'none';
-    savingText.style.display = 'inline';
-    
-    const formData = new FormData(form);
-    
-    return fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Show success state
-            saveBtn.classList.remove('saving');
-            saveBtn.classList.add('success');
-            savingText.style.display = 'none';
-            saveText.innerHTML = '<i data-feather="check-circle"></i> Saved!';
-            saveText.style.display = 'inline';
-            
-            if (typeof feather !== 'undefined') {
-                feather.replace();
-            }
-            
-            // Reload after short delay to show success state
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        } else {
-            throw new Error(data.error || 'Failed to update task');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        
-        // Show error state
-        saveBtn.classList.remove('saving');
-        saveBtn.classList.add('error');
-        savingText.style.display = 'none';
-        saveText.innerHTML = '<i data-feather="alert-circle"></i> Error';
-        saveText.style.display = 'inline';
-        
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-        
-        // Reset button after delay
-        setTimeout(() => {
-            saveBtn.classList.remove('error');
-            saveBtn.disabled = false;
-            saveText.innerHTML = '<i data-feather="check"></i> Save';
-            if (typeof feather !== 'undefined') {
-                feather.replace();
-            }
-        }, 3000);
-        
-        alert('Error: ' + error.message);
-    });
-};
+// Global inline editor instance
+let inlineEditor = new InlineFieldEditor();
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -1221,30 +1369,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
+    
+    // Initialize inline editing
+    inlineEditor.init();
 
-    // Set up real-time validation
-    document.querySelectorAll('.form-field').forEach(field => {
-        // Validate on change
-        field.addEventListener('change', function() {
-            formValidator.validateField(this);
-        });
-        
-        // Validate on input for immediate feedback
-        field.addEventListener('input', function() {
-            // Debounce validation for performance
-            clearTimeout(this.validationTimeout);
-            this.validationTimeout = setTimeout(() => {
-                formValidator.validateField(this);
-            }, 300);
-        });
-        
-        // Validate on blur
-        field.addEventListener('blur', function() {
-            formValidator.validateField(this);
-        });
-    });
-
-    // Auto-expand textarea
+    // Auto-expand comment textarea
     const commentTextarea = document.getElementById('comment');
     if (commentTextarea) {
         commentTextarea.addEventListener('input', function() {
@@ -1252,32 +1381,18 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.height = (this.scrollHeight) + 'px';
         });
     }
-
-    // Enhanced form submission
-    const editForm = document.getElementById('taskEditForm');
-    if (editForm) {
-        editForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Final validation check
-            let isValid = true;
-            document.querySelectorAll('.form-field').forEach(field => {
-                if (!formValidator.validateField(field) && field.dataset.validate === 'required') {
-                    isValid = false;
-                }
-            });
-            
-            if (isValid) {
-                window.submitTaskForm(this);
-            } else {
-                // Shake effect for invalid form
-                this.style.animation = 'shake 0.5s ease-in-out';
-                setTimeout(() => {
-                    this.style.animation = '';
-                }, 500);
+    
+    // Close any editing field when clicking outside
+    document.addEventListener('click', function(e) {
+        if (inlineEditor.currentlyEditing && 
+            !inlineEditor.currentlyEditing.contains(e.target)) {
+            // Check if click is on another editable field
+            const clickedEditableField = e.target.closest('.detail-item.can-edit .clickable-field');
+            if (!clickedEditableField) {
+                inlineEditor.cancelEditing(inlineEditor.currentlyEditing);
             }
-        });
-    }
+        }
+    });
 });
 
 // Add shake animation CSS
