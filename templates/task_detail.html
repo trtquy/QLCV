@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ task.title }} - Task Details (v2.0){% endblock %}
+{% block title %}{{ task.title }} - Task Details (v2.1){% endblock %}
 
 {% block extra_head %}
-<!-- Force cache bust -->
+<!-- Force cache bust v2.1 -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<meta name="cache-buster" content="{{ timestamp or '20250901183100' }}"
 <style>
 /* Base Layout */
 .task-detail-container {
