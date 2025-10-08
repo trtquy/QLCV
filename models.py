@@ -2,6 +2,13 @@ from app import db
 from datetime import datetime
 from typing import Optional
 
+
+task_tags = db.Table(
+    'task_tags',
+    db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
+)
+
 class User(db.Model):
     __tablename__ = 'users'
     
@@ -78,7 +85,7 @@ class Team(db.Model):
 
 class Task(db.Model):
     __tablename__ = 'tasks'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
@@ -104,6 +111,19 @@ class Task(db.Model):
     
     # Sub-task relationships
     parent_task = db.relationship('Task', remote_side=[id], backref=db.backref('subtasks', lazy='dynamic'))
+
+    tags = db.relationship(
+        'Tag',
+        secondary=task_tags,
+        back_populates='tasks',
+        lazy='selectin'
+    )
+    custom_fields = db.relationship(
+        'TaskCustomField',
+        back_populates='task',
+        cascade='all, delete-orphan',
+        lazy='selectin'
+    )
     
     # Indexes for better performance
     __table_args__ = (
@@ -177,7 +197,58 @@ class Task(db.Model):
             'subtask_progress': self.get_subtask_progress(),
             'subtask_count': self.subtasks.count() if self.subtasks else 0,
             'is_subtask': self.is_subtask(),
-            'can_be_completed': self.can_be_completed()
+            'can_be_completed': self.can_be_completed(),
+            'tags': [tag.to_dict() for tag in self.tags],
+            'tag_names': [tag.name for tag in self.tags],
+            'custom_fields': [field.to_dict() for field in self.custom_fields]
+        }
+
+
+class Tag(db.Model):
+    __tablename__ = 'tags'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    color = db.Column(db.String(20), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    tasks = db.relationship('Task', secondary=task_tags, back_populates='tags', lazy='selectin')
+
+    def __repr__(self):
+        return f'<Tag {self.name}>'
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'color': self.color,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class TaskCustomField(db.Model):
+    __tablename__ = 'task_custom_fields'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+    field_name = db.Column(db.String(100), nullable=False)
+    field_value = db.Column(db.Text, nullable=True)
+    field_type = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    task = db.relationship('Task', back_populates='custom_fields')
+
+    def __repr__(self):
+        return f'<TaskCustomField {self.field_name}>'
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'task_id': str(self.task_id),
+            'field_name': self.field_name,
+            'field_value': self.field_value,
+            'field_type': self.field_type,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
 class TaskAttachment(db.Model):

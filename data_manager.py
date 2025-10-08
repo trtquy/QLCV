@@ -1,5 +1,5 @@
-from typing import List, Optional
-from models import User, Task, Team, TimeLog
+from typing import List, Optional, Iterable, Dict, Any
+from models import User, Task, Team, TimeLog, Tag, TaskCustomField
 from app import db
 from flask import session
 import logging
@@ -69,14 +69,16 @@ class DataManager:
         return False
     
     # Task management
-    def create_task(self, title: str, description: str, created_by: str, 
+    def create_task(self, title: str, description: str, created_by: str,
                    assignee_id: Optional[str] = None, supervisor_id: Optional[str] = None,
-                   priority: str = 'medium', complexity: str = 'medium', 
-                   started_at=None, due_date=None) -> Task:
+                   priority: str = 'medium', complexity: str = 'medium',
+                   started_at=None, due_date=None,
+                   tags: Optional[Iterable[str]] = None,
+                   custom_fields: Optional[Iterable[Dict[str, Any]]] = None) -> Task:
         """Create a new task"""
         # Determine initial status based on due date
         initial_status = 'in_progress' if due_date else 'todo'
-        
+
         task = Task(
             title=title,
             description=description,
@@ -90,6 +92,14 @@ class DataManager:
             due_date=due_date
         )
         db.session.add(task)
+        db.session.flush()
+
+        if tags is not None:
+            self._set_task_tags(task, tags)
+
+        if custom_fields is not None:
+            self._set_task_custom_fields(task, custom_fields)
+
         db.session.commit()
         return task
     
@@ -113,13 +123,29 @@ class DataManager:
         """Update task data"""
         task = Task.query.get(int(task_id))
         if task:
+            tags = kwargs.pop('tags', None)
+            custom_fields = kwargs.pop('custom_fields', None)
+
+            commit_needed = False
+
             for key, value in kwargs.items():
                 if hasattr(task, key):
                     if key == 'assignee_id' and value:
                         setattr(task, key, int(value))
                     else:
                         setattr(task, key, value)
-            db.session.commit()
+                        commit_needed = True
+
+            if tags is not None:
+                self._set_task_tags(task, tags)
+                commit_needed = True
+
+            if custom_fields is not None:
+                self._set_task_custom_fields(task, custom_fields)
+                commit_needed = True
+
+            if commit_needed:
+                db.session.commit()
         return task
     
     def delete_task(self, task_id: str) -> bool:
@@ -302,6 +328,69 @@ class DataManager:
             query = query.filter(TimeLog.start_time <= end_date)
             
         return query.order_by(TimeLog.start_time.desc()).all()
+
+    # Tag and custom field helpers
+    def _normalize_tag_names(self, tags: Iterable[str]) -> List[str]:
+        normalized = []
+        for tag in tags or []:
+            if isinstance(tag, str):
+                name = tag.strip()
+            else:
+                name = str(tag).strip()
+            if name:
+                normalized.append(name)
+        # Preserve order but remove duplicates (case-insensitive)
+        seen = set()
+        unique_tags = []
+        for name in normalized:
+            key = name.lower()
+            if key not in seen:
+                seen.add(key)
+                unique_tags.append(name)
+        return unique_tags
+
+    def _get_or_create_tag(self, name: str) -> Tag:
+        existing = Tag.query.filter(db.func.lower(Tag.name) == name.lower()).first()
+        if existing:
+            return existing
+
+        tag = Tag(name=name)
+        db.session.add(tag)
+        db.session.flush()
+        return tag
+
+    def _set_task_tags(self, task: Task, tags: Iterable[str]):
+        normalized_tags = self._normalize_tag_names(tags)
+        if not normalized_tags:
+            task.tags.clear()
+            return
+
+        tag_objects = [self._get_or_create_tag(name) for name in normalized_tags]
+        task.tags = tag_objects
+
+    def _set_task_custom_fields(self, task: Task, fields: Iterable[Dict[str, Any]]):
+        task.custom_fields.clear()
+
+        if not fields:
+            return
+
+        for field in fields:
+            if not isinstance(field, dict):
+                continue
+
+            name = field.get('name') or field.get('field_name')
+            value = field.get('value') or field.get('field_value')
+            field_type = field.get('type') or field.get('field_type')
+
+            if not name:
+                continue
+
+            custom_field = TaskCustomField(
+                field_name=str(name).strip(),
+                field_value=str(value).strip() if value is not None else None,
+                field_type=str(field_type).strip() if field_type else None
+            )
+            task.custom_fields.append(custom_field)
     
     def update_task_estimate(self, task_id: str, estimated_hours: float) -> Optional[Task]:
         """Update task time estimate"""

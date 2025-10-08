@@ -126,16 +126,36 @@ function loadTaskForEdit(taskId) {
         if (estimatedEl) estimatedEl.value = task.estimated_hours || '';
         if (assigneeIdEl) assigneeIdEl.value = task.assignee_id || '';
         if (supervisorIdEl) supervisorIdEl.value = task.supervisor_id || '';
-        
+
         // Set date fields
         var startedAtEl = document.getElementById('edit_started_at');
         var dueDateEl = document.getElementById('edit_due_date');
         var completedAtEl = document.getElementById('edit_completed_at');
-        
+
         if (startedAtEl) startedAtEl.value = task.started_at ? task.started_at.split('T')[0] : '';
         if (dueDateEl) dueDateEl.value = task.due_date ? task.due_date.split('T')[0] : '';
         if (completedAtEl) completedAtEl.value = task.completed_at ? task.completed_at.split('T')[0] : '';
-        
+
+        var tagsInput = document.getElementById('edit_tags');
+        if (tagsInput) {
+            var tagNames = Array.isArray(task.tags) ? task.tags : [];
+            if (tagNames.length && typeof tagNames[0] === 'object') {
+                tagNames = tagNames.map(function(tag) {
+                    return tag && tag.name ? tag.name : '';
+                }).filter(function(name) { return name; });
+            }
+            tagsInput.value = tagNames.join(', ');
+        }
+
+        if (typeof renderCustomFields === 'function') {
+            renderCustomFields('edit', task.custom_fields || []);
+        }
+
+        var hiddenFieldsInput = document.getElementById('edit_custom_fields');
+        if (hiddenFieldsInput) {
+            hiddenFieldsInput.value = JSON.stringify(task.custom_fields || []);
+        }
+
         // Set form action
         var form = document.getElementById('editTaskForm');
         if (form) form.action = '/update_task/' + taskId;
@@ -409,10 +429,198 @@ window.tasksData = [
         total_logged: {{ task.get_total_time_logged() or 0 }},
         started_at: "{{ task.started_at.isoformat() if task.started_at else '' }}",
         due_date: "{{ task.due_date.isoformat() if task.due_date else '' }}",
-        completed_at: "{{ task.completed_at.isoformat() if task.completed_at else '' }}"
+        completed_at: "{{ task.completed_at.isoformat() if task.completed_at else '' }}",
+        tags: {{ task.tags | map(attribute='name') | list | tojson }},
+        custom_fields: {{ task.custom_fields | map(attribute='to_dict') | list | tojson }}
     }{% if not loop.last %},{% endif %}
     {% endfor %}
 ];
+
+function toggleCustomFieldsEmptyState(prefix) {
+    var container = document.getElementById(prefix + '_custom_fields_container');
+    var emptyState = document.getElementById(prefix + '_custom_fields_empty');
+
+    if (!container || !emptyState) {
+        return;
+    }
+
+    var hasRows = container.querySelectorAll('.custom-field-row').length > 0;
+    emptyState.style.display = hasRows ? 'none' : 'block';
+}
+
+function addCustomField(prefix, fieldData) {
+    var container = document.getElementById(prefix + '_custom_fields_container');
+    if (!container) {
+        return;
+    }
+
+    var row = document.createElement('div');
+    row.className = 'custom-field-row row g-2 align-items-center mb-2';
+
+    var nameCol = document.createElement('div');
+    nameCol.className = 'col-md-4';
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'form-control clean-input custom-field-name';
+    nameInput.placeholder = 'Field name';
+    var fieldNameValue = '';
+    if (fieldData) {
+        fieldNameValue = fieldData.name || fieldData.field_name || '';
+    }
+    nameInput.value = fieldNameValue;
+    nameCol.appendChild(nameInput);
+
+    var valueCol = document.createElement('div');
+    valueCol.className = 'col-md-5';
+    var valueInput = document.createElement('input');
+    valueInput.type = 'text';
+    valueInput.className = 'form-control clean-input custom-field-value';
+    valueInput.placeholder = 'Field value';
+    var fieldValueValue = '';
+    if (fieldData) {
+        fieldValueValue = fieldData.value || fieldData.field_value || '';
+    }
+    valueInput.value = fieldValueValue;
+    valueCol.appendChild(valueInput);
+
+    var typeCol = document.createElement('div');
+    typeCol.className = 'col-md-2';
+    var typeSelect = document.createElement('select');
+    typeSelect.className = 'form-select clean-input custom-field-type';
+    typeSelect.innerHTML = '<option value="">Text</option>' +
+        '<option value="number">Number</option>' +
+        '<option value="date">Date</option>' +
+        '<option value="url">URL</option>';
+    if (fieldData) {
+        var fieldTypeValue = fieldData.type || fieldData.field_type || '';
+        if (fieldTypeValue) {
+            typeSelect.value = fieldTypeValue;
+        }
+    }
+    typeCol.appendChild(typeSelect);
+
+    var removeCol = document.createElement('div');
+    removeCol.className = 'col-md-1 text-end';
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-link text-danger p-0 custom-field-remove';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.addEventListener('click', function() {
+        row.remove();
+        toggleCustomFieldsEmptyState(prefix);
+    });
+    removeCol.appendChild(removeBtn);
+
+    row.appendChild(nameCol);
+    row.appendChild(valueCol);
+    row.appendChild(typeCol);
+    row.appendChild(removeCol);
+
+    container.appendChild(row);
+
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+
+    toggleCustomFieldsEmptyState(prefix);
+}
+
+function renderCustomFields(prefix, fields) {
+    var container = document.getElementById(prefix + '_custom_fields_container');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (!fields || fields.length === 0) {
+        addCustomField(prefix);
+        return;
+    }
+
+    fields.forEach(function(field) {
+        addCustomField(prefix, field);
+    });
+
+    toggleCustomFieldsEmptyState(prefix);
+}
+
+function serializeCustomFields(prefix) {
+    var container = document.getElementById(prefix + '_custom_fields_container');
+    if (!container) {
+        return [];
+    }
+
+    var rows = container.querySelectorAll('.custom-field-row');
+    var fields = [];
+
+    rows.forEach(function(row) {
+        var nameInput = row.querySelector('.custom-field-name');
+        var valueInput = row.querySelector('.custom-field-value');
+        var typeInput = row.querySelector('.custom-field-type');
+
+        var name = nameInput ? nameInput.value.trim() : '';
+        if (!name) {
+            return;
+        }
+
+        var field = {
+            name: name,
+            value: valueInput ? valueInput.value.trim() : ''
+        };
+
+        if (typeInput && typeInput.value) {
+            field.type = typeInput.value;
+        }
+
+        fields.push(field);
+    });
+
+    return fields;
+}
+
+function initializeCustomFieldControls() {
+    renderCustomFields('create', []);
+    renderCustomFields('edit', []);
+
+    var addButtons = document.querySelectorAll('[data-custom-field-action="add"]');
+    addButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var prefix = btn.getAttribute('data-prefix');
+            addCustomField(prefix);
+        });
+    });
+
+    var createHidden = document.getElementById('create_custom_fields');
+    if (createHidden) {
+        createHidden.value = '[]';
+    }
+
+    var editHidden = document.getElementById('edit_custom_fields');
+    if (editHidden) {
+        editHidden.value = '[]';
+    }
+
+    var createForm = document.getElementById('createTaskForm');
+    if (createForm) {
+        createForm.addEventListener('submit', function() {
+            var hiddenFieldsInput = document.getElementById('create_custom_fields');
+            if (hiddenFieldsInput) {
+                hiddenFieldsInput.value = JSON.stringify(serializeCustomFields('create'));
+            }
+        });
+    }
+
+    var editForm = document.getElementById('editTaskForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function() {
+            var hiddenFieldsInput = document.getElementById('edit_custom_fields');
+            if (hiddenFieldsInput) {
+                hiddenFieldsInput.value = JSON.stringify(serializeCustomFields('edit'));
+            }
+        });
+    }
+}
 
 // Initialize time tracking when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -1002,7 +1210,33 @@ function populateEditForm(task) {
     document.getElementById('edit_started_at').value = task.started_at ? task.started_at.split('T')[0] : '';
     document.getElementById('edit_due_date').value = task.due_date ? task.due_date.split('T')[0] : '';
     document.getElementById('edit_completed_at').value = task.completed_at ? task.completed_at.split('T')[0] : '';
-    
+
+    var tagsInput = document.getElementById('edit_tags');
+    if (tagsInput) {
+        var tagNames = [];
+        if (Array.isArray(task.tags)) {
+            tagNames = task.tags.map(function(tag) {
+                if (!tag) {
+                    return '';
+                }
+                if (typeof tag === 'string') {
+                    return tag;
+                }
+                return tag.name || '';
+            }).filter(function(name) { return name; });
+        }
+        tagsInput.value = tagNames.join(', ');
+    }
+
+    if (typeof renderCustomFields === 'function') {
+        renderCustomFields('edit', task.custom_fields || []);
+    }
+
+    var hiddenCustomFieldsInput = document.getElementById('edit_custom_fields');
+    if (hiddenCustomFieldsInput) {
+        hiddenCustomFieldsInput.value = JSON.stringify(task.custom_fields || []);
+    }
+
     // Handle assignee autocomplete
     const assigneeInput = document.getElementById('edit_assignee_input');
     const assigneeHidden = document.getElementById('edit_assignee_id');
@@ -2245,12 +2479,36 @@ function filterByTeam() {
                     <!-- Description -->
                     <div class="mb-4">
                         <label for="description" class="form-label fw-medium mb-2">Description</label>
-                        <textarea class="form-control clean-input" id="description" name="description" 
+                        <textarea class="form-control clean-input" id="description" name="description"
                                   rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
                     </div>
-                    
 
-                    
+                    <!-- Tags -->
+                    <div class="mb-4">
+                        <label for="create_tags" class="form-label fw-medium mb-2">Tags</label>
+                        <input type="text" class="form-control clean-input" id="create_tags" name="tags"
+                               placeholder="e.g. Urgent, Compliance, Client A">
+                        <div class="form-text">Separate tags with commas to help categorize tasks.</div>
+                    </div>
+
+                    <!-- Custom Fields -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-2">Custom Fields</label>
+                        <div id="create_custom_fields_container" class="custom-fields-container"></div>
+                        <div class="custom-fields-empty text-muted small" id="create_custom_fields_empty">No custom fields yet.</div>
+                        <div class="mt-2 d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    data-custom-field-action="add" data-prefix="create">
+                                <i data-feather="plus" class="me-1" style="width: 14px; height: 14px;"></i>
+                                Add Custom Field
+                            </button>
+                        </div>
+                        <input type="hidden" id="create_custom_fields" name="custom_fields">
+                        <div class="form-text">Capture additional metadata as key/value pairs (e.g. account number, client reference).</div>
+                    </div>
+
+
+
                     <div class="row">
                         <!-- Priority Selection -->
                         <div class="col-md-6">
@@ -2396,10 +2654,32 @@ function filterByTeam() {
                     <!-- Description -->
                     <div class="mb-4">
                         <label for="edit_description" class="form-label fw-medium mb-2">Description</label>
-                        <textarea class="form-control clean-input" id="edit_description" name="description" 
+                        <textarea class="form-control clean-input" id="edit_description" name="description"
                                   rows="4" placeholder="Describe the task objectives and requirements..."></textarea>
                     </div>
-                    
+
+                    <div class="mb-4">
+                        <label for="edit_tags" class="form-label fw-medium mb-2">Tags</label>
+                        <input type="text" class="form-control clean-input" id="edit_tags" name="tags"
+                               placeholder="e.g. Urgent, Compliance, Client A">
+                        <div class="form-text">Separate tags with commas to keep workstreams organized.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-medium mb-2">Custom Fields</label>
+                        <div id="edit_custom_fields_container" class="custom-fields-container"></div>
+                        <div class="custom-fields-empty text-muted small" id="edit_custom_fields_empty">No custom fields yet.</div>
+                        <div class="mt-2 d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    data-custom-field-action="add" data-prefix="edit">
+                                <i data-feather="plus" class="me-1" style="width: 14px; height: 14px;"></i>
+                                Add Custom Field
+                            </button>
+                        </div>
+                        <input type="hidden" id="edit_custom_fields" name="custom_fields">
+                        <div class="form-text">Add bespoke attributes such as contract IDs, product types, or review cycles.</div>
+                    </div>
+
                     <div class="row">
                         <!-- Priority Selection -->
                         <div class="col-md-6">
@@ -2887,11 +3167,15 @@ function initializeModal() {
     
     // Form submission with loading state
     document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+        const hiddenFieldsInput = document.getElementById('create_custom_fields');
+        if (hiddenFieldsInput) {
+            hiddenFieldsInput.value = JSON.stringify(serializeCustomFields('create'));
+        }
         const submitBtn = this.querySelector('button[type="submit"]');
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
         submitBtn.disabled = true;
     });
-    
+
     // Reset form when modal is hidden
     document.getElementById('createTaskModal').addEventListener('hidden.bs.modal', function() {
         const form = document.getElementById('createTaskForm');
@@ -2899,6 +3183,11 @@ function initializeModal() {
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.innerHTML = 'Create Task';
         submitBtn.disabled = false;
+        renderCustomFields('create', []);
+        const hiddenFieldsInput = document.getElementById('create_custom_fields');
+        if (hiddenFieldsInput) {
+            hiddenFieldsInput.value = '[]';
+        }
     });
 }
 
@@ -2937,7 +3226,8 @@ document.addEventListener('DOMContentLoaded', function() {
         feather.replace();
     }
     initializeModal();
-    
+    initializeCustomFieldControls();
+
     // Initialize file upload
     if (typeof initializeFileUpload === 'function') {
         initializeFileUpload();

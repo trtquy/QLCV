@@ -7,6 +7,7 @@ import logging
 import os
 import uuid
 from werkzeug.utils import secure_filename
+import json
 
 @app.route('/')
 def index():
@@ -160,7 +161,19 @@ def create_task():
     estimated_hours = request.form.get('estimated_hours')
     started_at = request.form.get('started_at')
     due_date = request.form.get('due_date')
-    
+    tags_raw = request.form.get('tags', '')
+    custom_fields_raw = request.form.get('custom_fields', '')
+
+    tags = [tag.strip() for tag in tags_raw.split(',') if tag.strip()]
+    custom_fields = []
+    if custom_fields_raw:
+        try:
+            parsed_fields = json.loads(custom_fields_raw)
+            if isinstance(parsed_fields, list):
+                custom_fields = parsed_fields
+        except json.JSONDecodeError:
+            logging.warning('Invalid custom fields payload for task creation')
+
     if title:
         # Parse date fields
         parsed_started_at = None
@@ -189,7 +202,9 @@ def create_task():
             priority=priority,
             complexity=complexity,
             started_at=parsed_started_at,
-            due_date=parsed_due_date
+            due_date=parsed_due_date,
+            tags=tags,
+            custom_fields=custom_fields
         )
         
         # Automatically set task team to manager's team (if manager has team)
@@ -261,7 +276,24 @@ def update_task(task_id):
     started_at = request.form.get('started_at')
     due_date = request.form.get('due_date')
     completed_at = request.form.get('completed_at')
-    
+    tags = None
+    if 'tags' in request.form:
+        tags_raw = request.form.get('tags', '')
+        tags = [tag.strip() for tag in tags_raw.split(',') if tag.strip()]
+
+    custom_fields = None
+    if 'custom_fields' in request.form:
+        custom_fields_raw = request.form.get('custom_fields', '')
+        try:
+            parsed_fields = json.loads(custom_fields_raw) if custom_fields_raw else []
+            if isinstance(parsed_fields, list):
+                custom_fields = parsed_fields
+            else:
+                custom_fields = []
+        except json.JSONDecodeError:
+            logging.warning('Invalid custom fields payload for task update')
+            custom_fields = []
+
     if title:
         # Parse date fields
         parsed_started_at = None
@@ -315,7 +347,9 @@ def update_task(task_id):
             team_id=team_id,
             started_at=parsed_started_at,
             due_date=parsed_due_date,
-            completed_at=parsed_completed_at
+            completed_at=parsed_completed_at,
+            tags=tags,
+            custom_fields=custom_fields
         )
         
         # Update estimated hours if provided

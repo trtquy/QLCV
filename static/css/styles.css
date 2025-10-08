@@ -204,6 +204,77 @@ body {
     border-left-color: hsl(var(--primary)) !important;
 }
 
+.task-tags,
+.task-tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.task-tag-badge {
+    background: rgba(79, 70, 229, 0.12);
+    color: #4338ca;
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.custom-fields-container {
+    background: #f8fafc;
+    border: 1px dashed #d7dde5;
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+
+.custom-field-row .form-control,
+.custom-field-row .form-select {
+    font-size: 0.85rem;
+}
+
+.custom-fields-empty {
+    display: none;
+    margin-top: 0.5rem;
+}
+
+.custom-fields-section {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(14, 165, 233, 0.08));
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.custom-fields-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.custom-field-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.custom-field-name {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #4c51bf;
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+}
+
+.custom-field-value {
+    font-size: 0.95rem;
+    color: #1a202c;
+    font-weight: 500;
+    word-break: break-word;
+}
+
 .bg-priority-urgent {
     background-color: hsl(var(--urgent)) !important;
 }

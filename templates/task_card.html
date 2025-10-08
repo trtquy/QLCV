@@ -26,7 +26,15 @@
                 {% endif %}
             </div>
         </div>
-        
+
+        {% if task.tags %}
+        <div class="task-tags mb-2">
+            {% for tag in task.tags %}
+            <span class="task-tag-badge">{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if task.description %}
         <p class="card-text text-muted small mb-2">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
         {% endif %}

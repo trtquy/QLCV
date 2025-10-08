@@ -947,7 +947,15 @@
                         <span>Created {{ task.created_at.strftime('%B %d, %Y') }}</span>
                     </div>
                 </div>
-                
+
+                {% if task.tags %}
+                <div class="task-tags-wrapper mb-4">
+                    {% for tag in task.tags %}
+                    <span class="task-tag-badge">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <div class="task-description">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>Description</h3>
@@ -988,7 +996,24 @@
                         </div>
                     </div>
                 </div>
-                
+
+                {% if task.custom_fields %}
+                <div class="custom-fields-section mb-4">
+                    <h3 class="mb-3">Custom Fields</h3>
+                    <div class="custom-fields-grid">
+                        {% for field in task.custom_fields %}
+                        <div class="custom-field-card">
+                            <div class="custom-field-name">{{ field.field_name }}</div>
+                            <div class="custom-field-value">{{ field.field_value or '—' }}</div>
+                            {% if field.field_type %}
+                            <div class="custom-field-type text-muted small">{{ field.field_type.replace('_', ' ')|title }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Sub-tasks Section -->
                 <div class="subtasks-section mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
